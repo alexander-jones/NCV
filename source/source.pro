@@ -1,12 +1,12 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2012-09-27T02:01:57
+# Project created by QtCreator 2012-09-27T02:09:43
 #
 #-------------------------------------------------
 
 QT       += core gui opengl
 
-TARGET = brain-viz
+TARGET = source
 TEMPLATE = app
 
 
@@ -20,9 +20,9 @@ HEADERS  += \
 
 FORMS    +=
 
-RESOURCES += \
-    core-profile.qrc
-
 OTHER_FILES += \
     simple.vert \
     simple.frag
+
+RESOURCES += \
+    core-profile.qrc
