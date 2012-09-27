@@ -12,13 +12,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     glwidget.cpp \
-    camera.cpp
+    camera.cpp \
+    mainwindow.cpp
 
 HEADERS  += \
     glwidget.h \
-    camera.h
+    camera.h \
+    mainwindow.h
 
-FORMS    +=
+FORMS    += \
+    mainwindow.ui
 
 OTHER_FILES += \
     simple.vert \

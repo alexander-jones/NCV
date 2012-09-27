@@ -13,9 +13,12 @@ GLWidget::GLWidget( const QGLFormat& format, QWidget* parent )
     mouseInitialized = false;
     moveSpeed = 0.05f;
     turnSpeed = 0.005f;
+    setFocus();
 }
 
-
+GLWidget::~GLWidget()
+{
+}
 
 void GLWidget::initializeGL()
 {
