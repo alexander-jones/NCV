@@ -1,9 +1,17 @@
-#version 330
-uniform mat4x4 World, View, Projection;
+#version 410
 
-layout(location = 0, index = 0) out vec4 fragColor;
+
+uniform mat4x4 World, View, Projection, WVP;
+uniform int highlightID;
+in float ID;
+out vec4 fragColor;
 
 void main( void )
 {
-    fragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+    if(highlightID == ID)
+        fragColor = vec4( 1,0.5f,1,0.0f);
+    else
+
+        fragColor = vec4( 1,1,1,1.0f);
+    //fragColor = vec4( 1,1,1,1.0f);
 }

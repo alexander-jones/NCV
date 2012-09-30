@@ -1,5 +1,12 @@
-#include <QMatrix4x4>
+#ifndef CAMERA_H
+#define CAMERA_H
+
 #include <QVector3D>
+#include <QVector4D>
+#include <QMatrix4x4>
+#include "math.h"
+
+#define PI 3.141592653589793238462643383
 class Camera
 {
 public:
@@ -33,6 +40,7 @@ public:
     qreal GetFarPlane( );
     void SetFarPlane(qreal far);
 
+
 private:
     void CompileViewMatrix();
     // projection info
@@ -48,3 +56,5 @@ private:
     QVector3D position, direction, right, up;
 };
 
+
+#endif // CAMERA_H

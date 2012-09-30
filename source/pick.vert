@@ -1,7 +1,6 @@
 #version 410
 
-uniform mat4x4 World, View, Projection, WVP;
-
+uniform mat4x4  WVP;
 in vec3 vertex;
 in float id;
 out float ID;

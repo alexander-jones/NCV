@@ -1,14 +1,11 @@
 #include "camera.h"
-#include "math.h"
-#include <QVector4D>
-#define PI 3.141592653589793238462643383
 
 Camera::Camera(void)
 {
     viewMatrix = QMatrix4x4();
     projectionMatrix = QMatrix4x4();
     SetViewMatrix(QVector3D(0,0,0), 0.0, 0.0);
-    SetProjectionMatrix(90.0, 4.0/3.0, 0.1, 10000.0);
+    SetProjectionMatrix(45.0, 4.0/3.0, 0.1, 10000.0);
 
 }
 

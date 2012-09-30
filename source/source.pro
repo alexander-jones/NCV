@@ -13,19 +13,24 @@ TEMPLATE = app
 SOURCES += main.cpp \
     glwidget.cpp \
     camera.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    picker.cpp
 
 HEADERS  += \
     glwidget.h \
     camera.h \
-    mainwindow.h
+    mainwindow.h \
+    picker.h \
+    glhelper.h
 
 FORMS    += \
     mainwindow.ui
 
 OTHER_FILES += \
     simple.vert \
-    simple.frag
+    simple.frag \
+    pick.frag \
+    pick.vert
 
 RESOURCES += \
     core-profile.qrc
