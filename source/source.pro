@@ -14,23 +14,23 @@ SOURCES += main.cpp \
     glwidget.cpp \
     camera.cpp \
     mainwindow.cpp \
-    picker.cpp
+    sphere.cpp \
+    multipletargetframebuffer.cpp
 
 HEADERS  += \
     glwidget.h \
     camera.h \
     mainwindow.h \
-    picker.h \
-    glhelper.h
+    glhelper.h \
+    sphere.h \
+    multipletargetframebuffer.h
 
 FORMS    += \
     mainwindow.ui
 
 OTHER_FILES += \
     simple.vert \
-    simple.frag \
-    pick.frag \
-    pick.vert
+    simple.frag
 
 RESOURCES += \
     core-profile.qrc

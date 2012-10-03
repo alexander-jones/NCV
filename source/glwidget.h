@@ -1,7 +1,7 @@
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
-#include <QGLWidget>
+#include "multipletargetframebuffer.h"
 #include <QVector2D>
 #include <QGLBuffer>
 #include <QCoreApplication>
@@ -28,15 +28,16 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent* e);
     virtual void timerEvent(QTimerEvent *e);
 private:
-
+    MultipleTargetFrameBuffer * m_fbo;
     QGLShader * m_vertex, *m_fragment;
     QGLShaderProgram* m_program;
     Picker * m_picker;
     QGLBuffer m_vertexBuffer;
+    int m_width, m_height;
     Camera camera;
     QVector2D mousePosition;
     float moveSpeed, turnSpeed;
-    bool mouseInitialized,mouseDown;
+    bool mouseMovementInitialized,leftMouseDown,rightMouseDown;
 };
 
 #endif // GLWIDGET_H

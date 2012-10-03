@@ -1,10 +1,11 @@
+
+#include "glwidget.h"
+#include "mainwindow.h"
 #include <QApplication>
 #include <QPushButton>
 #include <QGLFormat>
 #include <QDebug>
 #include <QGridLayout>
-#include "glwidget.h"
-#include "mainwindow.h"
 
 int main( int argc, char* argv[] )
 {
@@ -20,6 +21,7 @@ int main( int argc, char* argv[] )
 
     // Create a GLWidget requesting our format
     GLWidget *glCanvas = new GLWidget( glFormat,w );
+
     w->setCentralWidget(glCanvas);
     w->show();
 

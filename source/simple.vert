@@ -1,10 +1,14 @@
 #version 410
 
 uniform mat4x4 World, View, Projection, WVP;
+highp uniform float highlightID;
 
 in vec3 vertex;
-in float id;
-out float ID;
+highp in float id;
+highp out float ID;
+
+
+
 
 void main( void )
 {
