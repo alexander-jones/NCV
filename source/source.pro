@@ -14,7 +14,6 @@ SOURCES += main.cpp \
     glwidget.cpp \
     camera.cpp \
     mainwindow.cpp \
-    sphere.cpp \
     multipletargetframebuffer.cpp
 
 HEADERS  += \
@@ -22,7 +21,6 @@ HEADERS  += \
     camera.h \
     mainwindow.h \
     glhelper.h \
-    sphere.h \
     multipletargetframebuffer.h
 
 FORMS    += \

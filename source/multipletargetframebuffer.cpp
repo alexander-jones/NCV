@@ -88,13 +88,6 @@ void MultipleTargetFrameBuffer:: SizeTargets(int width, int height)
         // connect texture to framebuffer attachment slot, then rebind default buffer to release this target
         glFramebufferTexture2D(GL_FRAMEBUFFER, it->second.attachment, GL_TEXTURE_2D, it->second.texture, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-        if (Status != GL_FRAMEBUFFER_COMPLETE)
-        {
-            qDebug() << "FB error, status: " << Status;
-        };
     }
 }
 
@@ -154,13 +147,16 @@ QColor  MultipleTargetFrameBuffer::GetTargetPixel(QString name,int x, int y)
             per_pixel_depth =  1;break;
         }
 
+        // establish buffer for pixel
         GLfloat * raw_pixel = new GLfloat[per_pixel_depth];
 
+        // bind requested texture and read specified pixel
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
         glReadBuffer(target.attachment);
         glReadPixels(x,target.height - y,1,1,target.format,GL_FLOAT,raw_pixel);
-
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+        // transform pixel to QColor format
         switch(target.format)
         {
         case GL_BGR:

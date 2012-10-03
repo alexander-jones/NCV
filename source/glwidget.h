@@ -2,12 +2,14 @@
 #define GLWIDGET_H
 
 #include "multipletargetframebuffer.h"
-#include <QVector2D>
-#include <QGLBuffer>
+
 #include <QCoreApplication>
+#include <QGLShader>
+#include <QGLBuffer>
+#include <QVector2D>
 #include <QKeyEvent>
 #include "camera.h"
-#include "picker.h"
+#include "glhelper.h"
 
 class GLWidget : public QGLWidget
 {
@@ -31,7 +33,6 @@ private:
     MultipleTargetFrameBuffer * m_fbo;
     QGLShader * m_vertex, *m_fragment;
     QGLShaderProgram* m_program;
-    Picker * m_picker;
     QGLBuffer m_vertexBuffer;
     int m_width, m_height;
     Camera camera;
