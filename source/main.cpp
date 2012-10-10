@@ -15,7 +15,7 @@ int main( int argc, char* argv[] )
     // That is, no old-school fixed pipeline functionality
     QGLFormat glFormat;
     glFormat.setVersion( 4, 1 );
-    glFormat.setProfile( QGLFormat::CoreProfile ); // Requires >=Qt-4.8.0
+    glFormat.setProfile( QGLFormat::CompatibilityProfile ); // Requires >=Qt-4.8.0
     glFormat.setSampleBuffers( true );
     qDebug() << "Running OpenGL Version " <<glFormat.majorVersion() << "." <<glFormat.minorVersion();
 

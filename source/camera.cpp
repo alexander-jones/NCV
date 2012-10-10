@@ -5,7 +5,7 @@ Camera::Camera(void)
     viewMatrix = QMatrix4x4();
     projectionMatrix = QMatrix4x4();
     SetViewMatrix(QVector3D(0,0,0), 0.0, 0.0);
-    SetProjectionMatrix(45.0, 4.0/3.0, 0.1, 10000.0);
+    SetProjectionMatrix(45.0, 4.0/3.0, 0.1, 1000000.0);
 
 }
 

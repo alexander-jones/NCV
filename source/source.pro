@@ -4,8 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
-
+QT  += core gui opengl
+#LIBS +=  -lGLEW  -lassimp
 TARGET = source
 TEMPLATE = app
 
@@ -27,8 +27,11 @@ FORMS    += \
     mainwindow.ui
 
 OTHER_FILES += \
-    simple.vert \
-    simple.frag
+    multi_target.vert \
+    multi_target.frag \
+    cube.nff \
+    final.vert \
+    final.frag
 
 RESOURCES += \
     core-profile.qrc

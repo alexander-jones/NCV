@@ -11,14 +11,31 @@ void MultipleTargetFrameBuffer::Init()
     glGenFramebuffers(1, &m_fbo);
 }
 
-void MultipleTargetFrameBuffer::Bind()
+void MultipleTargetFrameBuffer::BindTargets(int num, QString * names)
 {
     // bind all active render targets
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-    // schedule all render targets as outputs of fragment shader
-    glDrawBuffers(m_buffers.size(), &(m_buffers[0]));
+    GLenum * attachments = new GLenum[num];
+    for (int i =0; i < num; i ++)
+        attachments[i] = m_targets[names[i]].attachment;
 
+    // schedule all render targets as outputs of fragment shader
+    glDrawBuffers(num, (const GLenum *)attachments);
+
+}
+void MultipleTargetFrameBuffer::BindTarget(QString name)
+{
+    // bind all active render targets
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    // schedule all rendeglDrawbuffersr targets as outputs of fragment shader
+    glDrawBuffers(1, (const GLenum *)&m_targets[name].attachment);
+
+}
+FrameBufferTarget MultipleTargetFrameBuffer::GetTargetInfo(QString name)
+{
+    return m_targets[name];
 }
 
 void MultipleTargetFrameBuffer::Release()
@@ -27,28 +44,73 @@ void MultipleTargetFrameBuffer::Release()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum dpi, GLenum format, int width, int height)
+void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum dpi, int width, int height,GLenum attachment )
 {
-    if (  m_buffers.size() <= 16 || !m_depthEnabled && format == GL_DEPTH_COMPONENT )
-    {
-
         FrameBufferTarget target = FrameBufferTarget();
         target.height = height;
         target.width = width;
-        target.format = format;
         target.dpi = dpi;
 
-        if (format == GL_DEPTH_COMPONENT)
+        // determine format, other info based on dpi setting
+        switch (dpi)
         {
-            target.attachment = GL_DEPTH_ATTACHMENT;
-            m_depthEnabled = true;
+            case GL_RGB4:
+            case GL_RGB5:
+            case GL_RGB8:
+            case GL_RGB10:
+            case GL_RGB8UI:
+            case GL_RGB12:
+            case GL_RGB16:
+                if (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15)
+                    return;
+                else
+                {
+                    target.attachment = attachment;
+                    target.format = GL_RGB;
+                }
+                break;
+
+
+            case GL_RGBA4:
+            case GL_RGBA8:
+            case GL_RGBA12:
+            case GL_RGBA16:
+                if (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15)
+                    return;
+                else
+                {
+                    target.attachment = attachment;
+                    target.format = GL_RGBA;
+                }
+                break;
+
+            case GL_DEPTH_COMPONENT16:
+            case GL_DEPTH_COMPONENT24:
+            case GL_DEPTH_COMPONENT32:
+            case GL_DEPTH_COMPONENT32F:
+            case GL_DEPTH_COMPONENT32F_NV:
+                if (!m_depthEnabled && attachment == GL_DEPTH_ATTACHMENT)
+                {
+                    target.format = GL_DEPTH_COMPONENT;
+                    target.attachment = attachment;
+                    m_depthEnabled = true;
+                }
+                else
+                    return;
+                break;
+
+            case GL_ALPHA32UI_EXT:
+                if (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15)
+                    return;
+                else
+                {
+                    target.attachment = attachment;
+                    target.format = GL_ALPHA_INTEGER;
+                }
+                break;
+
         }
 
-        else
-        {
-            target.attachment = GL_COLOR_ATTACHMENT0 + m_targets.size();
-            m_buffers.push_back(target.attachment);
-        }
 
         // create a render target bound to the class frame buffer object
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -67,7 +129,6 @@ void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum dpi, GLenum forma
 
 
 
-    }
     return;
 }
 
@@ -97,7 +158,6 @@ void MultipleTargetFrameBuffer::RemoveTarget(QString name)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
         glDeleteTextures(1,&m_targets[name].texture);
-        m_buffers.erase(std::remove(m_buffers.begin(), m_buffers.end(), m_targets[name].attachment), m_buffers.end());
         m_targets.erase(name);
     }
 
@@ -177,5 +237,4 @@ QColor  MultipleTargetFrameBuffer::GetTargetPixel(QString name,int x, int y)
     }
     return pixel;
 }
-
 

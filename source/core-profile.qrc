@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file>simple.frag</file>
-        <file>simple.vert</file>
+        <file>cube.nff</file>
+        <file>multi_target.frag</file>
+        <file>multi_target.vert</file>
     </qresource>
 </RCC>

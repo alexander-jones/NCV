@@ -1,8 +1,11 @@
 #ifndef MULTIPLETARGETFRAMEBUFFER_H
 #define MULTIPLETARGETFRAMEBUFFER_H
-#pragma comment( lib, "glew32.lib" )
 
-#include <gl/glew.h>
+#ifdef WIN32
+    #pragma comment(lib,"glew32.lib")
+
+#endif
+#include <GL/glew.h>
 #include <QGLWidget>
 #include <QImage>
 #include <algorithm>
@@ -23,11 +26,14 @@ public:
     MultipleTargetFrameBuffer();
     void Init();
 
-    void Bind();
+    void BindTargets(int num, QString * names);
+    void BindTarget(QString name);
+    void BindTexture(QString name);
     void Release();
 
-    void AddTarget(QString name, GLenum dpi, GLenum format, int width, int height);
+    void AddTarget(QString name, GLenum dpi, int width, int height,GLenum attachment);
     void RemoveTarget(QString name);
+    FrameBufferTarget GetTargetInfo(QString name);
 
     void TargetToScreen(QString name, int x, int y, int width, int height);
     void SizeTargets(int width, int height);
@@ -37,7 +43,6 @@ public:
 private:
     GLuint  m_fbo;
     bool m_depthEnabled;
-    std::vector<GLenum>   m_buffers ;
     std::map<QString,FrameBufferTarget>  m_targets;
 };
 
