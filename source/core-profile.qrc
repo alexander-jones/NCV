@@ -1,7 +1,11 @@
 <RCC>
     <qresource prefix="/">
-        <file>cube.nff</file>
-        <file>multi_target.frag</file>
-        <file>multi_target.vert</file>
+        <file>assets/cube.nff</file>
+        <file>assets/neuron.obj</file>
+        <file>assets/neuronHigh.obj</file>
+        <file>shaders/final.frag</file>
+        <file>shaders/final.vert</file>
+        <file>shaders/multi_target.frag</file>
+        <file>shaders/multi_target.vert</file>
     </qresource>
 </RCC>

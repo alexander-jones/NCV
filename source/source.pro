@@ -30,8 +30,7 @@ OTHER_FILES += \
     multi_target.vert \
     multi_target.frag \
     cube.nff \
-    final.vert \
-    final.frag
+    final.vert
 
 RESOURCES += \
     core-profile.qrc

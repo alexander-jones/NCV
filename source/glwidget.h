@@ -16,8 +16,6 @@ enum RenderSetting
 {
     Diffuse,
     Normal,
-    Clip,
-    Pick,
     Position
 };
 
@@ -49,14 +47,10 @@ private:
     MultipleTargetFrameBuffer  m_frameTargetBuffer;
     QGLShaderProgram m_firstPassProgram;
     QGLShaderProgram m_finalPassProgram;
-    QGLBuffer m_vertexBuffer,m_indexBuffer, m_instanceBuffer;
-    QGLBuffer m_screenVertexBuffer;
-    std::vector<GLuint> m_indices;
-    std::vector<GLfloat> m_modelMats;
+    std::map<QString,QGLBuffer> m_buffers;
     QMatrix4x4 m_scale,m_spread;
     Assimp::Importer m_importer;
     QVector3D m_WorldSize;
-    std::vector<VertexAtrtributes> m_attributes;
     RenderSetting m_renderSetting;
     QString m_firstPassTargets[5];
     int m_width, m_height;

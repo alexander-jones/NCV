@@ -1,6 +1,14 @@
 #include "multipletargetframebuffer.h"
 #include <QtDebug>
 
+
+#include <qglframebufferobject.h>
+
+#include <qlibrary.h>
+
+#include <qimage.h>
+extern QImage qt_gl_read_framebuffer(const QSize&, bool, bool);
+
 MultipleTargetFrameBuffer::MultipleTargetFrameBuffer()
 {
 }
@@ -10,6 +18,7 @@ void MultipleTargetFrameBuffer::Init()
     m_depthEnabled = false;
     glGenFramebuffers(1, &m_fbo);
 }
+
 
 void MultipleTargetFrameBuffer::BindTargets(int num, QString * names)
 {
@@ -24,35 +33,41 @@ void MultipleTargetFrameBuffer::BindTargets(int num, QString * names)
     glDrawBuffers(num, (const GLenum *)attachments);
 
 }
-void MultipleTargetFrameBuffer::BindTarget(QString name)
-{
-    // bind all active render targets
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-
-    // schedule all rendeglDrawbuffersr targets as outputs of fragment shader
-    glDrawBuffers(1, (const GLenum *)&m_targets[name].attachment);
-
-}
 FrameBufferTarget MultipleTargetFrameBuffer::GetTargetInfo(QString name)
 {
     return m_targets[name];
 }
 
-void MultipleTargetFrameBuffer::Release()
+void MultipleTargetFrameBuffer::ReleaseTargets()
 {
     // release current targets by binding default target
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum dpi, int width, int height,GLenum attachment )
+void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum internalFormat, int width, int height,GLenum attachment, GLenum targetType)
 {
+        if (targetType != GL_TEXTURE_2D && targetType != GL_RENDERBUFFER)
+        {
+            qDebug() << "Target type parameter must be either GL_TEXTURE_2D or GL_RENDERBUFFER" ;
+            return;
+        }
         FrameBufferTarget target = FrameBufferTarget();
         target.height = height;
         target.width = width;
-        target.dpi = dpi;
+        target.internalFormat = internalFormat;
+        target.type = targetType;
+        target.attachment = attachment;
 
-        // determine format, other info based on dpi setting
-        switch (dpi)
+        // if parameters specified are invalid for a depth target exit.
+        if (attachment == GL_DEPTH_ATTACHMENT && m_depthEnabled )
+        {
+            qDebug() << "Frame buffer target ' " << name << " ' was not specified with valid parameters. ";
+            return;
+        }
+
+
+        // determine format based on internalFormat setting
+        switch (internalFormat)
         {
             case GL_RGB4:
             case GL_RGB5:
@@ -61,27 +76,14 @@ void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum dpi, int width, i
             case GL_RGB8UI:
             case GL_RGB12:
             case GL_RGB16:
-                if (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15)
-                    return;
-                else
-                {
-                    target.attachment = attachment;
-                    target.format = GL_RGB;
-                }
+                target.format = GL_RGB;
                 break;
-
 
             case GL_RGBA4:
             case GL_RGBA8:
             case GL_RGBA12:
             case GL_RGBA16:
-                if (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15)
-                    return;
-                else
-                {
-                    target.attachment = attachment;
-                    target.format = GL_RGBA;
-                }
+                target.format = GL_RGBA;
                 break;
 
             case GL_DEPTH_COMPONENT16:
@@ -89,39 +91,56 @@ void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum dpi, int width, i
             case GL_DEPTH_COMPONENT32:
             case GL_DEPTH_COMPONENT32F:
             case GL_DEPTH_COMPONENT32F_NV:
-                if (!m_depthEnabled && attachment == GL_DEPTH_ATTACHMENT)
-                {
-                    target.format = GL_DEPTH_COMPONENT;
-                    target.attachment = attachment;
-                    m_depthEnabled = true;
-                }
-                else
-                    return;
+                target.format = GL_DEPTH_COMPONENT;
+                m_depthEnabled = true;
                 break;
 
-            case GL_ALPHA32UI_EXT:
-                if (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15)
-                    return;
-                else
-                {
-                    target.attachment = attachment;
-                    target.format = GL_ALPHA_INTEGER;
-                }
+            case GL_R8UI:
+            case GL_R16UI:
+            case GL_R32UI:
+                target.format = GL_RED_INTEGER;
                 break;
 
+            default:
+                return;
         }
 
+
+        // if parameters specified are invalid for a texture exit.
+        if ((target.format == GL_RGB || target.format == GL_RGBA)  && (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15 ))
+        {
+            qDebug() << "Frame buffer target ' " << name << " ' was not specified with valid parameters. ";
+            return;
+        }
+
+        // if parameters specified are invalid for an integer buffer exit.
+        if (target.format == GL_RED_INTEGER && (attachment < GL_COLOR_ATTACHMENT0 || attachment > GL_COLOR_ATTACHMENT15 ))
+        {
+            qDebug() << "Frame buffer target ' " << name << " ' was not specified with valid parameters. ";
+            return;
+        }
 
         // create a render target bound to the class frame buffer object
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-        // create and size texture used for render target
-        glGenTextures(1, &target.texture);
-        glBindTexture(GL_TEXTURE_2D, target.texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, target.dpi, target.width, target.height, 0, target.format, GL_UNSIGNED_BYTE, 0);
 
-        // connect texture to framebuffer attachment slot, then rebind default buffer to release this target
-        glFramebufferTexture2D(GL_FRAMEBUFFER, target.attachment, GL_TEXTURE_2D, target.texture, 0);
+        // If target specified as render buffer, initialize it and bind to fbo. (Renderbuffer = fas    ter/ better rendering but doesn't support cpu reads)
+        if (target.type == GL_RENDERBUFFER)
+        {
+            glGenRenderbuffers(1,&target.id);
+            glBindRenderbuffer(GL_RENDERBUFFER,target.id);
+            glRenderbufferStorage(GL_RENDERBUFFER,target.internalFormat,target.width,target.height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER,target.attachment,GL_RENDERBUFFER,target.id);
+        }
+        // If target specified as texture, initialize it and bind to fbo.
+        else if (target.type == GL_TEXTURE_2D)
+        {
+            glGenTextures(1, &target.id);
+            glBindTexture(GL_TEXTURE_2D, target.id);
+            glTexImage2D(GL_TEXTURE_2D, 0, target.internalFormat, target.width, target.height, 0, target.format, GL_UNSIGNED_BYTE, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, target.attachment, GL_TEXTURE_2D, target.id, 0);
+
+        }
 
         // release frame buffer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -134,20 +153,30 @@ void MultipleTargetFrameBuffer::AddTarget(QString name, GLenum dpi, int width, i
 
 void MultipleTargetFrameBuffer:: SizeTargets(int width, int height)
 {
+    FrameBufferTarget * target;
     for ( std::map<QString,FrameBufferTarget>::iterator it = m_targets.begin() ; it != m_targets.end(); it++ )
     {
-        it->second.width = width;
-        it->second.height = height;
+        target = &(it->second);
+        target->width = width;
+        target->height = height;
 
         // Rebind texture change the attributes
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-        glDeleteTextures(1, &it->second.texture);
-        glGenTextures(1, &it->second.texture);
-        glBindTexture(GL_TEXTURE_2D, it->second.texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, it->second.dpi, it->second.width, it->second.height, 0, it->second.format, GL_UNSIGNED_BYTE, 0);
 
-        // connect texture to framebuffer attachment slot, then rebind default buffer to release this target
-        glFramebufferTexture2D(GL_FRAMEBUFFER, it->second.attachment, GL_TEXTURE_2D, it->second.texture, 0);
+
+        if (target->type == GL_RENDERBUFFER)
+        {
+            glBindRenderbuffer(GL_RENDERBUFFER,target->id);
+            glRenderbufferStorage(GL_RENDERBUFFER,target->internalFormat,target->width,target->height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER,target->attachment,GL_RENDERBUFFER,target->id);
+        }
+        else if (target->type == GL_TEXTURE_2D)
+        {
+            glBindTexture(GL_TEXTURE_2D, target->id);
+            glTexImage2D(GL_TEXTURE_2D, 0, target->internalFormat, target->width, target->height, 0, target->format, GL_UNSIGNED_BYTE, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, target->attachment, GL_TEXTURE_2D, target->id, 0);
+        }
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
@@ -157,12 +186,15 @@ void MultipleTargetFrameBuffer::RemoveTarget(QString name)
     if (m_targets.count(name) >0)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-        glDeleteTextures(1,&m_targets[name].texture);
+        if (m_targets[name].type == GL_RENDERBUFFER)
+            glDeleteRenderbuffers(1,&m_targets[name].id);
+        else if (m_targets[name].type == GL_TEXTURE_2D)
+            glDeleteTextures(1,&m_targets[name].id);
         m_targets.erase(name);
     }
 
 }
-void MultipleTargetFrameBuffer::TargetToScreen(QString name, int x, int y, int width, int height)
+void MultipleTargetFrameBuffer::TargetToScreen(QString name, QRect to)
 {
     if (m_targets.count(name) > 0)
     {
@@ -174,7 +206,7 @@ void MultipleTargetFrameBuffer::TargetToScreen(QString name, int x, int y, int w
         // tell OpenGL to read this target and blit it onto the rectangle specified
         glReadBuffer(m_targets[name].attachment);
         glBlitFramebuffer(0, 0, m_targets[name].width, m_targets[name].height,
-                        x, y, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+                          to.x(), to.y(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
         // release this framebuffer from reading, exit to default
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
@@ -182,59 +214,21 @@ void MultipleTargetFrameBuffer::TargetToScreen(QString name, int x, int y, int w
 }
 
 
-QColor  MultipleTargetFrameBuffer::GetTargetPixel(QString name,int x, int y)
+QImage  MultipleTargetFrameBuffer::GetTarget(QString name)
 {
-    QColor pixel;
+    QImage image;
 
-    if (m_targets.count(name) >0)
+    if (m_targets.count(name) >0 && m_targets[name].type == GL_TEXTURE_2D)
     {
-
-        FrameBufferTarget target = m_targets[name];
-        int per_pixel_depth;
-        switch(target.format)
-        {
-        case GL_BGR:
-        case GL_RGB:
-            per_pixel_depth = 3;break;
-
-        case GL_BGRA:
-        case GL_RGBA:
-            per_pixel_depth = 4;break;
-
-        case GL_DEPTH_COMPONENT:
-        case GL_ALPHA:
-        case GL_LUMINANCE:
-            per_pixel_depth =  1;break;
-        }
-
-        // establish buffer for pixel
-        GLfloat * raw_pixel = new GLfloat[per_pixel_depth];
 
         // bind requested texture and read specified pixel
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
-        glReadBuffer(target.attachment);
-        glReadPixels(x,target.height - y,1,1,target.format,GL_FLOAT,raw_pixel);
+        glReadBuffer(m_targets[name].attachment);
+        //glReadPixels();
+        //image = qt_gl_read_framebuffer(QSize(m_targets[name].width, m_targets[name].height), m_targets[name].internalFormat != GL_RGB, true);
+
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-
-        // transform pixel to QColor format
-        switch(target.format)
-        {
-        case GL_BGR:
-            pixel = QColor(raw_pixel[2],raw_pixel[1],raw_pixel[0]);break;
-        case GL_RGB:
-            pixel = QColor((raw_pixel[0] / 1.0f) * 255,(raw_pixel[1] / 1.0f) * 255,(raw_pixel[2] / 1.0f) * 255); break;
-
-        case GL_BGRA:
-            pixel = QColor(raw_pixel[2],raw_pixel[1],raw_pixel[0],raw_pixel[3]);break;
-        case GL_RGBA:
-            pixel = QColor(raw_pixel[0],raw_pixel[1],raw_pixel[2],raw_pixel[3]); break;
-
-        case GL_DEPTH_COMPONENT:
-        case GL_ALPHA:
-        case GL_LUMINANCE:
-            pixel = QColor(raw_pixel[0],raw_pixel[0],raw_pixel[0]); break;
-        }
     }
-    return pixel;
+    return image;
 }
 

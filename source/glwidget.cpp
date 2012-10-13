@@ -2,13 +2,12 @@
 #include <QTimer>
 
 GLWidget::GLWidget( const QGLFormat& format, QWidget* parent )
-    : QGLWidget( format, parent ),
-      m_vertexBuffer( QGLBuffer::VertexBuffer )
+    : QGLWidget( format, parent )
 {
     camera = Camera();
-    m_vertexBuffer = QGLBuffer(QGLBuffer::VertexBuffer);
-    m_instanceBuffer = QGLBuffer(QGLBuffer::VertexBuffer);
-    m_indexBuffer = QGLBuffer(QGLBuffer::IndexBuffer);
+    m_buffers["vertex"] = QGLBuffer(QGLBuffer::VertexBuffer);
+    m_buffers["instance"] = QGLBuffer(QGLBuffer::VertexBuffer);
+    m_buffers["index"] = QGLBuffer(QGLBuffer::IndexBuffer);
     leftMouseDown = false;
     rightMouseDown = false;
     m_frameTargetBuffer =  MultipleTargetFrameBuffer();
@@ -30,41 +29,46 @@ void GLWidget::BindModel( QString filename)
     const aiScene * model = m_importer.ReadFile(filename.toStdString(), aiProcess_JoinIdenticalVertices  | aiProcess_GenSmoothNormals
                                                 | aiProcess_Triangulate|aiProcess_MakeLeftHanded  |aiProcess_FixInfacingNormals );
 
+    std::vector<VertexAtrtributes> attributes;
+    std::vector<GLuint> indices;
+
     // gather indices of all faces
     for (int i = 0; i < model->mMeshes[0]->mNumFaces; i ++)
         for (int j = 0; j < model->mMeshes[0]->mFaces[i].mNumIndices; j ++)
-            m_indices.push_back(model->mMeshes[0]->mFaces[i].mIndices[j]);
+            indices.push_back(model->mMeshes[0]->mFaces[i].mIndices[j]);
 
     //fill attribute array
-    m_attributes.clear();
+    attributes.clear();
     for (int i = 0; i < model->mMeshes[0]->mNumVertices; i ++)
     {
-        m_attributes.push_back(VertexAtrtributes(model->mMeshes[0]->mVertices[i],model->mMeshes[0]->mNormals[i]));
+        attributes.push_back(VertexAtrtributes(model->mMeshes[0]->mVertices[i],model->mMeshes[0]->mNormals[i]));
     }
 
     // create buffers to bind mesh geometry
-    m_vertexBuffer.create();
-    m_indexBuffer.create();
+    m_buffers["vertex"].create();
+    m_buffers["index"].create();
 
-    m_vertexBuffer.setUsagePattern( QGLBuffer::StaticDraw );
-    m_indexBuffer.setUsagePattern( QGLBuffer::StaticDraw );
+    m_buffers["vertex"].setUsagePattern( QGLBuffer::StaticDraw );
+    m_buffers["index"].setUsagePattern( QGLBuffer::StaticDraw );
 
-    if ( !m_vertexBuffer.bind() )
+    if ( !m_buffers["vertex"].bind() )
     {
         qDebug() << "Could not bind vertex buffer to the context";
         return;
     }
 
-    if ( !m_indexBuffer.bind() )
+    if ( !m_buffers["index"].bind() )
     {
         qDebug() << "Could not bind index buffer to the context";
         return;
     }
 
 
-    m_vertexBuffer.allocate( &m_attributes[0], m_attributes.size() * sizeof(VertexAtrtributes));
-    m_indexBuffer.allocate( &(m_indices[0]),  m_indices.size() * sizeof( GLuint ));
+    m_buffers["vertex"].allocate( &attributes[0], attributes.size() * sizeof(VertexAtrtributes));
+    m_buffers["index"].allocate( &(indices[0]),  indices.size() * sizeof( GLuint ));
 
+    attributes.clear();
+    indices.clear();
     return;
 }
 
@@ -89,27 +93,25 @@ void GLWidget::initializeGL()
 
     // initialize target buffer
     m_frameTargetBuffer.Init();
-    m_frameTargetBuffer.AddTarget("diffuse",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT0);
-    m_frameTargetBuffer.AddTarget("position",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT1);
-    m_frameTargetBuffer.AddTarget("normal",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT2);
-    m_frameTargetBuffer.AddTarget("pick",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT3);
-    m_frameTargetBuffer.AddTarget("depth",GL_DEPTH_COMPONENT16,1000,1000,GL_DEPTH_ATTACHMENT);
-
-    m_frameTargetBuffer.AddTarget("final",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT0);
+    m_frameTargetBuffer.AddTarget("diffuse",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT0,GL_RENDERBUFFER);
+    m_frameTargetBuffer.AddTarget("position",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT1,GL_RENDERBUFFER);
+    m_frameTargetBuffer.AddTarget("normal",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT2,GL_RENDERBUFFER);
+    m_frameTargetBuffer.AddTarget("depth",GL_DEPTH_COMPONENT16,1000,1000,GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER);
+    m_frameTargetBuffer.AddTarget("final",GL_RGB8,1000,1000,GL_COLOR_ATTACHMENT0,GL_RENDERBUFFER);
 
     m_firstPassTargets[0] = "diffuse";
     m_firstPassTargets[1] = "position";
     m_firstPassTargets[2] = "normal";
-    m_firstPassTargets[3] = "pick";
 
     // bind base geometry
-    BindModel("../source/cube.nff");
+    BindModel("../source/assets/cube.nff");
 
     // fill world with instances
     int xDepth = 100, yDepth = 100, zDepth  =100;
     int spacing = 50;
     m_WorldSize = QVector3D(xDepth * spacing, yDepth * spacing, zDepth * spacing);
 
+    std::vector<GLfloat> modelMats;
     for (int i = -xDepth/2; i < xDepth/2; i ++)
     {
         for (int j = -yDepth/2; j <yDepth/2; j ++)
@@ -122,14 +124,14 @@ void GLWidget::initializeGL()
 
                 // pack each instance matrix as 16 successive floats
                 for (int offset = 0; offset < 16; offset ++)
-                    m_modelMats.push_back((GLfloat)(*(root + offset)));
+                    modelMats.push_back((GLfloat)(*(root + offset)));
             }
         }
     }
 
 
     // compile shader
-    if (!GLHelper::CompileShaderProgram(&m_firstPassProgram,":/multi_target.vert",":/multi_target.frag"))
+    if (!GLHelper::CompileShaderProgram(&m_firstPassProgram,":/shaders/multi_target.vert",":/shaders/multi_target.frag"))
         return;
     // Bind the shader program so that we can associate variables from
     // our application to the shaders
@@ -140,19 +142,20 @@ void GLWidget::initializeGL()
     }
 
     // bind per-vertex attributes of model
-    m_firstPassProgram.setAttributeBuffer( "position", GL_FLOAT, 0, 3,  6 * sizeof( float ) );
-    m_firstPassProgram.enableAttributeArray( "position" );
-    m_firstPassProgram.setAttributeBuffer( "normal", GL_FLOAT, 3 * sizeof( float ), 3,  6 * sizeof( float ) );
-    m_firstPassProgram.enableAttributeArray( "normal" );
+    m_firstPassProgram.setAttributeBuffer( "Vert_Position", GL_FLOAT, 0, 3,  6 * sizeof( float ) );
+    m_firstPassProgram.enableAttributeArray( "Vert_Position" );
+    m_firstPassProgram.setAttributeBuffer( "Vert_Normal", GL_FLOAT, 3 * sizeof( float ), 3,  6 * sizeof( float ) );
+    m_firstPassProgram.enableAttributeArray( "Vert_Normal" );
 
     // allocate memory for instances
-    m_instanceBuffer.create();
-    m_instanceBuffer.setUsagePattern( QGLBuffer::DynamicDraw );
-    m_instanceBuffer.bind();
-    m_instanceBuffer.allocate( &m_modelMats[0], m_modelMats.size() *sizeof( GLfloat));
+    m_buffers["instance"].create();
+    m_buffers["instance"].setUsagePattern( QGLBuffer::DynamicDraw );
+    m_buffers["instance"].bind();
+    m_buffers["instance"].allocate( &modelMats[0], modelMats.size() *sizeof( GLfloat));
 
+    modelMats.clear();
     // attach instances to attribute in program
-    GLuint mvpLoc = m_firstPassProgram.attributeLocation("Model");
+    GLuint mvpLoc = m_firstPassProgram.attributeLocation("Inst_Translation");
     for (int i = 0; i < 4; i ++)
     {
         m_firstPassProgram.setAttributeBuffer( mvpLoc + i, GL_FLOAT,sizeof(GLfloat) * i * 4  ,4, sizeof( GLfloat) * 16);
@@ -167,6 +170,7 @@ void GLWidget::initializeGL()
     m_firstPassProgram.setUniformValue("View",camera.GetViewMatrix());
     m_firstPassProgram.setUniformValue("Projection",camera.GetProjectionMatrix());
     m_firstPassProgram.setUniformValue("WorldSize",m_WorldSize);
+
 
     // start refresh rate timer
     this->startTimer(5);
@@ -203,27 +207,24 @@ void GLWidget::paintGL()
 {
 
     // bind multiple target buffer
-    m_frameTargetBuffer.BindTargets(4,m_firstPassTargets);
+    m_frameTargetBuffer.BindTargets(3,m_firstPassTargets);
     m_firstPassProgram.bind();
     // clear screen
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    glDrawElementsInstanced(GL_TRIANGLES,m_indices.size(),GL_UNSIGNED_INT,0,m_modelMats.size() / 16);
+    glDrawElementsInstanced(GL_TRIANGLES,m_buffers["index"].size() /sizeof( GLuint ) ,GL_UNSIGNED_INT,0,m_buffers["instance"].size() / (16 *sizeof(GL_FLOAT)));
 
     // release frame buffer and render to back buffer
-    m_frameTargetBuffer.Release();
+    m_frameTargetBuffer.ReleaseTargets();
 
     //m_frameTargetBuffer.BindTarget("final");
     if (m_renderSetting == Normal)
-        m_frameTargetBuffer.TargetToScreen("normal", 0, 0,m_width,m_height);
+        m_frameTargetBuffer.TargetToScreen("normal", QRect(0, 0,m_width,m_height));
     else  if (m_renderSetting == Position)
-        m_frameTargetBuffer.TargetToScreen("position", 0, 0,m_width,m_height);
-
-    else if (m_renderSetting == Pick)
-        m_frameTargetBuffer.TargetToScreen("pick", 0, 0,m_width,m_height);
+        m_frameTargetBuffer.TargetToScreen("position", QRect(0, 0,m_width,m_height));
 
     else if (m_renderSetting == Diffuse)
-        m_frameTargetBuffer.TargetToScreen("diffuse", 0, 0,m_width,m_height);
+        m_frameTargetBuffer.TargetToScreen("diffuse", QRect(0, 0,m_width,m_height));
 
     this->swapBuffers();
 }
@@ -260,17 +261,7 @@ void GLWidget::mousePressEvent(QMouseEvent* e)
     if (e->button() == Qt::LeftButton)
     {
         leftMouseDown = true;
-        QColor pixel = m_frameTargetBuffer.GetTargetPixel("pick",e->x(),e->y());
-        GLint id = pixel.red() + pixel.green()  * 256.0f + pixel.blue()  * 256.0f * 256.0f ;
-        //m_firstPassProgram.setUniformValue("SelectedID",id);
-    }
 
-    else if (e->button() == Qt::MidButton)
-    {
-        leftMouseDown = true;
-        QColor pixel = m_frameTargetBuffer.GetTargetPixel("pick",e->x(),e->y());
-        GLint id = pixel.red() + pixel.green()  * 256.0f + pixel.blue()  * 256.0f * 256.0f ;
-        //m_firstPassProgram.setUniformValue("SelectedID",id);
     }
 
 
@@ -355,9 +346,6 @@ void GLWidget::keyPressEvent( QKeyEvent* e )
             m_renderSetting = Normal;
             break;
 
-        case Qt::Key_4:
-            m_renderSetting =  Pick;
-            break;
 
         default:
             QGLWidget::keyPressEvent( e );
