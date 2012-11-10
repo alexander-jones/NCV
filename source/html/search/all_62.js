@@ -6,5 +6,5 @@ var searchData=
   ['bottom',['bottom',['../class_q_g_l_x_bounding_box.html#ada5c01b2cf2f892f68a490900edb8a05',1,'QGLXBoundingBox']]],
   ['bounds',['bounds',['../struct_q_g_l_x_octree_leaf.html#ae9f89e1443822e225b620ae6cbc39336',1,'QGLXOctreeLeaf']]],
   ['buffer',['buffer',['../struct_attribute_array.html#a67d52c9b6767feb80ef7430443ba3396',1,'AttributeArray']]],
-  ['bufferformattotextureformat',['bufferFormatToTextureFormat',['../class_q_g_l_x_core.html#ab7d77c0ce998821514d2f83decd0f1d8',1,'QGLXCore']]]
+  ['bufferformattotextureformat',['bufferFormatToTextureFormat',['../class_q_g_l_x_core.html#a82c5c8816dad9d8e83550a529f59911b',1,'QGLXCore']]]
 ];

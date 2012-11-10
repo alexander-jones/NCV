@@ -4,7 +4,6 @@ var searchData=
   ['targettype',['targetType',['../struct_frame_buffer_target.html#a42a9a729525d26457156a93fe9ad9eda',1,'FrameBufferTarget']]],
   ['texturebuffer',['TextureBuffer',['../class_q_g_l_x_buffer.html#af2dd1d012991f0b4b5c7e697659feaaea7890583bb2fc4ba8cb4e16079b2462f3',1,'QGLXBuffer']]],
   ['textureid',['textureID',['../class_q_g_l_x_buffer.html#af4515056a89891255c1993624119afd4',1,'QGLXBuffer']]],
-  ['textureprecision',['TexturePrecision',['../class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67',1,'QGLXCore']]],
   ['textureslot',['textureSlot',['../class_q_g_l_x_buffer.html#a6517aa1ef71adc9626b7a17fcd649c82',1,'QGLXBuffer']]],
   ['timerevent',['timerEvent',['../class_n_c_v.html#add3e32aeb31a4feeb37e756b50fab131',1,'NCV']]],
   ['top',['top',['../class_q_g_l_x_bounding_box.html#a34ff2df5825eb8d72797b4ff4020b0b4',1,'QGLXBoundingBox']]],

@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // voltage data is composed of 3 component float vector, so specify that
     // share data with both neuron / connection shaders
     // high precision format for data (more expensive but more accurate)
-    ncvSim->setNeuronAttributeArray("Inst_Voltage",voltages,GL_FLOAT,3,NCV::Shared,QGLXCore::High);
+    ncvSim->setNeuronAttributeArray("Inst_Voltage",voltages,GL_FLOAT,3,NCV::Shared);
     ncvSim->setNeuronAttributeArray("Inst_Firing",firings,GL_UNSIGNED_BYTE,1,NCV::Shared);
     ncvSim->setVisualizationParameter("MaxVoltage",100.0f,NCV::Shared);
     ncvSim->setVisualizationParameter("MinVoltage",0.0f,NCV::Shared);

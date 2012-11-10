@@ -263,7 +263,7 @@ void NCV::createNetwork()
     GLubyte * selected = new GLubyte[m_neuronsToCreate + m_connectionsToCreate];
     for (int i = 0; i <m_neuronsToCreate+ m_connectionsToCreate; i ++)
         selected [i] =0;
-    setCompoundAttributeArray("Inst_Selection",selected,GL_UNSIGNED_BYTE,1,Shared,QGLXCore::Low);
+    setCompoundAttributeArray("Inst_Selection",selected,GL_UNSIGNED_BYTE,1,Shared);
 
     // set world information based off positions inputted
     m_neuronProgram.bind();
@@ -317,7 +317,7 @@ void NCV::createAttributes()
                 m_textureBuffers[it.key()].setTextureSlot(m_textureBuffers.size()-1);
             }
             m_textureBuffers[it.key()].bind();
-            GLenum textureFormat  = QGLXCore::bufferFormatToTextureFormat(attribToWrite.componentType,attribToWrite.tupleSize,attribToWrite.precision);
+            GLenum textureFormat  = QGLXCore::bufferFormatToTextureFormat(attribToWrite.componentType,attribToWrite.tupleSize,attribToWrite.componentSize);
             if (attribToWrite.type == DataSet::Neuron)
                 m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride * m_neurons.numObjects(),textureFormat);
             else if (attribToWrite.type == DataSet::Connection)
@@ -809,7 +809,7 @@ bool NCV::compileShaderProgram(QGLShaderProgram & program, const QString& vertex
 void NCV::createNeurons(int number,QVector3D * positions )
 {
     m_neuronsToCreate = number;
-    m_attributesToCreate["Inst_Translation"] = DataSet(positions,GL_FLOAT,3,Shared,DataSet::Neuron,QGLXCore::High,1);
+    m_attributesToCreate["Inst_Translation"] = DataSet(positions,GL_FLOAT,3,Shared,DataSet::Neuron,1);
 
     establishWorldBounds(number,positions);
 
@@ -834,8 +834,8 @@ void NCV::createNeurons(const QString & filename )
 void NCV::createConnections(int number,GLuint * inNeurons,GLuint * outNeurons )
 {
     m_connectionsToCreate = number;
-    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
-    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
+    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,1);
+    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,1);
 }
 void NCV::createConnections(const QString & filename )
 {
@@ -854,31 +854,31 @@ void NCV::createConnections(const QString & filename )
     file.close();
 
 
-    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
-    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
+    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,1);
+    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,1);
 }
 
 
-void NCV::setConnectionAttributeArray(QString name, void * data,  GLenum componentType, int tupleSize, AttributeAccess access,QGLXCore::TexturePrecision precision )
+void NCV::setConnectionAttributeArray(QString name, void * data,  GLenum componentType, int tupleSize, AttributeAccess access )
 {
     if(componentType == GL_UNSIGNED_INT && access != Shared)
         componentType == GL_FLOAT;
-    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Connection,precision,1);
+    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Connection,1);
 }
 
-void NCV::setNeuronAttributeArray(QString name, void * data, GLenum componentType,  int tupleSize,AttributeAccess access,QGLXCore::TexturePrecision precision )
+void NCV::setNeuronAttributeArray(QString name, void * data, GLenum componentType,  int tupleSize,AttributeAccess access)
 {
     if(componentType == GL_UNSIGNED_INT && access != Shared)
         componentType == GL_FLOAT;
-    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Neuron,precision,1);
+    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Neuron,1);
 }
 
 
-void NCV::setCompoundAttributeArray(QString name, void * data,GLenum componentType, int tupleSize, AttributeAccess access,QGLXCore::TexturePrecision precision )
+void NCV::setCompoundAttributeArray(QString name, void * data,GLenum componentType, int tupleSize, AttributeAccess access )
 {
     if(componentType == GL_UNSIGNED_INT && access != Shared)
         componentType == GL_FLOAT;
-    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Compound,precision,1);
+    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Compound,1);
 }
 
 void NCV::setVisualizationParameter(const char * name, GLint value, AttributeAccess access)

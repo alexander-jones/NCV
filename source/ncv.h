@@ -110,7 +110,7 @@ public slots:
         \brief This function binds an attribute that spans all neurons and all connections to the rendering context.
         \note All compound attributes are accessible by both neurons and connections;
     */
-    void setCompoundAttributeArray(QString name, void * data,  GLenum componentType, int tupleSize, AttributeAccess access, QGLXCore::TexturePrecision precision = QGLXCore::Mid);
+    void setCompoundAttributeArray(QString name, void * data,  GLenum componentType, int tupleSize, AttributeAccess access);
 
     /*!
         \param name The name of the attribute being set.
@@ -118,10 +118,9 @@ public slots:
         \param componentType The base OpenGL data type used for this attribute.
         \param tupleSize The number of componentType values per attribute.
         \param access Describes what data set(s) can access this attribute.
-        \param precision The precision of the attribute. Only used if value access is Shared.
         \brief This function binds an attribute that spans all connections to the rendering context.
     */
-    void setConnectionAttributeArray(QString name, void * data,  GLenum componentType,int tupleSize, AttributeAccess access, QGLXCore::TexturePrecision precision = QGLXCore::Mid);
+    void setConnectionAttributeArray(QString name, void * data,  GLenum componentType,int tupleSize, AttributeAccess access);
 
     /*!
         \param name The name of the attribute being set.
@@ -129,10 +128,9 @@ public slots:
         \param componentType The base OpenGL data type used for this attribute.
         \param tupleSize The number of componentType values per attribute.
         \param access Describes what data set(s) can access this attribute.
-        \param precision The precision of the attribute. Only used if value access is Shared.
         \brief This function binds an attribute that spans all neurons to the rendering context.
     */
-    void setNeuronAttributeArray(QString name, void * data, GLenum componentType,int tupleSize, AttributeAccess access, QGLXCore::TexturePrecision precision = QGLXCore::Mid);
+    void setNeuronAttributeArray(QString name, void * data, GLenum componentType,int tupleSize, AttributeAccess access);
 
     /*!
         \param name The name of the parameter being set.
@@ -214,7 +212,7 @@ private:
             this->componentType = 0;
         }
 
-        DataSet (void * data,  GLenum componentType,int tupleSize,AttributeAccess access,AttributeType type, QGLXCore::TexturePrecision precision, int divisor = 0)
+        DataSet (void * data,  GLenum componentType,int tupleSize,AttributeAccess access,AttributeType type, int divisor = 0)
         {
             this->data = data;
             this->componentType = componentType;
@@ -222,14 +220,12 @@ private:
             this->divisor = divisor;
             this->type = type;
             this->access = access;
-            this->precision = precision;
             this->componentSize =  QGLXCore::getComponentSize(componentType);
             this->stride = tupleSize * componentSize;
         }
         void * data;
         int tupleSize, stride, componentSize;
         int divisor;
-        QGLXCore::TexturePrecision precision;
         GLenum componentType;
         AttributeType type;
         AttributeAccess access;

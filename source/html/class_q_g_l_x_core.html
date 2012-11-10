@@ -82,7 +82,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="class_q_g_l_x_core-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -92,46 +91,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <p><code>#include &lt;<a class="el" href="qglxcore_8h_source.html">qglxcore.h</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a4f8d4e9b6d8076912cb50deaff359e67"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67">TexturePrecision</a> { <a class="el" href="class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67ad8122992062292a8def3c06941c58907">Low</a>, 
-<a class="el" href="class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67ace0d84aebdf4f538e97bd440592e639c">Mid</a>, 
-<a class="el" href="class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67a603f6dd3684f0209dc79775caf266e05">High</a>
- }</td></tr>
-<tr class="separator:a4f8d4e9b6d8076912cb50deaff359e67"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a8bb0d9ce953a784b5ca9c6d3b6c572c1"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_q_g_l_x_core.html#a8bb0d9ce953a784b5ca9c6d3b6c572c1">getComponentSize</a> (GLenum componentType)</td></tr>
 <tr class="separator:a8bb0d9ce953a784b5ca9c6d3b6c572c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7d77c0ce998821514d2f83decd0f1d8"><td class="memItemLeft" align="right" valign="top">static GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_q_g_l_x_core.html#ab7d77c0ce998821514d2f83decd0f1d8">bufferFormatToTextureFormat</a> (GLenum componentType, int tupleSize, <a class="el" href="class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67">TexturePrecision</a> precision)</td></tr>
-<tr class="separator:ab7d77c0ce998821514d2f83decd0f1d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82c5c8816dad9d8e83550a529f59911b"><td class="memItemLeft" align="right" valign="top">static GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_q_g_l_x_core.html#a82c5c8816dad9d8e83550a529f59911b">bufferFormatToTextureFormat</a> (GLenum componentType, int tupleSize, int componentSize)</td></tr>
+<tr class="separator:a82c5c8816dad9d8e83550a529f59911b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Enumeration Documentation</h2>
-<a class="anchor" id="a4f8d4e9b6d8076912cb50deaff359e67"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67">QGLXCore::TexturePrecision</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<dl><dt><b>Enumerator: </b></dt><dd><table border="0" cellspacing="2" cellpadding="0">
-<tr><td valign="top"><em><a class="anchor" id="a4f8d4e9b6d8076912cb50deaff359e67ad8122992062292a8def3c06941c58907"></a>Low</em>&nbsp;</td><td>
-</td></tr>
-<tr><td valign="top"><em><a class="anchor" id="a4f8d4e9b6d8076912cb50deaff359e67ace0d84aebdf4f538e97bd440592e639c"></a>Mid</em>&nbsp;</td><td>
-</td></tr>
-<tr><td valign="top"><em><a class="anchor" id="a4f8d4e9b6d8076912cb50deaff359e67a603f6dd3684f0209dc79775caf266e05"></a>High</em>&nbsp;</td><td>
-</td></tr>
-</table>
-</dd>
-</dl>
-
-</div>
-</div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="ab7d77c0ce998821514d2f83decd0f1d8"></a>
+<a class="anchor" id="a82c5c8816dad9d8e83550a529f59911b"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -153,8 +121,8 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="class_q_g_l_x_core.html#a4f8d4e9b6d8076912cb50deaff359e67">TexturePrecision</a>&#160;</td>
-          <td class="paramname"><em>precision</em>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>componentSize</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -201,7 +169,7 @@ Static Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Nov 10 2012 10:48:48 for Brain Visualization by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Nov 10 2012 11:15:48 for Brain Visualization by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

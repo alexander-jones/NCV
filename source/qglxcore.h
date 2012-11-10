@@ -9,13 +9,6 @@ class QGLXCore
 {
 public:
 
-    enum TexturePrecision
-    {
-        Low,
-        Mid,
-        High
-    };
-
     static int getComponentSize(GLenum componentType)
     {
         switch(componentType)
@@ -52,12 +45,12 @@ public:
         return 0;
 
     }
-    static GLenum bufferFormatToTextureFormat(GLenum componentType,  int tupleSize,TexturePrecision precision)
+    static GLenum bufferFormatToTextureFormat(GLenum componentType,  int tupleSize,int  componentSize)
     {
         switch(componentType)
         {
             case GL_INT:
-            if (precision == Low)
+            if (componentSize == 1)
             {
                 if (tupleSize == 1)
                     return GL_R8I;
@@ -68,7 +61,7 @@ public:
                 else if (tupleSize ==4)
                     return GL_RGBA8I;
             }
-            if (precision == Mid)
+            if (componentSize == 2)
             {
                 if (tupleSize == 1)
                     return GL_R16I;
@@ -79,7 +72,7 @@ public:
                 else if (tupleSize ==4)
                     return GL_RGBA16I;
             }
-            if (precision == High)
+            if (componentSize == 4)
             {
                 if (tupleSize == 1)
                     return GL_R32I;
@@ -93,7 +86,7 @@ public:
             break;
 
             case GL_FLOAT:
-            if (precision == Low || precision == Mid)
+            if (componentSize == 2)
             {
                 if (tupleSize == 1)
                     return GL_R16F;
@@ -104,7 +97,7 @@ public:
                 else if (tupleSize ==4)
                     return GL_RGBA16F;
             }
-            if (precision == High)
+            if (componentSize == 4)
             {
                 if (tupleSize == 1)
                     return GL_R32F;
@@ -118,7 +111,7 @@ public:
             break;
 
             case GL_UNSIGNED_INT:
-            if (precision == Low)
+            if (componentSize == 1)
             {
                 if (tupleSize == 1)
                     return GL_R8UI;
@@ -129,7 +122,7 @@ public:
                 else if (tupleSize ==4)
                     return GL_RGBA8UI;
             }
-            if (precision == Mid)
+            if (componentSize == 2)
             {
                 if (tupleSize == 1)
                     return GL_R16UI;
@@ -140,7 +133,7 @@ public:
                 else if (tupleSize ==4)
                     return GL_RGBA16UI;
             }
-            if (precision == High)
+            if (componentSize == 4)
             {
                 if (tupleSize == 1)
                     return GL_R32UI;
@@ -155,7 +148,7 @@ public:
 
             case GL_SHORT:
             case GL_UNSIGNED_BYTE:
-            if (precision == Low)
+            if (componentSize == 1)
             {
                 if (tupleSize == 1)
                     return GL_R8;
@@ -166,7 +159,7 @@ public:
                 else if (tupleSize ==4)
                     return GL_RGBA8;
             }
-            if (precision == Mid || precision == High)
+            if (componentSize == 2)
             {
                 if (tupleSize == 1)
                     return GL_R16;
