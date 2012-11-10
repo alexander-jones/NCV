@@ -89,26 +89,42 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="multipletargetframebuffer_8h_source.html">multipletargetframebuffer.h</a>&gt;</code></p>
+<p>Container for all neccessary information used to manipulate this target in opengl.  
+ <a href="struct_frame_buffer_target.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="qglxdynamicframebuffer_8h_source.html">qglxdynamicframebuffer.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a9c901822448b6647ba9857ef7b23c989"><td class="memItemLeft" align="right" valign="top">GLuint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#a9c901822448b6647ba9857ef7b23c989">id</a></td></tr>
+<tr class="memdesc:a9c901822448b6647ba9857ef7b23c989"><td class="mdescLeft">&#160;</td><td class="mdescRight">The identifier used by opengl for this target.  <a href="#a9c901822448b6647ba9857ef7b23c989"></a><br/></td></tr>
 <tr class="separator:a9c901822448b6647ba9857ef7b23c989"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a69b919d8295d7c747c3808e2895d3c"><td class="memItemLeft" align="right" valign="top">GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#a8a69b919d8295d7c747c3808e2895d3c">format</a></td></tr>
-<tr class="separator:a8a69b919d8295d7c747c3808e2895d3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94febb40c271d79b14495a67a361ecb2"><td class="memItemLeft" align="right" valign="top">GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#a94febb40c271d79b14495a67a361ecb2">pixelType</a></td></tr>
+<tr class="memdesc:a94febb40c271d79b14495a67a361ecb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">The per pixel data type used by this target. (GL_FLOAT, GL_INT, GL_UNSIGNED_INT,...)  <a href="#a94febb40c271d79b14495a67a361ecb2"></a><br/></td></tr>
+<tr class="separator:a94febb40c271d79b14495a67a361ecb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31c4494d3c047bec12c047c5556620e5"><td class="memItemLeft" align="right" valign="top">GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#a31c4494d3c047bec12c047c5556620e5">pixelFormat</a></td></tr>
+<tr class="memdesc:a31c4494d3c047bec12c047c5556620e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The per pixel format used by this target. (GL_RGB,GL_RGBA,GL_RED,GL_RED_INTEGER,...)  <a href="#a31c4494d3c047bec12c047c5556620e5"></a><br/></td></tr>
+<tr class="separator:a31c4494d3c047bec12c047c5556620e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8cb0f59bb9510d0f369bb77791ac92f1"><td class="memItemLeft" align="right" valign="top">GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#a8cb0f59bb9510d0f369bb77791ac92f1">internalFormat</a></td></tr>
+<tr class="memdesc:a8cb0f59bb9510d0f369bb77791ac92f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The per pixel precision format used by this target. (GL_RGB8,GL_RGBA12,GL_RED16,GL_RED32UI,...)  <a href="#a8cb0f59bb9510d0f369bb77791ac92f1"></a><br/></td></tr>
 <tr class="separator:a8cb0f59bb9510d0f369bb77791ac92f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e8e4cf6294fe6c60f97d7ad08bcb49c"><td class="memItemLeft" align="right" valign="top">GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#a0e8e4cf6294fe6c60f97d7ad08bcb49c">attachment</a></td></tr>
+<tr class="memdesc:a0e8e4cf6294fe6c60f97d7ad08bcb49c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The attachment slot this target can be bound to for rendering. (GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT15,GL_DEPTH_ATTACHMENT,...)  <a href="#a0e8e4cf6294fe6c60f97d7ad08bcb49c"></a><br/></td></tr>
 <tr class="separator:a0e8e4cf6294fe6c60f97d7ad08bcb49c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add59136a71a649b58013169ad95391ba"><td class="memItemLeft" align="right" valign="top">GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#add59136a71a649b58013169ad95391ba">type</a></td></tr>
-<tr class="separator:add59136a71a649b58013169ad95391ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42a9a729525d26457156a93fe9ad9eda"><td class="memItemLeft" align="right" valign="top">GLenum&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#a42a9a729525d26457156a93fe9ad9eda">targetType</a></td></tr>
+<tr class="memdesc:a42a9a729525d26457156a93fe9ad9eda"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of this target. (GL_RENDERBUFFER,GL_TEXTURE_2D)  <a href="#a42a9a729525d26457156a93fe9ad9eda"></a><br/></td></tr>
+<tr class="separator:a42a9a729525d26457156a93fe9ad9eda"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8c4d27d3b92cd3cc6424beb2fed40e7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#ab8c4d27d3b92cd3cc6424beb2fed40e7">width</a></td></tr>
+<tr class="memdesc:ab8c4d27d3b92cd3cc6424beb2fed40e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The width of the target.  <a href="#ab8c4d27d3b92cd3cc6424beb2fed40e7"></a><br/></td></tr>
 <tr class="separator:ab8c4d27d3b92cd3cc6424beb2fed40e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0e4755601921c7bb1df5a9bca0493fd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_frame_buffer_target.html#ac0e4755601921c7bb1df5a9bca0493fd">height</a></td></tr>
+<tr class="memdesc:ac0e4755601921c7bb1df5a9bca0493fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">The height of the target.  <a href="#ac0e4755601921c7bb1df5a9bca0493fd"></a><br/></td></tr>
 <tr class="separator:ac0e4755601921c7bb1df5a9bca0493fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Data Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Container for all neccessary information used to manipulate this target in opengl. </p>
+<dl class="section author"><dt>Author</dt><dd>Alex Jones </dd></dl>
+</div><h2 class="groupheader">Member Data Documentation</h2>
 <a class="anchor" id="a0e8e4cf6294fe6c60f97d7ad08bcb49c"></a>
 <div class="memitem">
 <div class="memproto">
@@ -119,17 +135,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a class="anchor" id="a8a69b919d8295d7c747c3808e2895d3c"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">GLenum FrameBufferTarget::format</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
+<p>The attachment slot this target can be bound to for rendering. (GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT15,GL_DEPTH_ATTACHMENT,...) </p>
 
 </div>
 </div>
@@ -143,6 +149,8 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>The height of the target. </p>
+
 </div>
 </div>
 <a class="anchor" id="a9c901822448b6647ba9857ef7b23c989"></a>
@@ -154,6 +162,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>The identifier used by opengl for this target. </p>
 
 </div>
 </div>
@@ -167,17 +177,49 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>The per pixel precision format used by this target. (GL_RGB8,GL_RGBA12,GL_RED16,GL_RED32UI,...) </p>
+
 </div>
 </div>
-<a class="anchor" id="add59136a71a649b58013169ad95391ba"></a>
+<a class="anchor" id="a31c4494d3c047bec12c047c5556620e5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">GLenum FrameBufferTarget::type</td>
+          <td class="memname">GLenum FrameBufferTarget::pixelFormat</td>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>The per pixel format used by this target. (GL_RGB,GL_RGBA,GL_RED,GL_RED_INTEGER,...) </p>
+
+</div>
+</div>
+<a class="anchor" id="a94febb40c271d79b14495a67a361ecb2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">GLenum FrameBufferTarget::pixelType</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The per pixel data type used by this target. (GL_FLOAT, GL_INT, GL_UNSIGNED_INT,...) </p>
+
+</div>
+</div>
+<a class="anchor" id="a42a9a729525d26457156a93fe9ad9eda"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">GLenum FrameBufferTarget::targetType</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The type of this target. (GL_RENDERBUFFER,GL_TEXTURE_2D) </p>
 
 </div>
 </div>
@@ -191,15 +233,17 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>The width of the target. </p>
+
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="multipletargetframebuffer_8h_source.html">multipletargetframebuffer.h</a></li>
+<li><a class="el" href="qglxdynamicframebuffer_8h_source.html">qglxdynamicframebuffer.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 12 2012 21:29:34 for Brain Visualization by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Nov 10 2012 02:06:12 for Brain Visualization by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

@@ -5,32 +5,60 @@
 #-------------------------------------------------
 
 QT  += core gui opengl
-#LIBS +=  -lGLEW  -lassimp
 TARGET = source
 TEMPLATE = app
 
+#linux specific settings
+unix:!macx{
+    LIBS +=  -lGLEW  -lassimp
+}
 
-SOURCES += main.cpp \
-    glwidget.cpp \
-    camera.cpp \
+#windows specific settings
+winx{
+}
+
+#mac specific settings
+macx{
+}
+
+SOURCES += \
+    qglxdynamicframebuffer.cpp \
+    qglxcamera.cpp \
+    qglxboundingbox.cpp \
     mainwindow.cpp \
-    multipletargetframebuffer.cpp
+    main.cpp \
+    qglxsystem.cpp \
+    qglxbuffer.cpp \
+    ncvglwidget.cpp
 
 HEADERS  += \
-    glwidget.h \
-    camera.h \
+    qglxoctree.h \
+    qglxdynamicframebuffer.h \
+    qglxcamera.h \
+    qglxboundingbox.h \
     mainwindow.h \
-    glhelper.h \
-    multipletargetframebuffer.h
+    qglxcore.h \
+    qglxsystem.h \
+    qglxbuffer.h \
+    ncvglwidget.h
 
 FORMS    += \
     mainwindow.ui
 
 OTHER_FILES += \
-    multi_target.vert \
-    multi_target.frag \
-    cube.nff \
-    final.vert
+    shaders/final.vert \
+    shaders/final.frag \
+    Doxyfile \
+    assets/cube.nff \
+    shaders/synapse.frag \
+    shaders/synapse.vert \
+    shaders/neuron.vert \
+    shaders/neuron.frag \
+    shaders/synapse.geom \
+    shaders/selectionRect.frag \
+    shaders/postProcess.vert
 
 RESOURCES += \
     core-profile.qrc
+
+#QMAKE_CXXFLAGS += -std=c++0x

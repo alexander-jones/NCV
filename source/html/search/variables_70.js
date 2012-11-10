@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['position',['position',['../struct_vertex_atrtributes.html#a662790ae8b892eb469c20db1207575be',1,'VertexAtrtributes']]]
+  ['pixelformat',['pixelFormat',['../struct_frame_buffer_target.html#a31c4494d3c047bec12c047c5556620e5',1,'FrameBufferTarget']]],
+  ['pixeltype',['pixelType',['../struct_frame_buffer_target.html#a94febb40c271d79b14495a67a361ecb2',1,'FrameBufferTarget']]]
 ];

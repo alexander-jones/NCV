@@ -5,7 +5,12 @@
         <file>assets/neuronHigh.obj</file>
         <file>shaders/final.frag</file>
         <file>shaders/final.vert</file>
-        <file>shaders/multi_target.frag</file>
-        <file>shaders/multi_target.vert</file>
+        <file>shaders/synapse.frag</file>
+        <file>shaders/synapse.vert</file>
+        <file>shaders/neuron.frag</file>
+        <file>shaders/neuron.vert</file>
+        <file>shaders/synapse.geom</file>
+        <file>shaders/postProcess.vert</file>
+        <file>shaders/selectionRect.frag</file>
     </qresource>
 </RCC>
