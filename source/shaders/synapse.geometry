@@ -1,0 +1,29 @@
+#version 410
+
+uniform mat4 View, Projection;
+uniform samplerBuffer Inst_Translation;
+uniform usamplerBuffer Inst_Selection;
+
+flat in int Nueron_IN[1];
+flat in int Nueron_OUT[1];
+
+out vec3 WorldPos;
+flat out int ID;
+
+layout (points) in;
+layout (line_strip,max_vertices =2) out;
+
+void main( void )
+{
+    WorldPos = texelFetch(Inst_Translation,Nueron_IN[0]-1).xyz;
+    ID = Nueron_IN[0];
+    gl_Position = Projection * View * vec4(WorldPos,1.0f);
+    EmitVertex();
+
+    WorldPos = texelFetch(Inst_Translation,Nueron_OUT[0]-1).xyz;
+    ID = Nueron_OUT[0];
+    gl_Position = Projection * View * vec4(WorldPos,1.0f);
+    EmitVertex();
+
+    EndPrimitive();
+}
