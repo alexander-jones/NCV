@@ -58,45 +58,10 @@ void QGLXSystem::setPrimitiveType(PrimitiveType type)
     m_primType = type;
 }
 
-int QGLXSystem::getComponentSize(GLenum componentType)
-{
-    switch(componentType)
-    {
-        case GL_INT:
-        return sizeof(GLint);
-        break;
 
-        case GL_FLOAT:
-        return sizeof(GLfloat);
-        break;
-
-        case GL_UNSIGNED_INT:
-        return sizeof(GLuint);
-        break;
-
-        case GL_SHORT:
-        return sizeof(GLshort);
-        break;
-
-        case GL_BOOL:
-        return sizeof(GLboolean);
-        break;
-
-        case GL_UNSIGNED_BYTE:
-        return sizeof(GLubyte);
-        break;
-
-        case GL_BYTE:
-        return  sizeof(GLbyte);
-        break;
-    }
-
-
-
-}
 void QGLXSystem::setVertexAttributeArray(QString name,void * data, int stride, GLenum componentType, AttributeUsage usage )
 {
-    int componentSize = getComponentSize(componentType);
+    int componentSize = QGLXCore::getComponentSize(componentType);
 
     QGLXBuffer * buffer = new QGLXBuffer();
     m_attributes[name] = AttributeArray(buffer,componentType,m_program->attributeLocation(name),stride,componentSize);
@@ -122,7 +87,7 @@ void QGLXSystem::setInstanceAttributeArray(QString name,void * data, int stride,
 
     if (m_LayoutType == InstancedArray || m_LayoutType == InstancedElement)
     {
-        int componentSize = getComponentSize(componentType);
+        int componentSize = QGLXCore::getComponentSize(componentType);
 
         QGLXBuffer * buffer = new QGLXBuffer();
         m_attributes[name] = AttributeArray(buffer,componentType,m_program->attributeLocation(name),stride,componentSize,1);

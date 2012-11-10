@@ -9,6 +9,7 @@ var searchData=
   ['qglxcamera',['QGLXCamera',['../class_q_g_l_x_camera.html',1,'QGLXCamera'],['../class_q_g_l_x_camera.html#a7575c5d758c3f9d61c87abcd22d35911',1,'QGLXCamera::QGLXCamera()']]],
   ['qglxcamera_2ecpp',['qglxcamera.cpp',['../qglxcamera_8cpp.html',1,'']]],
   ['qglxcamera_2eh',['qglxcamera.h',['../qglxcamera_8h.html',1,'']]],
+  ['qglxcore',['QGLXCore',['../class_q_g_l_x_core.html',1,'']]],
   ['qglxcore_2eh',['qglxcore.h',['../qglxcore_8h.html',1,'']]],
   ['qglxdynamicframebuffer_2ecpp',['qglxdynamicframebuffer.cpp',['../qglxdynamicframebuffer_8cpp.html',1,'']]],
   ['qglxdynamicframebuffer_2eh',['qglxdynamicframebuffer.h',['../qglxdynamicframebuffer_8h.html',1,'']]],

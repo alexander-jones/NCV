@@ -29,7 +29,7 @@ SOURCES += \
     main.cpp \
     qglxsystem.cpp \
     qglxbuffer.cpp \
-    ncvglwidget.cpp
+    ncv.cpp
 
 HEADERS  += \
     qglxoctree.h \
@@ -37,10 +37,10 @@ HEADERS  += \
     qglxcamera.h \
     qglxboundingbox.h \
     mainwindow.h \
-    qglxcore.h \
     qglxsystem.h \
     qglxbuffer.h \
-    ncvglwidget.h
+    qglxcore.h \
+    ncv.h
 
 FORMS    += \
     mainwindow.ui

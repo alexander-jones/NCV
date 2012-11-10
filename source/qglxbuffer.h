@@ -1,7 +1,7 @@
 #ifndef QGLXBUFFER_H
 #define QGLXBUFFER_H
 
-#include <GL/glew.h>
+#include "qglxcore.h"
 #include <QGLWidget>
 #include <QGLBuffer>
 /*!

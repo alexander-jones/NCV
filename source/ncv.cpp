@@ -1,10 +1,10 @@
-#include "ncvglwidget.h"
+#include "ncv.h"
 #include <QTimer>
 #include <QDir>
 #include <QRect>
 #include "time.h"
 
-NCVGLWidget::NCVGLWidget( const QGLFormat& format, QWidget* parent )
+NCV::NCV( const QGLFormat& format, QWidget* parent )
     : QGLWidget( format, parent )
 {
     m_camera = QGLXCamera();
@@ -31,11 +31,11 @@ NCVGLWidget::NCVGLWidget( const QGLFormat& format, QWidget* parent )
 }
 
 
-NCVGLWidget::~NCVGLWidget()
+NCV::~NCV()
 {
 }
 
-void NCVGLWidget::establishWorldBounds(int numNeurons,QVector3D * neuronPositions)
+void NCV::establishWorldBounds(int numNeurons,QVector3D * neuronPositions)
 {
     QVector3D lowBound = QVector3D(100000000,100000000,100000000);
     QVector3D highBound = QVector3D(-100000000,-100000000,-100000000);
@@ -68,7 +68,7 @@ void NCVGLWidget::establishWorldBounds(int numNeurons,QVector3D * neuronPosition
 }
 
 
-void NCVGLWidget::initializeGL()
+void NCV::initializeGL()
 {
     GLenum res = glewInit();
 
@@ -162,7 +162,7 @@ void NCVGLWidget::initializeGL()
     this->startTimer(5);
 }
 
-void NCVGLWidget::timerEvent(QTimerEvent * e)
+void NCV::timerEvent(QTimerEvent * e)
 {
     // perform refresh
     paintGL();
@@ -172,7 +172,7 @@ void NCVGLWidget::timerEvent(QTimerEvent * e)
         qDebug() <<err;
 
 }
-void NCVGLWidget::onViewChanged()
+void NCV::onViewChanged()
 {
     m_connectionProgram.bind();
     m_connectionProgram.setUniformValue("View",m_camera.getViewMatrix());
@@ -185,7 +185,7 @@ void NCVGLWidget::onViewChanged()
 
 
 
-void NCVGLWidget::resizeGL( int w, int h )
+void NCV::resizeGL( int w, int h )
 {
     // Set the viewport to window dimensions
     m_width = w;
@@ -194,7 +194,7 @@ void NCVGLWidget::resizeGL( int w, int h )
     sizeTargets();
 
 }
-void NCVGLWidget::sizeTargets()
+void NCV::sizeTargets()
 {
     // resize the targets of the frame buffer
     QString targets[6] = {"diffuse","position","voltage","firing","pick","depth"};
@@ -218,7 +218,7 @@ void NCVGLWidget::sizeTargets()
     m_neuronProgram.release();
 }
 
-void NCVGLWidget::createNetwork()
+void NCV::createNetwork()
 {
     Assimp::Importer importer;
     // load instance model ,do some post import optimizations
@@ -263,7 +263,7 @@ void NCVGLWidget::createNetwork()
     GLubyte * selected = new GLubyte[m_neuronsToCreate + m_connectionsToCreate];
     for (int i = 0; i <m_neuronsToCreate+ m_connectionsToCreate; i ++)
         selected [i] =0;
-    setCompoundAttribute("Inst_Selection",selected,sizeof(GLubyte),GL_R8,Shared);
+    setCompoundAttributeArray("Inst_Selection",selected,GL_UNSIGNED_BYTE,1,Shared,QGLXCore::Low);
 
     // set world information based off positions inputted
     m_neuronProgram.bind();
@@ -277,7 +277,7 @@ void NCVGLWidget::createNetwork()
     m_connectionsToCreate = 0;
     m_neuronsToCreate = 0;
 }
-void NCVGLWidget::createAttributes()
+void NCV::createAttributes()
 {
     // loop through every attribute being created.
     for (QMap<QString,DataSet>::iterator it =  m_attributesToCreate.begin(); it != m_attributesToCreate.end(); it++)
@@ -317,12 +317,13 @@ void NCVGLWidget::createAttributes()
                 m_textureBuffers[it.key()].setTextureSlot(m_textureBuffers.size()-1);
             }
             m_textureBuffers[it.key()].bind();
+            GLenum textureFormat  = QGLXCore::bufferFormatToTextureFormat(attribToWrite.componentType,attribToWrite.tupleSize,attribToWrite.precision);
             if (attribToWrite.type == DataSet::Neuron)
-                m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride * m_neurons.numObjects(),attribToWrite.componentType);
+                m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride * m_neurons.numObjects(),textureFormat);
             else if (attribToWrite.type == DataSet::Connection)
-                m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride *  m_connections.numObjects(),attribToWrite.componentType);
+                m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride *  m_connections.numObjects(),textureFormat);
             else if (attribToWrite.type == DataSet::Compound)
-                m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride * (m_neurons.numObjects() + m_connections.numObjects()),attribToWrite.componentType);
+                m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride * (m_neurons.numObjects() + m_connections.numObjects()),textureFormat);
 
             if (attribToWrite.access != ConnectionOnly  )
             {
@@ -349,7 +350,8 @@ void NCVGLWidget::createAttributes()
     m_attributesToCreate.clear();
 }
 
-void NCVGLWidget::paintGL()
+
+void NCV::paintGL()
 {
     // FPS counter
     m_frameCount ++;
@@ -452,7 +454,7 @@ void NCVGLWidget::paintGL()
 }
 
 
-void NCVGLWidget::mouseMoveEvent(QMouseEvent* e)
+void NCV::mouseMoveEvent(QMouseEvent* e)
 {
     QVector2D newPos = QVector2D(e->x(),e->y());
 
@@ -480,7 +482,7 @@ void NCVGLWidget::mouseMoveEvent(QMouseEvent* e)
     }
 
 }
-void NCVGLWidget::wheelEvent(QWheelEvent *e)
+void NCV::wheelEvent(QWheelEvent *e)
 {
     // scale neuron
     if(e->orientation() == Qt::Vertical)
@@ -493,7 +495,7 @@ void NCVGLWidget::wheelEvent(QWheelEvent *e)
 
     }
 }
-void NCVGLWidget::mousePressEvent(QMouseEvent* e)
+void NCV::mousePressEvent(QMouseEvent* e)
 {
     m_mousePosition = QVector2D(e->x(),e->y());
     // if left button pressed, start building selection rect.
@@ -540,7 +542,7 @@ inline GLuint SwapEndian(GLuint val)
           ((val>>8) & 0x0000ff00) | (val>>24);
 }
 
-void  NCVGLWidget::mouseReleaseEvent(QMouseEvent* e)
+void  NCV::mouseReleaseEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton)
     {
@@ -652,7 +654,7 @@ void  NCVGLWidget::mouseReleaseEvent(QMouseEvent* e)
 }
 
 
-void NCVGLWidget::keyPressEvent( QKeyEvent* e )
+void NCV::keyPressEvent( QKeyEvent* e )
 {
 
     switch ( e->key() )
@@ -749,7 +751,7 @@ void NCVGLWidget::keyPressEvent( QKeyEvent* e )
             QGLWidget::keyPressEvent( e );
     }
 }
-void NCVGLWidget::keyReleaseEvent(QKeyEvent *e)
+void NCV::keyReleaseEvent(QKeyEvent *e)
 {
     switch (e->key())
     {
@@ -760,7 +762,7 @@ void NCVGLWidget::keyReleaseEvent(QKeyEvent *e)
 
 }
 
-bool NCVGLWidget::compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath,const QString& fragmentShaderPath )
+bool NCV::compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath,const QString& fragmentShaderPath )
 {
     // First we load and compile the vertex shader->..
     bool success = program.addShaderFromSourceFile( QGLShader::Vertex, vertexShaderPath );
@@ -779,7 +781,7 @@ bool NCVGLWidget::compileShaderProgram(QGLShaderProgram & program, const QString
     return success;
 }
 
-bool NCVGLWidget::compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath, const QString & geometryShaderPath, const QString& fragmentShaderPath )
+bool NCV::compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath, const QString & geometryShaderPath, const QString& fragmentShaderPath )
 {
     // First we load and compile the vertex shader->..
     bool success = program.addShaderFromSourceFile( QGLShader::Vertex, vertexShaderPath );
@@ -804,15 +806,15 @@ bool NCVGLWidget::compileShaderProgram(QGLShaderProgram & program, const QString
     return success;
 }
 
-void NCVGLWidget::createNeurons(int number,QVector3D * positions )
+void NCV::createNeurons(int number,QVector3D * positions )
 {
     m_neuronsToCreate = number;
-    m_attributesToCreate["Inst_Translation"] = DataSet(positions,sizeof(QVector3D),GL_RGBA32F,Shared,DataSet::Neuron,1);
+    m_attributesToCreate["Inst_Translation"] = DataSet(positions,GL_FLOAT,3,Shared,DataSet::Neuron,QGLXCore::High,1);
 
     establishWorldBounds(number,positions);
 
 }
-void NCVGLWidget::createNeurons(const QString & filename )
+void NCV::createNeurons(const QString & filename )
 {
     QFile file(filename);
     file.open(QIODevice::ReadOnly);
@@ -829,13 +831,13 @@ void NCVGLWidget::createNeurons(const QString & filename )
     establishWorldBounds(m_neuronsToCreate,positions);
 }
 
-void NCVGLWidget::createConnections(int number,GLuint * inNeurons,GLuint * outNeurons )
+void NCV::createConnections(int number,GLuint * inNeurons,GLuint * outNeurons )
 {
     m_connectionsToCreate = number;
-    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,sizeof(GLuint),GL_FLOAT,ConnectionOnly,DataSet::Connection,1);
-    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,sizeof(GLuint),GL_FLOAT,ConnectionOnly,DataSet::Connection,1);
+    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
+    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
 }
-void NCVGLWidget::createConnections(const QString & filename )
+void NCV::createConnections(const QString & filename )
 {
     QFile file(filename);
     file.open(QIODevice::ReadOnly);
@@ -852,68 +854,74 @@ void NCVGLWidget::createConnections(const QString & filename )
     file.close();
 
 
-    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,sizeof(GLuint),GL_FLOAT,ConnectionOnly,DataSet::Connection,1);
-    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,sizeof(GLuint),GL_FLOAT,ConnectionOnly,DataSet::Connection,1);
+    m_attributesToCreate["Inst_Neuron_IN"] = DataSet(inNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
+    m_attributesToCreate["Inst_Neuron_OUT"] = DataSet(outNeurons,GL_FLOAT,1,ConnectionOnly,DataSet::Connection,QGLXCore::Low,1);
 }
 
 
-void NCVGLWidget::setConnectionAttribute(QString name, void * data, int stride, GLenum componentType, AttributeAccess access)
+void NCV::setConnectionAttributeArray(QString name, void * data,  GLenum componentType, int tupleSize, AttributeAccess access,QGLXCore::TexturePrecision precision )
 {
-    m_attributesToCreate[name] = DataSet(data,stride,componentType,access,DataSet::Connection,1);
+    if(componentType == GL_UNSIGNED_INT && access != Shared)
+        componentType == GL_FLOAT;
+    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Connection,precision,1);
 }
 
-void NCVGLWidget::setNeuronAttribute(QString name, void * data, int stride, GLenum componentType, AttributeAccess access)
+void NCV::setNeuronAttributeArray(QString name, void * data, GLenum componentType,  int tupleSize,AttributeAccess access,QGLXCore::TexturePrecision precision )
 {
-    m_attributesToCreate[name] = DataSet(data,stride,componentType,access,DataSet::Neuron,1);
+    if(componentType == GL_UNSIGNED_INT && access != Shared)
+        componentType == GL_FLOAT;
+    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Neuron,precision,1);
 }
 
 
-void NCVGLWidget::setCompoundAttribute(QString name, void * data, int stride, GLenum componentType, AttributeAccess access)
+void NCV::setCompoundAttributeArray(QString name, void * data,GLenum componentType, int tupleSize, AttributeAccess access,QGLXCore::TexturePrecision precision )
 {
-    m_attributesToCreate[name] = DataSet(data,stride,componentType,access,DataSet::Compound,1);
+    if(componentType == GL_UNSIGNED_INT && access != Shared)
+        componentType == GL_FLOAT;
+    m_attributesToCreate[name] = DataSet(data,componentType,tupleSize,access,DataSet::Compound,precision,1);
 }
 
-void NCVGLWidget::setVisualizationParameter(const char * name, GLint value, AttributeAccess access)
+void NCV::setVisualizationParameter(const char * name, GLint value, AttributeAccess access)
 {
     m_intParametersToCreate[name] = Parameter<GLint>(value,access);
     m_newVisualizationParameters = true;
 }
-void NCVGLWidget::setVisualizationParameter(const char * name, QVector2D value, AttributeAccess access)
+void NCV::setVisualizationParameter(const char * name, QVector2D value, AttributeAccess access)
 {
     m_vector2DParametersToCreate[name] = Parameter<QVector2D>(value,access);
     m_newVisualizationParameters = true;
 }
 
-void NCVGLWidget::setVisualizationParameter(const char * name, QVector3D value, AttributeAccess access)
+void NCV::setVisualizationParameter(const char * name, QVector3D value, AttributeAccess access)
 {
     m_vector3DParametersToCreate[name] = Parameter<QVector3D>(value,access);
     m_newVisualizationParameters = true;
 }
 
-void NCVGLWidget::setVisualizationParameter(const char * name,  QMatrix4x4 value, AttributeAccess access)
+void NCV::setVisualizationParameter(const char * name,  QMatrix4x4 value, AttributeAccess access)
 {
     m_mat4x4ParametersToCreate[name] = Parameter<QMatrix4x4>(value,access);
     m_newVisualizationParameters = true;
 }
 
-void NCVGLWidget::setVisualizationParameter(const char * name,GLuint value, AttributeAccess access)
+void NCV::setVisualizationParameter(const char * name,GLuint value, AttributeAccess access)
 {
     m_uintParametersToCreate[name] = Parameter<GLuint>(value,access);
     m_newVisualizationParameters = true;
 }
 
-void NCVGLWidget::setVisualizationParameter(const char * name,GLfloat value, AttributeAccess access)
+void NCV::setVisualizationParameter(const char * name,GLfloat value, AttributeAccess access)
 {
     m_floatParametersToCreate[name] = Parameter<GLfloat>(value,access);
     m_newVisualizationParameters = true;
 }
 
-void NCVGLWidget::setVisualizationParameter(const char * name,GLubyte value, AttributeAccess access)
+void NCV::setVisualizationParameter(const char * name,GLubyte value, AttributeAccess access)
 {
     m_ubyteParametersToCreate[name] = Parameter<GLubyte>(value,access);
     m_newVisualizationParameters = true;
 }
-void NCVGLWidget::setVisualizationParameters()
+void NCV::setVisualizationParameters()
 {
     for (QMap<const char *,Parameter<GLubyte> >::iterator it = m_ubyteParametersToCreate.begin(); it != m_ubyteParametersToCreate.end(); it ++)
     {

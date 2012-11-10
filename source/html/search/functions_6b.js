@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['keypressevent',['keyPressEvent',['../class_n_c_v_g_l_widget.html#a2c7c0e8bb30f8b5eed4b3ee093ea4a71',1,'NCVGLWidget']]],
-  ['keyreleaseevent',['keyReleaseEvent',['../class_n_c_v_g_l_widget.html#a27a795cf03751defc79712a3e83234c6',1,'NCVGLWidget']]]
+  ['keypressevent',['keyPressEvent',['../class_n_c_v.html#a69dfb3574679f455daa66d11ebfa3fb7',1,'NCV']]],
+  ['keyreleaseevent',['keyReleaseEvent',['../class_n_c_v.html#a7b91b44c224c4e7047a889a238253cba',1,'NCV']]]
 ];

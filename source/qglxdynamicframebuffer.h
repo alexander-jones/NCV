@@ -1,5 +1,5 @@
-#ifndef QGLXDynamicFrameBufferObject_H
-#define QGLXDynamicFrameBufferObject_H
+#ifndef QGLXDYNAMICFRAMEBUFFEROBJECT_H
+#define QGLXDYNAMICFRAMEBUFFEROBJECT_H
 
 #include "qglxcore.h"
 #include <QGLWidget>
@@ -150,4 +150,4 @@ private:
     QMap<QString,FrameBufferTarget>  m_targets;
 };
 
-#endif // QGLXDynamicFrameBufferObject_H
+#endif // QGLXDYNAMICFRAMEBUFFEROBJECT_H

@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "ncvglwidget.h"
+#include "ncv.h"
 #include <QGLFormat>
 
 namespace Ui {

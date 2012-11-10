@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << "Running OpenGL Version " <<glFormat.majorVersion() << "." <<glFormat.minorVersion();
 
     // Create a GLWidget requesting our format
-    NCVGLWidget *ncvSim = new NCVGLWidget( glFormat,this );
+    NCV *ncvSim = new NCV( glFormat,this );
     this->setCentralWidget(ncvSim);
     QVector3D worldSize = QVector3D(200000 , 200000,200000);
 
@@ -54,12 +54,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ###################################################################*/
     ncvSim->createNeurons(numNeurons,neruonPositions);
     ncvSim->createConnections(numConnections,nueronIN,nueronOUT);
-    ncvSim->setNeuronAttribute("Inst_Voltage",voltages,sizeof(GLfloat),GL_R32F,NCVGLWidget::Shared);
-    ncvSim->setNeuronAttribute("Inst_Firing",firings,sizeof(GLubyte),GL_R8,NCVGLWidget::Shared);
-    ncvSim->setVisualizationParameter("MaxVoltage",100.0f,NCVGLWidget::Shared);
-    ncvSim->setVisualizationParameter("MinVoltage",0.0f,NCVGLWidget::Shared);
-    ncvSim->setVisualizationParameter("FireColor",QVector3D(1.0,0.0,0.0),NCVGLWidget::Shared);
-    ncvSim->setVisualizationParameter("IdleColor",QVector3D(0.0,1.0,0.0),NCVGLWidget::Shared);
+
+    // attach voltage data to Inst_Voltage parameter
+    // voltage data is composed of 3 component float vector, so specify that
+    // share data with both neuron / connection shaders
+    // high precision format for data (more expensive but more accurate)
+    ncvSim->setNeuronAttributeArray("Inst_Voltage",voltages,GL_FLOAT,3,NCV::Shared,QGLXCore::High);
+    ncvSim->setNeuronAttributeArray("Inst_Firing",firings,GL_UNSIGNED_BYTE,1,NCV::Shared);
+    ncvSim->setVisualizationParameter("MaxVoltage",100.0f,NCV::Shared);
+    ncvSim->setVisualizationParameter("MinVoltage",0.0f,NCV::Shared);
+    ncvSim->setVisualizationParameter("FireColor",QVector3D(1.0,0.0,0.0),NCV::Shared);
+    ncvSim->setVisualizationParameter("IdleColor",QVector3D(0.0,1.0,0.0),NCV::Shared);
     /* ###################################################################
     Neural Network Example
     ###################################################################*/

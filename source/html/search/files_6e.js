@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['ncvglwidget_2ecpp',['ncvglwidget.cpp',['../ncvglwidget_8cpp.html',1,'']]],
-  ['ncvglwidget_2eh',['ncvglwidget.h',['../ncvglwidget_8h.html',1,'']]]
+  ['ncv_2ecpp',['ncv.cpp',['../ncv_8cpp.html',1,'']]],
+  ['ncv_2eh',['ncv.h',['../ncv_8h.html',1,'']]]
 ];

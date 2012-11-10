@@ -1,14 +1,14 @@
 var searchData=
 [
   ['setaspectratio',['setAspectRatio',['../class_q_g_l_x_camera.html#a7fd784d84676134812062745fb69226b',1,'QGLXCamera']]],
-  ['setcompoundattribute',['setCompoundAttribute',['../class_n_c_v_g_l_widget.html#a4510971a69d21e139ad479558c0e05ef',1,'NCVGLWidget']]],
-  ['setconnectionattribute',['setConnectionAttribute',['../class_n_c_v_g_l_widget.html#a88223cb00fc52c31ef197dcc0fbe147f',1,'NCVGLWidget']]],
+  ['setcompoundattributearray',['setCompoundAttributeArray',['../class_n_c_v.html#a131deb68b388e94cacaac358d3a07e2c',1,'NCV']]],
+  ['setconnectionattributearray',['setConnectionAttributeArray',['../class_n_c_v.html#aaca683f99ca7f592140cf5e6aca7e408',1,'NCV']]],
   ['setfarplane',['setFarPlane',['../class_q_g_l_x_camera.html#a8cb90970fed61174f6639650593692b2',1,'QGLXCamera']]],
   ['setfieldofview',['setFieldOfView',['../class_q_g_l_x_camera.html#a4dbdc847a77dbc6a1914dfc553aa2ab6',1,'QGLXCamera']]],
   ['setinstanceattributearray',['setInstanceAttributeArray',['../class_q_g_l_x_system.html#a11162ab922bad5f988b19222c7a0f419',1,'QGLXSystem']]],
   ['setlevels',['setLevels',['../class_q_g_l_x_octree.html#a063d8eda860158f1b7e8baa9b10d6aac',1,'QGLXOctree']]],
   ['setnearplane',['setNearPlane',['../class_q_g_l_x_camera.html#a51f337db2e5fb6cd6fe92724f7a459da',1,'QGLXCamera']]],
-  ['setneuronattribute',['setNeuronAttribute',['../class_n_c_v_g_l_widget.html#a6238721dd05568446902f8424e0692fe',1,'NCVGLWidget']]],
+  ['setneuronattributearray',['setNeuronAttributeArray',['../class_n_c_v.html#ab249903c3bbe323143c76d7516beba67',1,'NCV']]],
   ['setpackedinstanceattributearray',['setPackedInstanceAttributeArray',['../class_q_g_l_x_system.html#a0d97c86d52a8655289588247d8307266',1,'QGLXSystem']]],
   ['setpackedvertexattributearray',['setPackedVertexAttributeArray',['../class_q_g_l_x_system.html#ab898200f0f73778be1a681fbdc745978',1,'QGLXSystem']]],
   ['setposition',['setPosition',['../class_q_g_l_x_camera.html#ac15763e02e8f2beebc433a0c02bb4f8a',1,'QGLXCamera']]],
@@ -19,8 +19,8 @@ var searchData=
   ['setvertexattributearray',['setVertexAttributeArray',['../class_q_g_l_x_system.html#a0e830429e18542e843bcba466f349005',1,'QGLXSystem']]],
   ['setvertexattributeindices',['setVertexAttributeIndices',['../class_q_g_l_x_system.html#aa049a74cddd4a430611343da9c75e08b',1,'QGLXSystem']]],
   ['setviewmatrix',['setViewMatrix',['../class_q_g_l_x_camera.html#a4654cbe96be58713a58a72e108a9fdd8',1,'QGLXCamera::setViewMatrix(QVector3D pos, qreal horizAngle, qreal vertAngle)'],['../class_q_g_l_x_camera.html#a0f9512686f4d69f7a6b76a9ac8f248ba',1,'QGLXCamera::setViewMatrix(QVector3D pos, QVector3D target, QVector3D up)']]],
-  ['setvisualizationparameter',['setVisualizationParameter',['../class_n_c_v_g_l_widget.html#aed0f453146326de55c69f3400621d370',1,'NCVGLWidget::setVisualizationParameter(const char *name, GLint value, AttributeAccess access)'],['../class_n_c_v_g_l_widget.html#a06d34ae0d926792ed6f2058b65cd4004',1,'NCVGLWidget::setVisualizationParameter(const char *name, QVector2D value, AttributeAccess access)'],['../class_n_c_v_g_l_widget.html#a99e007087125787e677988b676d1e47a',1,'NCVGLWidget::setVisualizationParameter(const char *name, QVector3D value, AttributeAccess access)'],['../class_n_c_v_g_l_widget.html#a6d4e5cdeb8a9a6435eaea6ee501036ad',1,'NCVGLWidget::setVisualizationParameter(const char *name, QMatrix4x4 value, AttributeAccess access)'],['../class_n_c_v_g_l_widget.html#a0bd3a435b4033a450178966e3bf27753',1,'NCVGLWidget::setVisualizationParameter(const char *name, GLuint value, AttributeAccess access)'],['../class_n_c_v_g_l_widget.html#aefb95ba1d08c511eb315dc2535b8c263',1,'NCVGLWidget::setVisualizationParameter(const char *name, GLfloat value, AttributeAccess access)'],['../class_n_c_v_g_l_widget.html#af5343d93a93e03a804f1e78577cf485b',1,'NCVGLWidget::setVisualizationParameter(const char *name, GLubyte value, AttributeAccess access)']]],
+  ['setvisualizationparameter',['setVisualizationParameter',['../class_n_c_v.html#ad2a1dfec35bd418b4dc455eaa268dcec',1,'NCV::setVisualizationParameter(const char *name, GLint value, AttributeAccess access)'],['../class_n_c_v.html#ae2b67b338bdf33ad600a64181d347eed',1,'NCV::setVisualizationParameter(const char *name, QVector2D value, AttributeAccess access)'],['../class_n_c_v.html#a88e17444bb26183a8467d1baabcafdd9',1,'NCV::setVisualizationParameter(const char *name, QVector3D value, AttributeAccess access)'],['../class_n_c_v.html#a302a2a171bda4c22ec274661d5768a4c',1,'NCV::setVisualizationParameter(const char *name, QMatrix4x4 value, AttributeAccess access)'],['../class_n_c_v.html#ab4c2a5ba2789bcdd828c5e40b26a3d52',1,'NCV::setVisualizationParameter(const char *name, GLuint value, AttributeAccess access)'],['../class_n_c_v.html#a432fcafb0752daa40c23454768c3b0c5',1,'NCV::setVisualizationParameter(const char *name, GLfloat value, AttributeAccess access)'],['../class_n_c_v.html#a9e2a02722d25eb45cef870ae6327aaf8',1,'NCV::setVisualizationParameter(const char *name, GLubyte value, AttributeAccess access)']]],
   ['size',['size',['../class_q_g_l_x_bounding_box.html#a8ca4f88d02660c635eed218f3f57bf32',1,'QGLXBoundingBox']]],
   ['sizetargets',['sizeTargets',['../class_q_g_l_x_dynamic_frame_buffer_object.html#a7f4e5e52e402d854e22464300c1ed57c',1,'QGLXDynamicFrameBufferObject']]],
-  ['swapendian',['SwapEndian',['../ncvglwidget_8cpp.html#a814c1c447d6c4381a347b32e6ea78f4f',1,'ncvglwidget.cpp']]]
+  ['swapendian',['SwapEndian',['../ncv_8cpp.html#a814c1c447d6c4381a347b32e6ea78f4f',1,'ncv.cpp']]]
 ];

@@ -1,6 +1,7 @@
 var searchData=
 [
   ['getaspectratio',['getAspectRatio',['../class_q_g_l_x_camera.html#a8ee3c1cf489fb25013453db7a6d36dce',1,'QGLXCamera']]],
+  ['getcomponentsize',['getComponentSize',['../class_q_g_l_x_core.html#a8bb0d9ce953a784b5ca9c6d3b6c572c1',1,'QGLXCore']]],
   ['getcontents',['getContents',['../class_q_g_l_x_octree.html#af5a53ef3d93a019bde348ed2fe9a69e6',1,'QGLXOctree::getContents(std::vector&lt; T &gt; &amp;items, bool recursive=false)'],['../class_q_g_l_x_octree.html#a708c82b257b22d6ad33d030040aa9c61',1,'QGLXOctree::getContents(std::vector&lt; QGLXOctreeLeaf&lt; T &gt; &gt; &amp;items, bool recursive=false)']]],
   ['getfarplane',['getFarPlane',['../class_q_g_l_x_camera.html#a952dc8adf50bb81d3a60a99ee0d362ce',1,'QGLXCamera']]],
   ['getfieldofview',['getFieldOfView',['../class_q_g_l_x_camera.html#ab125e7b2575be5e1a09b96f3fb70543b',1,'QGLXCamera']]],

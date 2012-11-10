@@ -1,5 +1,5 @@
-#ifndef NCVGLWIDGET_H
-#define NCVGLWIDGET_H
+#ifndef NCV_H
+#define NCV_H
 
 #include "qglxdynamicframebuffer.h"
 #include "qglxsystem.h"
@@ -47,11 +47,11 @@ enum SelectionState
 
 
 /*!
-    \class NCVGLWidget
+    \class NCV
     \author Alex Jones
     \brief The OpenGL Widget housing the core NCV rendering context.
 */
-class NCVGLWidget : public QGLWidget
+class NCV : public QGLWidget
 {
     Q_OBJECT
 public:
@@ -67,8 +67,8 @@ public:
         \param parent The parent widget to house this canvas.
         \brief The OpenGL Widget housing the core NCV rendering context.
     */
-    NCVGLWidget( const QGLFormat& format, QWidget* parent = 0 );
-    ~NCVGLWidget();
+    NCV( const QGLFormat& format, QWidget* parent = 0 );
+    ~NCV();
 
 public slots:
     /*!
@@ -110,35 +110,77 @@ public slots:
         \brief This function binds an attribute that spans all neurons and all connections to the rendering context.
         \note All compound attributes are accessible by both neurons and connections;
     */
-    void setCompoundAttribute(QString name, void * data, int stride, GLenum componentType, AttributeAccess access);
+    void setCompoundAttributeArray(QString name, void * data,  GLenum componentType, int tupleSize, AttributeAccess access, QGLXCore::TexturePrecision precision = QGLXCore::Mid);
 
     /*!
         \param name The name of the attribute being set.
         \param data The data to bind.
-        \param stride The stride (in bytes) of each element in data;
-        \param componentType The OpenGL data type used for this attribute.
+        \param componentType The base OpenGL data type used for this attribute.
+        \param tupleSize The number of componentType values per attribute.
         \param access Describes what data set(s) can access this attribute.
+        \param precision The precision of the attribute. Only used if value access is Shared.
         \brief This function binds an attribute that spans all connections to the rendering context.
     */
-    void setConnectionAttribute(QString name, void * data, int stride, GLenum componentType,AttributeAccess access);
+    void setConnectionAttributeArray(QString name, void * data,  GLenum componentType,int tupleSize, AttributeAccess access, QGLXCore::TexturePrecision precision = QGLXCore::Mid);
 
     /*!
         \param name The name of the attribute being set.
         \param data The data to bind.
-        \param stride The stride (in bytes) of each element in data;
-        \param componentType The OpenGL data type used for this attribute.
+        \param componentType The base OpenGL data type used for this attribute.
+        \param tupleSize The number of componentType values per attribute.
         \param access Describes what data set(s) can access this attribute.
+        \param precision The precision of the attribute. Only used if value access is Shared.
         \brief This function binds an attribute that spans all neurons to the rendering context.
     */
-    void setNeuronAttribute(QString name, void * data, int stride, GLenum componentType,AttributeAccess access);
+    void setNeuronAttributeArray(QString name, void * data, GLenum componentType,int tupleSize, AttributeAccess access, QGLXCore::TexturePrecision precision = QGLXCore::Mid);
 
-
+    /*!
+        \param name The name of the parameter being set.
+        \param value The data to bind to the parameter specified.
+        \param access Describes what data set(s) can access this attribute.
+    */
     void setVisualizationParameter(const char * name, GLint value, AttributeAccess access);
+
+    /*!
+        \param name The name of the parameter being set.
+        \param value The data to bind to the parameter specified.
+        \param access Describes what data set(s) can access this attribute.
+    */
     void setVisualizationParameter(const char * name, QVector2D value, AttributeAccess access);
+
+    /*!
+        \param name The name of the parameter being set.
+        \param value The data to bind to the parameter specified.
+        \param access Describes what data set(s) can access this attribute.
+    */
     void setVisualizationParameter(const char * name, QVector3D value, AttributeAccess access);
+
+    /*!
+        \param name The name of the parameter being set.
+        \param value The data to bind to the parameter specified.
+        \param access Describes what data set(s) can access this attribute.
+    */
     void setVisualizationParameter(const char * name,  QMatrix4x4 value, AttributeAccess access);
+
+    /*!
+        \param name The name of the parameter being set.
+        \param value The data to bind to the parameter specified.
+        \param access Describes what data set(s) can access this attribute.
+    */
     void setVisualizationParameter(const char * name,GLuint value, AttributeAccess access);
+
+    /*!
+        \param name The name of the parameter being set.
+        \param value The data to bind to the parameter specified.
+        \param access Describes what data set(s) can access this attribute.
+    */
     void setVisualizationParameter(const char * name,GLfloat value, AttributeAccess access);
+
+    /*!
+        \param name The name of the parameter being set.
+        \param value The data to bind to the parameter specified.
+        \param access Describes what data set(s) can access this attribute.
+    */
     void setVisualizationParameter(const char * name,GLubyte value, AttributeAccess access);
 
 protected:
@@ -172,18 +214,22 @@ private:
             this->componentType = 0;
         }
 
-        DataSet (void * data, int stride, GLenum componentType,AttributeAccess access,AttributeType type, int divisor = 0)
+        DataSet (void * data,  GLenum componentType,int tupleSize,AttributeAccess access,AttributeType type, QGLXCore::TexturePrecision precision, int divisor = 0)
         {
             this->data = data;
-            this->stride = stride;
             this->componentType = componentType;
+            this->tupleSize = tupleSize;
             this->divisor = divisor;
             this->type = type;
             this->access = access;
+            this->precision = precision;
+            this->componentSize =  QGLXCore::getComponentSize(componentType);
+            this->stride = tupleSize * componentSize;
         }
         void * data;
-        int stride;
+        int tupleSize, stride, componentSize;
         int divisor;
+        QGLXCore::TexturePrecision precision;
         GLenum componentType;
         AttributeType type;
         AttributeAccess access;
@@ -246,4 +292,4 @@ private:
 
 };
 
-#endif // NCVGLWIDGET_H
+#endif // NCV_H
