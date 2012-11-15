@@ -263,6 +263,7 @@ void NCV::createNetwork()
 
     // create connection system
     m_connections.create(m_connectionsToCreate, 1,0,1);
+    m_connectionProgram.bind();
     m_connections.setPrimitiveType(QGLXSystem::Point);
     m_connections.attachShaderProgram(&m_connectionProgram);
 
