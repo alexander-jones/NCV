@@ -20,7 +20,7 @@ QMatrix4x4 QGLXCamera::getViewMatrix()
    return viewMatrix;
 }
 
-void QGLXCamera::setViewMatrix(QVector3D pos, qreal horizAngle, qreal vertAngle)
+void QGLXCamera::setViewMatrix(QVector3D pos, GLfloat horizAngle, GLfloat vertAngle)
 {
    position = pos;
    horizontalAngle = horizAngle;
@@ -54,7 +54,7 @@ void QGLXCamera::setViewMatrix(QVector3D pos, QVector3D target, QVector3D up)
    compileViewMatrix();
 }
 
-void QGLXCamera::pan(qreal x, qreal y, qreal z)
+void QGLXCamera::pan(GLfloat x, GLfloat y, GLfloat z)
 {
     position += x * right ;
     position += z * direction ;
@@ -62,7 +62,7 @@ void QGLXCamera::pan(qreal x, qreal y, qreal z)
     compileViewMatrix();
 }
 
-void QGLXCamera::translate(qreal x, qreal y, qreal z)
+void QGLXCamera::translate(GLfloat x, GLfloat y, GLfloat z)
 {
     position += QVector3D(x,y,z);
     compileViewMatrix();
@@ -94,18 +94,18 @@ QVector3D QGLXCamera::getRight()
     return right;
 }
 
-qreal QGLXCamera::getRotationX()
+GLfloat QGLXCamera::getRotationX()
 {
     return verticalAngle;
 }
 
-qreal QGLXCamera::getRotationY()
+GLfloat QGLXCamera::getRotationY()
 {
     return horizontalAngle;
 }
 
 
-void QGLXCamera::rotate(qreal horizRot, qreal vertRot)
+void QGLXCamera::rotate(GLfloat horizRot, GLfloat vertRot)
 {
     horizontalAngle += horizRot;
     verticalAngle += vertRot;
@@ -131,58 +131,58 @@ QMatrix4x4 QGLXCamera::getProjectionMatrix()
 {
    return projectionMatrix;
 }
-void QGLXCamera::setProjectionMatrix(qreal fov, qreal aspect, qreal near, qreal far)
+void QGLXCamera::setProjectionMatrix(GLfloat fov, GLfloat aspect, GLfloat nearP, GLfloat farP)
 {
    fieldOfView = fov;
    aspectRatio = aspect;
-   nearPlane = near;
-   farPlane = far;
+   nearPlane = nearP;
+   farPlane = farP;
    projectionMatrix.setToIdentity();
    projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
 }
 
-qreal QGLXCamera::getFieldOfView( )
+GLfloat QGLXCamera::getFieldOfView( )
 {
     return fieldOfView;
 }
 
-void QGLXCamera::setFieldOfView(qreal fov)
+void QGLXCamera::setFieldOfView(GLfloat fov)
 {
    fieldOfView = fov;
    projectionMatrix.setToIdentity();
    projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
 }
 
-qreal QGLXCamera::getAspectRatio( )
+GLfloat QGLXCamera::getAspectRatio( )
 {
    return aspectRatio;
 }
-void QGLXCamera::setAspectRatio(qreal aspect)
+void QGLXCamera::setAspectRatio(GLfloat aspect)
 {
    aspectRatio = aspect;
    projectionMatrix.setToIdentity();
    projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
 }
 
-qreal QGLXCamera::getNearPlane( )
+GLfloat QGLXCamera::getNearPlane( )
 {
    return nearPlane;
 }
-void QGLXCamera::setNearPlane(qreal near)
+void QGLXCamera::setNearPlane(GLfloat nearP)
 {
-   nearPlane = near;
+   nearPlane = nearP;
    projectionMatrix.setToIdentity();
    projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
 }
 
-qreal QGLXCamera::getFarPlane( )
+GLfloat QGLXCamera::getFarPlane( )
 {
    return farPlane;
 }
 
-void QGLXCamera::setFarPlane(qreal far)
+void QGLXCamera::setFarPlane(GLfloat farP)
 {
-   farPlane = far;
+   farPlane = farP;
    projectionMatrix.setToIdentity();
    projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
 }

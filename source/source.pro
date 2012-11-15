@@ -29,7 +29,10 @@ SOURCES += \
     main.cpp \
     qglxsystem.cpp \
     qglxbuffer.cpp \
-    ncv.cpp
+    ncv.cpp \
+    slider.cpp \
+    righttoolbar.cpp \
+    lefttoolbar.cpp
 
 HEADERS  += \
     qglxoctree.h \
@@ -40,7 +43,10 @@ HEADERS  += \
     qglxsystem.h \
     qglxbuffer.h \
     qglxcore.h \
-    ncv.h
+    ncv.h \
+    slider.h \
+    righttoolbar.h \
+    lefttoolbar.h
 
 FORMS    += \
     mainwindow.ui
@@ -56,7 +62,9 @@ OTHER_FILES += \
     shaders/neuron.frag \
     shaders/synapse.geom \
     shaders/selectionRect.frag \
-    shaders/postProcess.vert
+    shaders/selectionRect.vert \
+    shaders/selection.frag \
+    shaders/selection.vert
 
 RESOURCES += \
     core-profile.qrc

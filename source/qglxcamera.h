@@ -1,6 +1,6 @@
 #ifndef QGLXCAMERA_H
 #define QGLXCAMERA_H
-
+#include "qglxcore.h"
 #include <QVector3D>
 #include <QVector4D>
 #include <QMatrix4x4>
@@ -23,7 +23,7 @@ public:
     /*!
         \brief This function returns the current aspect ratio of the projection.
     */
-    qreal getAspectRatio( );
+    GLfloat getAspectRatio( );
 
     /*!
         \brief This function returns the current direction the camera is facing.
@@ -45,12 +45,12 @@ public:
     /*!
         \brief This function returns the current far plane of the projection.
     */
-    qreal getFarPlane( );
+    GLfloat getFarPlane( );
 
     /*!
         \brief This function returns the current field of view of the projection.
     */
-    qreal getFieldOfView();
+    GLfloat getFieldOfView();
 
     /*!
         \brief This function returns the currently set aspectRatio.
@@ -60,7 +60,7 @@ public:
     /*!
         \brief This function returns the current position of the camera.
     */
-    qreal getNearPlane( );
+    GLfloat getNearPlane( );
 
     /*!
         \brief This function returns the current projection matrix.
@@ -70,12 +70,12 @@ public:
     /*!
         \brief This function returns the camera's current rotation about the x axis.
     */
-    qreal getRotationX();
+    GLfloat getRotationX();
 
     /*!
         \brief This function returns the camera's current rotation about the y axis.
     */
-    qreal getRotationY();
+    GLfloat getRotationY();
 
     /*!
         \brief This function returns the camera's current view matrix.
@@ -87,31 +87,31 @@ public:
         \param vertAngle Angle about the y axis to rotate.
         \brief This function rotates the camera's current view.
     */
-    void rotate(qreal horizAngle, qreal vertAngle);
+    void rotate(GLfloat horizAngle, GLfloat vertAngle);
 
     /*!
         \param aspect The aspect ratio to use.
         \brief This function changes the camera's current aspect ratio.
     */
-    void setAspectRatio(qreal aspect);
+    void setAspectRatio(GLfloat aspect);
 
     /*!
         \param far The far plane to use.
         \brief This function changes the camera's current far plane.
     */
-    void setFarPlane(qreal far);
+    void setFarPlane(GLfloat far);
 
     /*!
         \param fov The field of view to use.
         \brief This function changes the camera's current field of view.
     */
-    void setFieldOfView(qreal fov);
+    void setFieldOfView(GLfloat fov);
 
     /*!
         \param near The near plane to use.
         \brief This function changes the camera's current far plane.
     */
-    void setNearPlane(qreal near);
+    void setNearPlane(GLfloat near);
 
     /*!
         \param pos The position to use.
@@ -125,7 +125,7 @@ public:
         \param far The field of view to use.
         \brief This function set's the camera's current projection matrix.
     */
-    void setProjectionMatrix(qreal fov, qreal aspect, qreal near, qreal far);
+    void setProjectionMatrix(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat far);
 
     /*!
         \param pos The position to use.
@@ -133,7 +133,7 @@ public:
         \param vertAngle  The angle about the y axis to rotate the camera.
         \brief This function set's the camera's current view matrix.
     */
-    void setViewMatrix(QVector3D pos, qreal horizAngle, qreal vertAngle);
+    void setViewMatrix(QVector3D pos, GLfloat horizAngle, GLfloat vertAngle);
 
 
     /*!
@@ -150,7 +150,7 @@ public:
         \param z The amount to translate along the z axis of the current view space.
         \brief This function translates the camera's position in view space.
     */
-    void pan(qreal x,  qreal y, qreal z);
+    void pan(GLfloat x,  GLfloat y, GLfloat z);
 
     /*!
         \param x The amount to translate along the x axis.
@@ -158,21 +158,21 @@ public:
         \param z The amount to translate along the z axis.
         \brief This function translates the camera's position in world space.
     */
-    void translate(qreal x, qreal y , qreal z);
+    void translate(GLfloat x, GLfloat y , GLfloat z);
 
 
 private:
     void compileViewMatrix();
     // projection info
     QMatrix4x4  projectionMatrix;
-    qreal fieldOfView;
-    qreal aspectRatio;
-    qreal nearPlane;
-    qreal farPlane;
+    GLfloat fieldOfView;
+    GLfloat aspectRatio;
+    GLfloat nearPlane;
+    GLfloat farPlane;
 
     // view matrix info
     QMatrix4x4 viewMatrix;
-    qreal verticalAngle, horizontalAngle;
+    GLfloat verticalAngle, horizontalAngle;
     QVector3D position, direction, right, up;
 };
 

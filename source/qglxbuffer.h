@@ -18,23 +18,27 @@ public:
     */
     enum Type
     {
-        /*! \brief Vertex buffer object for use when specifing vertex arrays. */
+        /*! \brief Vertex buffer for use when specifing vertex arrays. */
         VertexBuffer = QGLBuffer::VertexBuffer,
-        /*! \brief Index buffer object for use with glDrawElements / glDrawElementsInstanced */
+        /*! \brief Index buffer for use with glDrawElements / glDrawElementsInstanced */
         IndexBuffer = QGLBuffer::IndexBuffer,
-        /*! \brief Pixel pack buffer object for reading pixel data from the GL server (for example, with glReadPixels()). Not supported under OpenGL/ES. */
+        /*! \brief Pixel pack buffer for reading pixel data from the GL server (for example, with glReadPixels()). Not supported under OpenGL/ES. */
         PixelPackBuffer = QGLBuffer::PixelPackBuffer,
-        /*! \brief Pixel unpack buffer object for writing pixel data to the GL server (for example, with glTexImage2D()). Not supported under OpenGL/ES. */
+        /*! \brief Pixel unpack buffer for writing pixel data to the GL server (for example, with glTexImage2D()). Not supported under OpenGL/ES. */
         PixelUnpackBuffer = QGLBuffer::PixelUnpackBuffer,
-        /*! \brief Texture buffer object used for specifing buffer data as a texture. */
-        TextureBuffer
+        /*! \brief Texture buffer used for specifing buffer data as a texture. */
+        TextureBuffer,
+        /*! \brief Atomic counter buffer that can be incremented / decrimented in any shader stage by any GPU core. */
+        AtomicCounterBuffer ,
+        /*! \brief Transform feedback buffer used to capture an primitive output stream from a geometry shader. */
+        TransformFeedbackBuffer
     };
 
 
     /*!
         \brief Constructs a new buffer object of Type VertexBuffer.
     */
-    QGLXBuffer():QGLBuffer(){}
+    QGLXBuffer();
     /*!
         \brief Constructs a new buffer object of Type specified by type.
     */
@@ -104,7 +108,8 @@ public:
 
 
 private:
-    GLuint m_tbo,m_tex;
+    bool m_isQGLX;
+    GLuint m_bufferID,m_textureID;
     GLenum m_dataType, m_textureSlot;
     Type m_type;
 };

@@ -28,14 +28,14 @@ void QGLXDynamicFrameBufferObject::bindTargets(int num, QString * names)
 
     GLenum d = glGetError();
 }
-FrameBufferTarget * QGLXDynamicFrameBufferObject::getTargets(int num, QString * names)
+GLuint  QGLXDynamicFrameBufferObject::getTargetID(QString  name)
 {
-    QList<FrameBufferTarget> targets;
+    GLuint id = 0;
 
-    for (int i =0; i < num; i ++)
-        targets.push_back(m_targets[names[i]]);
+        if (m_targets.contains(name))
+            id =m_targets[name].id;
 
-    return &targets[0];
+    return id;
 }
 
 void QGLXDynamicFrameBufferObject::releaseTargets()
@@ -240,8 +240,7 @@ void QGLXDynamicFrameBufferObject:: sizeTargets(int num, QString *names, int wid
             else if (target->targetType == GL_TEXTURE_2D)
             {
                 glBindTexture(GL_TEXTURE_2D, target->id);
-                glTexImage2D(GL_TEXTURE_2D, 0, target->internalFormat, target->width, target->height, 0, target->pixelFormat
-                             , GL_UNSIGNED_BYTE, 0);
+                glTexImage2D(GL_TEXTURE_2D, 0, target->internalFormat, target->width, target->height, 0, target->pixelFormat, target->pixelType, 0);
                 glFramebufferTexture2D(GL_FRAMEBUFFER, target->attachment, GL_TEXTURE_2D, target->id, 0);
             }
 

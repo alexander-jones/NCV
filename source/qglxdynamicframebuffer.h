@@ -95,7 +95,7 @@ public:
         \param names The names of the targets to get info about.
         \brief This returns an array of FrameBufferTargets that describe target properties.
     */
-    FrameBufferTarget * getTargets(int num, QString * names);
+    GLuint getTargetID(QString  name);
 
     /*!
         \param name The indentifier of the target to read pixels from.

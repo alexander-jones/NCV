@@ -20,7 +20,6 @@
 #include <QCoreApplication>
 #include <QVector2D>
 #include <QKeyEvent>
-#include <QGLShaderProgram>
 #include <QTime>
 #include <QMap>
 #include <QList>
@@ -192,8 +191,6 @@ protected:
     virtual void mousePressEvent(QMouseEvent* e);
     virtual void mouseReleaseEvent(QMouseEvent* e);
     virtual void timerEvent(QTimerEvent *e);
-    bool compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath,const QString& fragmentShaderPath );
-    bool compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath, const QString & geometryShaderPath, const QString& fragmentShaderPath );
 
 private:
 
@@ -274,9 +271,8 @@ private:
     bool m_leftMouseDown,m_rightMouseDown,m_shiftDown,m_renderNeurons,m_renderConnections,m_newVisualizationParameters;
     SelectionState m_connectionSelectionState;
     QMap<QString,QGLXBuffer> m_textureBuffers;
-    QGLXBuffer m_selectionRectVertices;
-    QVector<GLubyte> m_selectionDomain;
-    int m_startSelectionID;
+    QGLXBuffer m_selectionRectVertices,m_screenVertices,m_screenCoords;
+    QSet<GLuint> m_selectedObjects;
 
     QMap<const char *,Parameter<QVector2D> > m_vector2DParametersToCreate;
     QMap<const char *,Parameter<QVector3D> > m_vector3DParametersToCreate;

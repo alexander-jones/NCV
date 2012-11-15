@@ -21,13 +21,11 @@ NCV::NCV( const QGLFormat& format, QWidget* parent )
     m_neuronsToCreate = 0;
     m_connectionsToCreate = 0;
     m_shiftDown = false;
-    m_startSelectionID = -1;
     m_renderNeurons= true;
     m_renderConnections= true;
     m_newVisualizationParameters = false;
     m_connectionSelectionState = Regular;
     srand(time(NULL));
-    setFocus();
 }
 
 
@@ -70,7 +68,7 @@ void NCV::establishWorldBounds(int numNeurons,QVector3D * neuronPositions)
 
 void NCV::initializeGL()
 {
-    GLenum res = glewInit();
+    glewInit();
 
     QGLFormat glFormat = QGLWidget::format();
     if ( !glFormat.sampleBuffers() )
@@ -99,7 +97,7 @@ void NCV::initializeGL()
     m_firstPassTargets.push_back("pick");
 
     // compile shader
-    if (!compileShaderProgram(m_neuronProgram,":/shaders/neuron.vert",":/shaders/neuron.frag"))
+    if (!QGLXCore::compileShaderProgram(m_neuronProgram,":/shaders/neuron.vert",":/shaders/neuron.frag"))
         return;
     if ( !m_neuronProgram.bind() )
     {
@@ -116,12 +114,11 @@ void NCV::initializeGL()
     m_neuronProgram.setUniformValue("WorldSize",m_worldSize);
     m_neuronProgram.setUniformValue("SelectionColor",QVector3D(1,1,0));
     m_neuronProgram.setUniformValue("View",m_camera.getViewMatrix());
-    m_neuronProgram.setUniformValue("SelectionID",0);
     m_neuronProgram.release();
 
 
     // compile shader
-    if (!compileShaderProgram(m_connectionProgram,":/shaders/synapse.vert",":/shaders/synapse.geom",":/shaders/synapse.frag"))
+    if (!QGLXCore::compileShaderProgram(m_connectionProgram,":/shaders/synapse.vert",":/shaders/synapse.geom",":/shaders/synapse.frag"))
         return;
     if ( !m_connectionProgram.bind() )
     {
@@ -134,14 +131,12 @@ void NCV::initializeGL()
     m_connectionProgram.setUniformValue("Projection",m_camera.getProjectionMatrix());
     m_connectionProgram.setUniformValue("WorldSize",m_worldSize);
     m_connectionProgram.setUniformValue("SelectionState",m_connectionSelectionState);
-    m_connectionProgram.setUniformValue("NueronSelectionColor",QVector3D(1,0,0));
+    m_connectionProgram.setUniformValue("NeuronSelectionColor",QVector3D(1,0,0));
     m_connectionProgram.setUniformValue("SelectionColor",QVector3D(1,1,0));
-    m_connectionProgram.setUniformValue("SelectionID",0);
-    m_connectionProgram.setUniformValue("ColorIntensity",1.0f);
     m_connectionProgram.release();
 
     // compile selection shader
-    if (!compileShaderProgram(m_selectionRectProgram,":/shaders/postProcess.vert",":/shaders/selectionRect.frag"))
+    if (!QGLXCore::compileShaderProgram(m_selectionRectProgram,":/shaders/selectionRect.vert",":/shaders/selectionRect.frag"))
         return;
     if ( !m_selectionRectProgram.bind() )
     {
@@ -158,6 +153,22 @@ void NCV::initializeGL()
     m_selectionRectVertices.setUsagePattern( QGLXBuffer::StaticDraw );
     m_selectionRectVertices.allocate(NULL,5 * sizeof(QVector3D),GL_FLOAT);
     m_selectionRectVertices.release();
+
+    QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
+    QVector2D screenCoords[4] = {QVector2D(0,0),QVector2D(1,0),QVector2D(1,1),QVector2D(0,1)};
+
+    m_screenVertices.create();
+    m_screenVertices.bind();
+    m_screenVertices.setUsagePattern( QGLXBuffer::StaticDraw );
+    m_screenVertices.allocate(&screenVerts[0],4 * sizeof(QVector3D),GL_FLOAT);
+    m_screenVertices.release();
+
+    m_screenCoords.create();
+    m_screenCoords.bind();
+    m_screenCoords.setUsagePattern( QGLXBuffer::StaticDraw );
+    m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D),GL_FLOAT);
+    m_screenCoords.release();
+
     // start refresh rate timer
     this->startTimer(5);
 }
@@ -197,7 +208,7 @@ void NCV::resizeGL( int w, int h )
 void NCV::sizeTargets()
 {
     // resize the targets of the frame buffer
-    QString targets[6] = {"diffuse","position","voltage","firing","pick","depth"};
+    QString targets[7] = {"diffuse","position","voltage","firing","pick","depth"};
     int targetWidth = m_width;
     int targetHeight = m_height;
     if (m_renderSetting == All)
@@ -238,8 +249,9 @@ void NCV::createNetwork()
 
 
     // set per-vertex attributes of model
+    m_neuronProgram.bind();
     m_neurons.setVertexAttributeIndices(&indices[0]);
-    m_neurons.setVertexAttributeArray("Vert_Normal",model->mMeshes[0]->mNormals,sizeof(aiVector3D),GL_FLOAT);
+    //m_neurons.setVertexAttributeArray("Vert_Normal",model->mMeshes[0]->mNormals,sizeof(aiVector3D),GL_FLOAT);
     m_neurons.setVertexAttributeArray("Vert_Position",model->mMeshes[0]->mVertices,sizeof(aiVector3D),GL_FLOAT);
 
     // establish system ids
@@ -247,6 +259,7 @@ void NCV::createNetwork()
     for (int i =0; i < m_neuronsToCreate; i ++)
         neuronIDs[i] = i +1;
     m_neurons.setInstanceAttributeArray("Inst_ID",neuronIDs,sizeof(GLuint),GL_FLOAT,1);
+    m_neuronProgram.release();
 
     // create connection system
     m_connections.create(m_connectionsToCreate, 1,0,1);
@@ -272,7 +285,7 @@ void NCV::createNetwork()
     m_neuronProgram.release();
     m_connectionProgram.bind();
     m_connectionProgram.setUniformValue("WorldSize",m_worldSize);
-    m_neuronProgram.setUniformValue("WorldCenter",m_worldCenter);
+    m_connectionProgram.setUniformValue("WorldCenter",m_worldCenter);
     m_connectionProgram.release();
     m_connectionsToCreate = 0;
     m_neuronsToCreate = 0;
@@ -325,6 +338,7 @@ void NCV::createAttributes()
             else if (attribToWrite.type == DataSet::Compound)
                 m_textureBuffers[it.key()].allocate(attribToWrite.data,attribToWrite.stride * (m_neurons.numObjects() + m_connections.numObjects()),textureFormat);
 
+            // check if the buffer can be accessed by neurons...
             if (attribToWrite.access != ConnectionOnly  )
             {
                 // bind texture of texture buffer to neuron shader program
@@ -333,6 +347,7 @@ void NCV::createAttributes()
                 m_neuronProgram.setUniformValue(nLoc, m_textureBuffers.size()-1);
                 m_neuronProgram.release();
             }
+            // check if the buffer can be accessed by connections...
             if (attribToWrite.access != NeuronOnly   )
             {
                 // bind texture of texture buffer to connection shader program
@@ -353,6 +368,7 @@ void NCV::createAttributes()
 
 void NCV::paintGL()
 {
+    setFocus();
     // FPS counter
     m_frameCount ++;
     if (m_time.elapsed() >= 1000)
@@ -362,7 +378,7 @@ void NCV::paintGL()
         m_frameCount = 0;
     }
 
-
+    // check to see if any changes were requested externally
     if (m_neuronsToCreate >0 || m_connectionsToCreate > 0)
         createNetwork();
 
@@ -391,7 +407,6 @@ void NCV::paintGL()
         m_connections.draw();
         m_connectionProgram.release();
     }
-
 
     if (m_renderNeurons)
     {
@@ -535,13 +550,6 @@ void NCV::mousePressEvent(QMouseEvent* e)
     }
 }
 
-
-inline GLuint SwapEndian(GLuint val)
-{
-   return (val<<24) | ((val<<8) & 0x00ff0000) |
-          ((val>>8) & 0x0000ff00) | (val>>24);
-}
-
 void  NCV::mouseReleaseEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton)
@@ -550,8 +558,8 @@ void  NCV::mouseReleaseEvent(QMouseEvent* e)
         int width = abs(m_selectionRect.width());
         int height = abs(m_selectionRect.height());
 
-        m_selectionRect.setLeft(max(0,min(m_selectionRect.left(),m_selectionRect.right())));
-        m_selectionRect.setTop(max(0,min(m_selectionRect.top(),m_selectionRect.bottom())));
+        m_selectionRect.setLeft(std::max(0,std::min(m_selectionRect.left(),m_selectionRect.right())));
+        m_selectionRect.setTop(std::max(0,std::min(m_selectionRect.top(),m_selectionRect.bottom())));
         if (m_renderSetting == All)
         {
             if (m_selectionRect.left() >( m_width / 2))
@@ -579,59 +587,26 @@ void  NCV::mouseReleaseEvent(QMouseEvent* e)
         GLubyte selected = 1;
         GLubyte deselected = 0;
 
-        QSet<GLuint> selectedObjects;
         m_textureBuffers["Inst_Selection"].bind();
         // if not performing compound selection, deselect previously selected items
         if (!m_shiftDown )
         {
-            for (int i =0; i < m_selectionDomain.size(); i ++)
-            {
-                int index = m_startSelectionID + i-1;
-                if (m_selectionDomain[i] >0)
-                    m_textureBuffers["Inst_Selection"].write(index* sizeof(GLubyte),&deselected,sizeof(GLubyte));
-            }
-            m_startSelectionID = -1;
-            m_selectionDomain.clear();
+            for (QSet<GLuint>::iterator it = m_selectedObjects.begin(); it != m_selectedObjects.end(); it++)
+                m_textureBuffers["Inst_Selection"].write((*it -1)* sizeof(GLubyte),&deselected,sizeof(GLubyte));
+            m_selectedObjects.clear();
         }
         // compile new selections into a unique set
         for (int i =0; i < m_selectionRect.width() *  m_selectionRect.height(); i ++)
-            if (objectID[i] != 0)
-                selectedObjects.insert(objectID[i]);
-
-        // compile these selections into a vector, padding locations in between with deselections
-        for (QSet<GLuint>::iterator it = selectedObjects.begin(); it !=selectedObjects.end(); it++)
         {
-            GLuint id = *it;
-            if (m_startSelectionID == -1)
+            if (objectID[i] != 0 )
             {
-                m_selectionDomain.push_back(selected);
-                m_startSelectionID = id;
+                GLuint id = objectID[i];
+                m_selectedObjects.insert(id);
             }
-            else if (id <m_startSelectionID)
-            {
-
-                while (id < (m_startSelectionID-1))
-                {
-                    m_selectionDomain.push_front(0);
-                   m_startSelectionID --;
-                }
-                m_selectionDomain.push_front(1);
-                m_startSelectionID --;
-
-            }
-            else if (id > (m_startSelectionID + m_selectionDomain.size()-1))
-            {
-                while (id > (m_startSelectionID + m_selectionDomain.size()))
-                   m_selectionDomain.push_back(0);
-                m_selectionDomain.push_back(1);
-            }
-            else
-                m_selectionDomain[id - m_startSelectionID] = 1;
         }
-
         // update selection buffer memory
-        if ( m_selectionDomain.size() > 0)
-            m_textureBuffers["Inst_Selection"].write((m_startSelectionID -1)* sizeof(GLubyte),&m_selectionDomain[0],sizeof(GLubyte)*m_selectionDomain.size());
+        for (QSet<GLuint>::iterator it = m_selectedObjects.begin(); it != m_selectedObjects.end(); it++)
+            m_textureBuffers["Inst_Selection"].write((*it-1)* sizeof(GLubyte),&selected,sizeof(GLubyte));
 
         // rebind selection to shaders
         m_connectionProgram.bind();
@@ -762,49 +737,7 @@ void NCV::keyReleaseEvent(QKeyEvent *e)
 
 }
 
-bool NCV::compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath,const QString& fragmentShaderPath )
-{
-    // First we load and compile the vertex shader->..
-    bool success = program.addShaderFromSourceFile( QGLShader::Vertex, vertexShaderPath );
-    if ( !success )
-        qDebug() << program.log();
 
-    // ...now the fragment shader->..
-    success = program.addShaderFromSourceFile( QGLShader::Fragment, fragmentShaderPath );
-    if ( !success )
-        qDebug() << program.log();
-
-    // ...and finally we link them to resolve any references.
-    success = program.link();
-    if ( !success )
-        qDebug() << "Could not link shader program:" << program.log();
-    return success;
-}
-
-bool NCV::compileShaderProgram(QGLShaderProgram & program, const QString& vertexShaderPath, const QString & geometryShaderPath, const QString& fragmentShaderPath )
-{
-    // First we load and compile the vertex shader->..
-    bool success = program.addShaderFromSourceFile( QGLShader::Vertex, vertexShaderPath );
-    if ( !success )
-        qDebug() << program.log();
-
-    // ...now the geometry shader->..
-    success = program.addShaderFromSourceFile( QGLShader::Geometry, geometryShaderPath );
-    if ( !success )
-        qDebug() << program.log();
-
-    // ...now the fragment shader->..
-    success = program.addShaderFromSourceFile( QGLShader::Fragment, fragmentShaderPath );
-    if ( !success )
-        qDebug() << program.log();
-
-
-    // ...and finally we link them to resolve any references.
-    success = program.link();
-    if ( !success )
-        qDebug() << "Could not link shader program:" << program.log();
-    return success;
-}
 
 void NCV::createNeurons(int number,QVector3D * positions )
 {

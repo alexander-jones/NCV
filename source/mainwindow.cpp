@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "righttoolbar.h"
+#include "lefttoolbar.h"
 
 #ifdef WIN32
     #include <Windows.h>
@@ -11,6 +13,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    RightToolBar *right;
+    LeftToolBar *left;
+
+    right= new RightToolBar();
+    addToolBar(Qt::RightToolBarArea, right);
+
+    left= new LeftToolBar();
+    addToolBar(Qt::LeftToolBarArea, left);
+
     QGLFormat glFormat;
     glFormat.setVersion( 4,0 );
     glFormat.setDoubleBuffer(true);
@@ -23,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setCentralWidget(ncvSim);
     QVector3D worldSize = QVector3D(200000 , 200000,200000);
 
-    int numNeurons = 10000;
+    int numNeurons = 100000;
 
     QVector3D * neruonPositions = new QVector3D[numNeurons];
     GLfloat * voltages = new GLfloat[numNeurons];
