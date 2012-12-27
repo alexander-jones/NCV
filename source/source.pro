@@ -22,7 +22,6 @@ macx{
 }
 
 SOURCES += \
-    qglxdynamicframebuffer.cpp \
     qglxcamera.cpp \
     qglxboundingbox.cpp \
     mainwindow.cpp \
@@ -30,13 +29,22 @@ SOURCES += \
     qglxsystem.cpp \
     qglxbuffer.cpp \
     ncv.cpp \
-    slider.cpp \
     righttoolbar.cpp \
-    lefttoolbar.cpp
+    ncvwidget.cpp \
+    managementSidebar.cpp \
+    sidebar.cpp \
+    camerasidebar.cpp \
+    spinbox3d.cpp \
+    lightingsidebar.cpp \
+    collapsiblewidget.cpp \
+    qglxtexture1d.cpp \
+    qglxtexture3d.cpp \
+    qglxtexture2d.cpp \
+    qglxtexture.cpp \
+    qglxframebufferobject.cpp
 
 HEADERS  += \
     qglxoctree.h \
-    qglxdynamicframebuffer.h \
     qglxcamera.h \
     qglxboundingbox.h \
     mainwindow.h \
@@ -44,27 +52,44 @@ HEADERS  += \
     qglxbuffer.h \
     qglxcore.h \
     ncv.h \
-    slider.h \
     righttoolbar.h \
-    lefttoolbar.h
+    ncvwidget.h \
+    qglxtexture.h \
+    managementSidebar.h \
+    sidebar.h \
+    camerasidebar.h \
+    spinbox3d.h \
+    lightingsidebar.h \
+    collapsiblewidget.h \
+    qglxtexture1d.h \
+    qglxtexture3d.h \
+    qglxtexture2d.h \
+    qglxframebufferobject.h
 
 FORMS    += \
     mainwindow.ui
 
 OTHER_FILES += \
-    shaders/final.vert \
-    shaders/final.frag \
     Doxyfile \
     assets/cube.nff \
     shaders/synapse.frag \
     shaders/synapse.vert \
     shaders/neuron.vert \
     shaders/neuron.frag \
-    shaders/synapse.geom \
     shaders/selectionRect.frag \
-    shaders/selectionRect.vert \
     shaders/selection.frag \
-    shaders/selection.vert
+    shaders/postProcess.vert \
+    shaders/synapse.geom \
+    shaders/lighting.frag \
+    shaders/neuronFloat.vert \
+    shaders/neuronBit.vert \
+    shaders/bit.frag \
+    shaders/float.frag \
+    shaders/connectionBit.geom \
+    shaders/connectionBit.vert \
+    shaders/connectionFloat.vert \
+    shaders/connectionFloat.geom \
+    shaders/simpleBlend.frag
 
 RESOURCES += \
     core-profile.qrc

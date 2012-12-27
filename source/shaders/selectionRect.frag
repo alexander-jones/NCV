@@ -1,6 +1,8 @@
+#version 400
 uniform vec3 SelectionColor;
+out vec4 Color;
 
 void main(void)
 {
-    gl_FragColor =vec4(SelectionColor,1.0);
+    Color =vec4(SelectionColor,1.0);
 }

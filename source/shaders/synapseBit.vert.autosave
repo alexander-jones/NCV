@@ -1,0 +1,41 @@
+#version 400
+
+uniform mat4 View, Projection, Scale;
+uniform samplerBuffer Inst_Translation;
+uniform usamplerBuffer Inst_Attribute;
+uniform vec3 CameraPosition;
+uniform float FogStart, FogEnd;
+
+flat in uint Vert_Offset;
+flat in uint Inst_Neuron_IN;
+flat in uint Inst_Neuron_OUT;
+flat in uint Inst_ID;
+
+out float Depth;
+flat out uint Conn_ID;
+flat out uint Conn_Firing;
+out float Conn_Voltage;
+out vec3 End_Position;
+#version 400
+
+
+in vec3 Vert_Position;
+in vec3 Vert_Normal;
+flat in uint Inst_ID;
+
+flat out uint ID;
+flat out uint BitFlag;
+out float Depth;
+
+
+void main( void )
+{
+    int index = int(Inst_Neuron_IN * (1-Vert_Offset) + Inst_Neuron_OUT * Vert_Offset)-1;
+
+    End_Position = texelFetch(Inst_Translation,index).xyz;
+    Depth = (distance(CameraPosition,End_Position) - FogStart) / (FogEnd - FogStart);
+
+    ID = Inst_ID;
+    BitFlag = texelFetch(Inst_Attribute,int(Inst_ID)-1).r & ( (Inst_ID -1) % 8);
+    gl_Position = vec4(End_Position,1.0f);
+}

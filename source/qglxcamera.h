@@ -18,7 +18,7 @@ public:
     /*!
         \brief A constructor. That is all.
     */
-    QGLXCamera(void);
+    QGLXCamera();
 
     /*!
         \brief This function returns the current aspect ratio of the projection.
@@ -114,10 +114,12 @@ public:
     void setNearPlane(GLfloat near);
 
     /*!
-        \param pos The position to use.
+        \param pos The vector to use.
         \brief This function changes the camera's current position.
     */
     void setPosition(QVector3D pos);
+
+
     /*!
         \param fov The field of view to use.
         \param aspect The far plane to use.
@@ -127,6 +129,19 @@ public:
     */
     void setProjectionMatrix(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat far);
 
+
+    /*!
+        \param dir The vector to use.
+        \brief This function changes the camera's current forward vector.
+    */
+    void setForward(QVector3D dir);
+
+
+    /*!
+        \param up The vector to use.
+        \brief This function changes the camera's current up vector.
+    */
+    void setUp(QVector3D up);
     /*!
         \param pos The position to use.
         \param horizAngle The angle about the x axis to rotate the camera.
@@ -162,18 +177,18 @@ public:
 
 
 private:
-    void compileViewMatrix();
+    void m_compileViewMatrix();
     // projection info
-    QMatrix4x4  projectionMatrix;
-    GLfloat fieldOfView;
-    GLfloat aspectRatio;
-    GLfloat nearPlane;
-    GLfloat farPlane;
+    QMatrix4x4  m_projectionMatrix;
+    GLfloat m_fieldOfView;
+    GLfloat m_aspectRatio;
+    GLfloat m_nearPlane;
+    GLfloat m_farPlane;
 
     // view matrix info
-    QMatrix4x4 viewMatrix;
-    GLfloat verticalAngle, horizontalAngle;
-    QVector3D position, direction, right, up;
+    QMatrix4x4 m_viewMatrix;
+    GLfloat m_verticalAngle, m_horizontalAngle;
+    QVector3D m_position, m_direction, m_right, m_up;
 };
 
 

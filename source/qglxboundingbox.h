@@ -51,7 +51,7 @@ public:
     */
     bool contains(QVector3D point);
 
-    /*!0:4
+    /*!
         \brief This function returns the corner positions of the bounding box.
     */
     QVector3D * corners();

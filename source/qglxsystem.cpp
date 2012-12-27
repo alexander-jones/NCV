@@ -1,11 +1,11 @@
 
 #include "qglxsystem.h"
+#include "qglxtexture.h"
 
 
 QGLXSystem::QGLXSystem()
 {
     m_primType = Triangle;
-    m_program = NULL;
     m_LayoutType == Array;
     m_numObjects = 0;
     m_vertsPerObject = 0;
@@ -47,12 +47,6 @@ void QGLXSystem::create(int numObjects, int vertsPerObject, int elementsPerObjec
     }
 }
 
-void QGLXSystem::attachShaderProgram(QGLShaderProgram * program)
-{
-    m_program = program;
-}
-
-
 void QGLXSystem::setPrimitiveType(PrimitiveType type)
 {
     m_primType = type;
@@ -61,10 +55,10 @@ void QGLXSystem::setPrimitiveType(PrimitiveType type)
 
 void QGLXSystem::setVertexAttributeArray(QString name,void * data, int stride, GLenum componentType, AttributeUsage usage )
 {
-    int componentSize = QGLXCore::getComponentSize(componentType);
+    int componentSize = QGLXTexture::getComponentSize(componentType);
 
     QGLXBuffer * buffer = new QGLXBuffer();
-    m_attributes[name] = AttributeArray(buffer,componentType,m_program->attributeLocation(name),stride,componentSize);
+    m_attributes[name] = AttributeArray(buffer,componentType,stride,componentSize);
     m_attributes[name].buffer->create();
 
     if (usage == Static)
@@ -77,6 +71,7 @@ void QGLXSystem::setVertexAttributeArray(QString name,void * data, int stride, G
     else
         m_attributes[name].buffer->allocate( data, m_vertsPerObject * stride);
     m_attributes[name].buffer->release();
+    m_attributes[name].divisor = 0;
 }
 
 
@@ -87,10 +82,10 @@ void QGLXSystem::setInstanceAttributeArray(QString name,void * data, int stride,
 
     if (m_LayoutType == InstancedArray || m_LayoutType == InstancedElement)
     {
-        int componentSize = QGLXCore::getComponentSize(componentType);
+        int componentSize = QGLXTexture::getComponentSize(componentType);
 
         QGLXBuffer * buffer = new QGLXBuffer();
-        m_attributes[name] = AttributeArray(buffer,componentType,m_program->attributeLocation(name),stride,componentSize,1);
+        m_attributes[name] = AttributeArray(buffer,componentType,stride,componentSize,1);
         m_attributes[name].buffer->create();
 
         if (usage == Static)
@@ -106,49 +101,56 @@ void QGLXSystem::setInstanceAttributeArray(QString name,void * data, int stride,
 }
 
 
-void QGLXSystem::draw()
-{
-    drawSubset(0,m_numObjects);
-}
-
-
-void QGLXSystem::drawSubset(int start, int count)
+void QGLXSystem::bind(QGLShaderProgram * program)
 {
     for (QMap<QString,AttributeArray>::iterator it =  m_attributes.begin(); it != m_attributes.end();it++)
     {
-        AttributeArray attrib = it.value();
         QString name = it.key();
+        AttributeArray attrib = it.value();
         attrib.buffer->bind();
-        int offset = 0;
-        if (attrib.divisor > 0)
-            offset = start * m_instancesPerObject;
-        m_program->setAttributeBuffer( attrib.location, attrib.componentType,  offset ,attrib.stride  / attrib.componentSize, attrib.stride);
-        m_program->enableAttributeArray( attrib.location);
-        glVertexAttribDivisor( attrib.location, attrib.divisor);
+        int location = program->attributeLocation(name);
+        program->setAttributeBuffer( location, attrib.componentType,  0 ,attrib.stride  / attrib.componentSize, attrib.stride);
+        program->enableAttributeArray( location);
+        glVertexAttribDivisor( location, attrib.divisor);
     }
     if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
         m_indexBuffer.bind();
 
+}
+
+void QGLXSystem::release(QGLShaderProgram * program)
+{
+    if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
+        m_indexBuffer.release();
+
+    for (QMap<QString,AttributeArray>::iterator it =  m_attributes.begin(); it != m_attributes.end();it++)
+    {
+        QString name = it.key();
+        AttributeArray attrib = it.value();
+        int location = program->attributeLocation(name);
+        program->disableAttributeArray( location );
+        attrib.buffer->release();
+    }
+}
+
+void QGLXSystem::drawSubset(GLuint start, GLuint count)
+{
      if (m_LayoutType == Array)
          glDrawArrays(m_primType,start * m_vertsPerObject,count  * m_vertsPerObject);
      else if (m_LayoutType == Element)
-         glDrawElements(m_primType,count * m_elementsPerObject,GL_UNSIGNED_INT,0);
+         glDrawElementsBaseVertex(m_primType,count * m_elementsPerObject,GL_UNSIGNED_INT,0,start * m_elementsPerObject);
      else if (m_LayoutType == InstancedArray)
-         glDrawArraysInstanced(m_primType,0,m_vertsPerObject,count* m_instancesPerObject);
+         glDrawArraysInstancedBaseInstance(m_primType,0,m_vertsPerObject,count* m_instancesPerObject, start * m_instancesPerObject);
      else if (m_LayoutType == InstancedElement)
-         glDrawElementsInstanced(m_primType,m_elementsPerObject ,GL_UNSIGNED_INT,0,count * m_instancesPerObject );
+         glDrawElementsInstancedBaseInstance(m_primType,m_elementsPerObject ,GL_UNSIGNED_INT,0,count * m_instancesPerObject, start * m_instancesPerObject );
 
-     if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
-         m_indexBuffer.release();
-
-     for (QMap<QString,AttributeArray>::iterator it =  m_attributes.begin(); it != m_attributes.end();it++)
-     {
-         AttributeArray attrib = it.value();
-         m_program->disableAttributeArray( attrib.location );
-         attrib.buffer->release();
-     }
 }
 
+
+void QGLXSystem::draw()
+{
+    drawSubset(0,m_numObjects);
+}
 
 void QGLXSystem::editAttributeArray(QString attribute,void * data, int index, int count)
 {

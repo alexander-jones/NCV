@@ -1,26 +1,29 @@
 #version 400
 
+const float e = 2.71828;
 const int  MAP_DIFFUSE = 0;
-const int  MAP_POSITION = 1;
-const int  MAP_VOLTAGE = 2;
-const int  MAP_FIRINGS = 3;
+const int  MAP_VOLTAGE = 1;
+const int  MAP_FIRINGS = 2;
+const int  MAP_POSITION = 3;
+const int  MAP_NORMAL = 4;
+const int  MAP_ID = 0;
 
-uniform samplerBuffer Inst_Voltage;
-uniform usamplerBuffer Inst_Firing;
-
-uniform float MaxVoltage,MinVoltage;
-uniform vec3 FireColor,IdleColor;
+uniform vec4 DeselectionColor;
+uniform int Deselected;
+uniform float MaximumValue,MinimumValue;
+uniform vec3 OnColor,OffColor;
 
 uniform vec3 WorldSize, WorldCenter, SelectionColor ;
-uniform int SelectionID;
+uniform vec2 ScreenSize;
 
-
-flat in uint Selection;
 flat in uint ID;
 in vec3 WorldPos;
+in float Voltage;
+in vec3 Normal;
+flat in uint Firing;
 in float Depth;
 
-out vec4 FragData[4];
+out vec4 FragData[5];
 flat out uint PickData;
 
 // map value in range from blue (low)  to green to yellow to red to white (high)
@@ -68,32 +71,32 @@ void main( void )
 {
     vec3 startPos = - WorldSize / 2.0;
     vec3 distColor = (WorldPos - startPos )/ WorldSize;
-    uint firing = texelFetch(Inst_Firing,int(ID)-1).r;
-    float voltage = texelFetch(Inst_Voltage,int(ID)-1).r;
-
-	if (Selection >0)
-		FragData[MAP_DIFFUSE] = vec4( SelectionColor,1.0);
-	else
-		FragData[MAP_DIFFUSE] = vec4( normalize( vec3(ID % 6,ID % 5,ID % 4)).xyz ,1.0);
-		
-	if (Selection >0)
-		FragData[MAP_POSITION] = vec4( SelectionColor,1.0);
-	else
-		FragData[MAP_POSITION] = vec4( distColor ,1.0);
-		
-		
-	if (Selection >0)
-		FragData[MAP_VOLTAGE] = vec4( SelectionColor,1.0);
-	else
-		FragData[MAP_VOLTAGE] = vec4( intensityMap(MinVoltage,MaxVoltage,voltage).xyz,1.0);
-		
-
-	if (Selection >0)
-		FragData[MAP_FIRINGS] = vec4( SelectionColor,1.0);
-    else if (firing > 0)
-        FragData[MAP_FIRINGS] = vec4(FireColor,1.0);
+    if (Deselected > 0 )
+        FragData[MAP_DIFFUSE] = DeselectionColor;
     else
-        FragData[MAP_FIRINGS] = vec4(IdleColor,1.0);
+        FragData[MAP_DIFFUSE] = vec4( normalize( vec3(ID % 6,ID % 5,ID % 4)).xyz,0.2f);
+
+
+    float FogDensity = 1.0f;
+    vec4 FogColor = vec4(0,0,0,1.0f);
+    float intensity = FogDensity * pow(e,Depth*2)/pow(e,2);
+    FragData[MAP_DIFFUSE] = intensity * FogColor + (1.0f- intensity) * FragData[MAP_DIFFUSE];
+
+    if (Deselected > 0 )
+        FragData[MAP_VOLTAGE] = DeselectionColor;
+    else
+        FragData[MAP_VOLTAGE] = vec4( intensityMap(MinimumValue,MaximumValue,Voltage).xyz,0.2f);
+
+    if (Deselected > 0 )
+        FragData[MAP_FIRINGS] = DeselectionColor;
+    else if (Firing > 0)
+        FragData[MAP_FIRINGS] = vec4(OnColor,1.0);
+    else
+        FragData[MAP_FIRINGS] = vec4(OffColor,1.0);
+
+    FragData[MAP_POSITION] = vec4( distColor ,1.0);
+    FragData[MAP_NORMAL] = vec4( Normal ,1.0);
+
 
     PickData  = ID;
 }

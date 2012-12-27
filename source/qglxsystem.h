@@ -13,15 +13,13 @@ struct AttributeArray
     AttributeArray( )
     {
         this->componentType = 0;
-        this->location = 0;
         this->buffer = NULL;
     }
 
-    AttributeArray( QGLXBuffer * buffer, GLenum componentType, GLuint location,int stride, int componentSize, int divisor = 0)
+    AttributeArray( QGLXBuffer * buffer, GLenum componentType,int stride, int componentSize, int divisor = 0)
     {
         this->buffer = buffer;
         this->componentType = componentType;
-        this->location = location;
         this ->componentSize =componentSize;
         this->stride = stride;
         this->divisor = divisor;
@@ -29,7 +27,6 @@ struct AttributeArray
 
     QGLXBuffer * buffer;
     GLenum componentType;
-    GLuint location;
     int stride,componentSize, divisor;
 
 };
@@ -87,11 +84,9 @@ public:
     ~QGLXSystem();
 
     /*!
-        \param program A pointer to the program used to render this system.
-        \brief This function attaches a shader to this system for rendering.
+        \brief This function binds the system to the current context.
     */
-    void attachShaderProgram(QGLShaderProgram * program);
-
+    void bind(QGLShaderProgram * program);
     /*!
         \param numObjects The number of objects in this system.
         \param vertsPerObject How many vertices are described per object.
@@ -104,6 +99,7 @@ public:
 
     /*!
         \brief This function draws all members of the system with all the currently created attributes.
+        This function assumes bind() has already been called on this system.
     */
     void draw();
 
@@ -112,8 +108,9 @@ public:
         \param start The first object in the system to draw.
         \param count The number of objects to draw after start.
         \brief This function draws a subset of the members of the system.
+        This function assumes bind() has already been called on this system.
     */
-    void drawSubset(int start, int count);
+    void drawSubset(GLuint start, GLuint count);
 
     /*!
         \param attribute The name of the attribute array to edit.
@@ -135,6 +132,11 @@ public:
     PrimitiveType primitiveType();
 
     /*!
+        \brief This function releases the system from the current context.
+    */
+    void release(QGLShaderProgram * program);
+
+    /*!
         \param type A base rendering primitive. (Triangle, Line, Point, Quad, etc..)
         \brief This function sets the primitive type used for rendering this system.
     */
@@ -152,19 +154,6 @@ public:
     */
     void setInstanceAttributeArray(QString name,void * data, int stride, GLenum componentType, int divisor, AttributeUsage usage = Static);
 
-
-    /*!
-        \param names The names to associate the attribute arrays with.
-        \param data The data of these attribute arrays.
-        \param strides The size in bytes of each element.
-        \param componentTypes The opengl component type. (GL_INT, GL_FLOAT, GL_UNSIGNED_BYTE, ...)
-        \param divisor  The number of instances that will pass between updates of this attribute.
-        \param usage Whether or not the buffer will be dynamically or staticly used.
-        \brief This function enables binding of multiple attributes stored in a single buffer.
-        The elements of this data will be advanced per every divisor instances.
-    */
-    void setPackedInstanceAttributeArray(int num, QString * names,void * data, int * strides, GLenum * componentTypes, int divisor, AttributeUsage usage = Static);
-
     /*!
         \param name The name to associate this attribute array with.
         \param data The data of this attribute array.
@@ -177,19 +166,7 @@ public:
     void setVertexAttributeArray(QString name,void * data, int stride, GLenum componentType, AttributeUsage usage = Static);
 
     /*!
-        \param names The names to associate the attribute arrays with.
-        \param data The data of these attribute arrays.
-        \param strides The size in bytes of each element.
-        \param componentTypes The opengl component type. (GL_INT, GL_FLOAT, GL_UNSIGNED_BYTE, ...)
-        \param usage Whether or not the buffer will be dynamically or staticly used.
-        \brief This function enables binding of multiple attributes stored in a single buffer.
-        The elements of data will be advanced per-vertex.
-    */
-    void setPackedVertexAttributeArray(int num, QString * names,void * data, int * strides, GLenum * componentTypes, AttributeUsage usage = Static);
-
-
-    /*!
-        \param data The data to write.
+        \param indices The indices to write.
         \param usage Whether or not the buffer will be dynamically or staticly used.
         \brief This function sets the index buffer for this system.
     */

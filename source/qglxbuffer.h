@@ -18,20 +18,28 @@ public:
     */
     enum Type
     {
-        /*! \brief Vertex buffer for use when specifing vertex arrays. */
+        /*! \brief A buffer used for specifing vertex arrays. */
         VertexBuffer = QGLBuffer::VertexBuffer,
-        /*! \brief Index buffer for use with glDrawElements / glDrawElementsInstanced */
+        /*! \brief A buffer used to specify vertex indices for use with glDrawElements / glDrawElementsInstanced */
         IndexBuffer = QGLBuffer::IndexBuffer,
-        /*! \brief Pixel pack buffer for reading pixel data from the GL server (for example, with glReadPixels()). Not supported under OpenGL/ES. */
+        /*! \brief A buffer for reading pixel data from the GL server (for example, with glReadPixels()). Not supported under OpenGL/ES. */
         PixelPackBuffer = QGLBuffer::PixelPackBuffer,
-        /*! \brief Pixel unpack buffer for writing pixel data to the GL server (for example, with glTexImage2D()). Not supported under OpenGL/ES. */
+        /*! \brief A buffer for writing pixel data to the GL server (for example, with glTexImage2D()). Not supported under OpenGL/ES. */
         PixelUnpackBuffer = QGLBuffer::PixelUnpackBuffer,
-        /*! \brief Texture buffer used for specifing buffer data as a texture. */
-        TextureBuffer,
-        /*! \brief Atomic counter buffer that can be incremented / decrimented in any shader stage by any GPU core. */
-        AtomicCounterBuffer ,
-        /*! \brief Transform feedback buffer used to capture an primitive output stream from a geometry shader. */
-        TransformFeedbackBuffer
+        /*! \brief A one dimensional buffer used for specifing buffer data as a texture. */
+        TextureBuffer  = GL_TEXTURE_BUFFER,
+        /*! \brief A buffer that can be incremented / decrimented in any shader stage by any GPU core. */
+        AtomicCounterBuffer = GL_ATOMIC_COUNTER_BUFFER,
+        /*! \brief A buffer used to capture an primitive output stream from a geometry shader. */
+        TransformFeedbackBuffer = GL_TRANSFORM_FEEDBACK_BUFFER,
+        /*! \brief A buffer used to store uniforms for a shader program. */
+        UniformBuffer = GL_UNIFORM_BUFFER,
+        /*! \brief A buffer close in functionality to a uniform buffer, but with atomic read / write capabilities. */
+        ShaderStorageBuffer = GL_SHADER_STORAGE_BUFFER,
+        /*! \brief A buffer that stores parameters for indirect compute shader dispatches. */
+        DispatchIndirectBuffer = GL_DISPATCH_INDIRECT_BUFFER
+
+
     };
 
 
@@ -69,11 +77,17 @@ public:
     */
     void destroy();
 
+
     /*!
-        \brief This function returns the texture slot associated with this buffer.
-        If this buffer is not a Texture Buffer or has not had setTextureSlot called on it, -1 will be returned.
+        \brief This function indicates whether or not this buffer has been created.
     */
-    GLint textureSlot();
+    bool isCreated();
+
+    /*!
+        \param access The Read / Write permissions of this mapping.
+        \brief This function maps the content of this buffer to a pointer.
+    */
+    void * map(Access access);
 
     /*!
         \brief This function releases this buffer from the current context.
@@ -86,11 +100,6 @@ public:
         \brief This function allows the user to read data stored in this buffer.
     */
     bool read(int offset, void *data, int count);
-    /*!
-        \param slot The texture slot to associate with this buffer.
-        \brief This function associates a Texture Buffer with a texture slot.
-    */
-    void setTextureSlot(GLuint slot);
 
     /*!
         \param offset The offset (in bytes) to start write from.
@@ -106,11 +115,15 @@ public:
     */
     GLint textureID();
 
+    /*!.
+        \brief This function unmaps the content of this buffer to a pointer.
+    */
+    void unmap();
 
 private:
     bool m_isQGLX;
     GLuint m_bufferID,m_textureID;
-    GLenum m_dataType, m_textureSlot;
+    GLenum m_dataType;
     Type m_type;
 };
 

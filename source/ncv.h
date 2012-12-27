@@ -1,22 +1,21 @@
 #ifndef NCV_H
 #define NCV_H
 
-#include "qglxdynamicframebuffer.h"
+#ifdef WIN32
+    #pragma comment(lib,"assimp.lib")
+#endif
+
+
+#include "qglxframebufferobject.h"
+#include "qglxtexture1d.h"
 #include "qglxsystem.h"
 #include "qglxoctree.h"
 #include "qglxcamera.h"
 
-#ifdef WIN32
-    #pragma comment(lib,"assimp.lib")
-    #include <assimp/scene.h>
-    #include <assimp/Importer.hpp>
-    #include <assimp/postprocess.h>
-#else
-    #include <assimp/aiPostProcess.h>
-    #include <assimp/assimp.hpp>
-    #include <assimp/aiScene.h>
+#include <assimp/scene.h>
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
 
-#endif
 #include <QCoreApplication>
 #include <QVector2D>
 #include <QKeyEvent>
@@ -28,20 +27,127 @@
 #include <QRect>
 #include "time.h"
 
-enum RenderSetting
+
+struct Range
 {
-    Diffuse,
-    Position,
-    Voltage,
-    Firing,
-    All
+    int start;
+    int end;
 };
 
-enum SelectionState
+
+enum RangeInferenceFunction
 {
-    None = 0,
-    Regular = 1,
-    Connectivity =2
+    Max,
+    Min,
+    Subtract,
+    Add,
+    Interpolate
+};
+
+enum FlagInferenceFunction
+{
+    Or,
+    And,
+    Xor
+};
+
+
+
+class Attribute : public QGLXBuffer
+{
+public:
+    enum AttributeOwner
+    {
+        Neuron,
+        Connection
+    };
+    enum AttributeType
+    {
+        Range,
+        Position,
+        Flag,
+        Invalid
+    };
+    Attribute( )
+        :QGLXBuffer(QGLXBuffer::TextureBuffer)
+    {
+        this->owner = Neuron;
+        unboundData = NULL;
+        type = Invalid;
+    }
+
+    Attribute(AttributeOwner owner, GLvoid * unboundData)
+        :QGLXBuffer(QGLXBuffer::TextureBuffer)
+    {
+        this->owner = owner;
+        this->unboundData = unboundData;
+        type = Position;
+    }
+
+    Attribute(AttributeOwner owner, QVector3D onColor, QVector3D offColor, GLvoid * data)
+        :QGLXBuffer(QGLXBuffer::TextureBuffer)
+    {
+        this->onColor = onColor;
+        this->offColor = offColor;
+        this->owner = owner;
+        this->unboundData = data;
+        type = Flag;
+    }
+    Attribute(AttributeOwner owner,GLfloat minValue, GLfloat maxValue, GLvoid * data)
+        :QGLXBuffer(QGLXBuffer::TextureBuffer)
+    {
+        this->minValue = minValue;
+        this->maxValue = maxValue;
+        this->owner = owner;
+        this->unboundData = data;
+        type = Range;
+    }
+    void bindBuffer(GLuint numNeurons, GLuint numConnections)
+    {
+        if (!isCreated())
+            create();
+
+        bind();
+
+        if (unboundData != NULL)
+        {
+            if (type == Position)
+            {
+                GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
+                GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,3,QGLXTexture::getComponentSize(GL_FLOAT));
+
+                allocate(unboundData,3* componentSize * numNeurons,textureFormat);
+            }
+            else if (type == Range)
+            {
+                GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
+                GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,1,QGLXTexture::getComponentSize(GL_FLOAT));
+
+                if (owner == Neuron)
+                    allocate(unboundData, componentSize * numNeurons,textureFormat);
+                else
+                    allocate(unboundData,componentSize * numConnections,textureFormat);
+            }
+            else if (type == Flag)
+            {
+                GLuint componentSize = QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE);
+                GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_BYTE,1,QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE));
+
+                if (owner == Neuron)
+                    allocate(unboundData, componentSize * numNeurons/8,textureFormat);
+                else
+                    allocate(unboundData,componentSize * numConnections/8,textureFormat);
+            }
+            delete [] unboundData;
+            unboundData = NULL;
+        }
+    }
+
+    AttributeOwner owner;
+    AttributeType type;
+    GLvoid * unboundData;
+    QVector3D onColor, offColor;
+    GLfloat minValue, maxValue;
 };
 
 
@@ -54,20 +160,20 @@ class NCV : public QGLWidget
 {
     Q_OBJECT
 public:
-    enum AttributeAccess
-    {
-        ConnectionOnly,
-        NeuronOnly,
-        Shared
-    };
+
     /*!
         \param format The format of the OpenGL context used with this application.
         If the graphics hardware being used cannot support OpenGL 4, an error will be raised.
         \param parent The parent widget to house this canvas.
         \brief The OpenGL Widget housing the core NCV rendering context.
     */
-    NCV( const QGLFormat& format, QWidget* parent = 0 );
+    NCV( QWidget* parent = 0 );
     ~NCV();
+
+    /*!
+        \brief This function indicates whether a proper OpenGL 4.X Context is established.
+    */
+    bool isValid();
 
 public slots:
     /*!
@@ -101,186 +207,132 @@ public slots:
     */
     void createNeurons(const QString & filename );
 
-    /*!
-        \param name The name of the attribute being set.
-        \param data The data to bind.
-        \param stride The stride (in bytes) of each element in data;
-        \param componentType The OpenGL data type used for this attribute.
-        \brief This function binds an attribute that spans all neurons and all connections to the rendering context.
-        \note All compound attributes are accessible by both neurons and connections;
-    */
-    void setCompoundAttributeArray(QString name, void * data,  GLenum componentType, int tupleSize, AttributeAccess access);
 
     /*!
-        \param name The name of the attribute being set.
-        \param data The data to bind.
-        \param componentType The base OpenGL data type used for this attribute.
-        \param tupleSize The number of componentType values per attribute.
-        \param access Describes what data set(s) can access this attribute.
-        \brief This function binds an attribute that spans all connections to the rendering context.
+        \param camera The camera to add to the camera set.
+        \param name The name to identify this camera by
+        \brief This function adds a camera to the camera set.
     */
-    void setConnectionAttributeArray(QString name, void * data,  GLenum componentType,int tupleSize, AttributeAccess access);
+    void addCamera(QGLXCamera *camera, QString name);
+
 
     /*!
-        \param name The name of the attribute being set.
-        \param data The data to bind.
-        \param componentType The base OpenGL data type used for this attribute.
-        \param tupleSize The number of componentType values per attribute.
-        \param access Describes what data set(s) can access this attribute.
-        \brief This function binds an attribute that spans all neurons to the rendering context.
+        \param name The name of the camera being set.
+        \brief This function sets a camera as the currentCamera.
     */
-    void setNeuronAttributeArray(QString name, void * data, GLenum componentType,int tupleSize, AttributeAccess access);
+    void switchCamera(QString name);
+
+
 
     /*!
-        \param name The name of the parameter being set.
-        \param value The data to bind to the parameter specified.
-        \param access Describes what data set(s) can access this attribute.
+        \param name The name of the camera being removed.
+        \brief This function removes a camera from the camera set.
     */
-    void setVisualizationParameter(const char * name, GLint value, AttributeAccess access);
+    void deleteCamera(QString name);
 
     /*!
-        \param name The name of the parameter being set.
-        \param value The data to bind to the parameter specified.
-        \param access Describes what data set(s) can access this attribute.
+        \param camera The camera to add to the camera set.
+        \param name The name to identify this camera by
+        \brief This function adds a camera to the camera set.
     */
-    void setVisualizationParameter(const char * name, QVector2D value, AttributeAccess access);
+    void addLight(QGLXLight *light, QString name);
 
     /*!
-        \param name The name of the parameter being set.
-        \param value The data to bind to the parameter specified.
-        \param access Describes what data set(s) can access this attribute.
+        \param name The name of the camera being removed.
+        \brief This function removes a camera from the camera set.
     */
-    void setVisualizationParameter(const char * name, QVector3D value, AttributeAccess access);
+    void deleteLight(QString name);
 
-    /*!
-        \param name The name of the parameter being set.
-        \param value The data to bind to the parameter specified.
-        \param access Describes what data set(s) can access this attribute.
-    */
-    void setVisualizationParameter(const char * name,  QMatrix4x4 value, AttributeAccess access);
+    void setMaterial(QGLXMaterial *);
 
-    /*!
-        \param name The name of the parameter being set.
-        \param value The data to bind to the parameter specified.
-        \param access Describes what data set(s) can access this attribute.
-    */
-    void setVisualizationParameter(const char * name,GLuint value, AttributeAccess access);
+    void setNeuronRangeAttribute(QString name, GLfloat * data,GLfloat minValue, GLfloat maxValue, RangeInferenceFunction func = Interpolate);
 
-    /*!
-        \param name The name of the parameter being set.
-        \param value The data to bind to the parameter specified.
-        \param access Describes what data set(s) can access this attribute.
-    */
-    void setVisualizationParameter(const char * name,GLfloat value, AttributeAccess access);
+    void setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor, FlagInferenceFunction func = And);
 
-    /*!
-        \param name The name of the parameter being set.
-        \param value The data to bind to the parameter specified.
-        \param access Describes what data set(s) can access this attribute.
-    */
-    void setVisualizationParameter(const char * name,GLubyte value, AttributeAccess access);
+    void setConnectionRangeAttribute(QString name, GLfloat * data,GLfloat minValue, GLfloat maxValue);
+
+    void setConnectionFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor);
+
+    void setNeuronAttributeToRender(QString name);
+
+    void setConnectionAttributeToRender(QString name);
+
+    //void setGroupAssociation(QString group, int startNeuron, int endNeuron, bool includeOutgoingConnections = false, QString parent = "");
+
+
+
+signals:
+    void newFPSReading(float framesPerSecond);
+    void newCurrentCamera(QString name);
+    void newCamera(QGLXCamera *camera, QString name);
+    void cameraDeleted(QString name);
+    void cameraUpdated(QString name);
+    void newLight(QGLXLight* light, QString name);
+    void lightDeleted(QGLXLight* light, QString name);
+    void invalidGraphicsConfigurationDetected();
 
 protected:
-    virtual void initializeGL();
-    virtual void resizeGL( int w, int h );
-    virtual void paintGL();
-    virtual void  wheelEvent(QWheelEvent *e);
-    virtual void keyPressEvent( QKeyEvent* e );
+    void initializeGL();
+    void resizeGL( int w, int h );
+    void paintGL();
+    void  wheelEvent(QWheelEvent *e);
+    void keyPressEvent( QKeyEvent* e );
     void keyReleaseEvent(QKeyEvent *e);
-    virtual void mouseMoveEvent(QMouseEvent* e);
-    virtual void mousePressEvent(QMouseEvent* e);
-    virtual void mouseReleaseEvent(QMouseEvent* e);
-    virtual void timerEvent(QTimerEvent *e);
+    void mouseMoveEvent(QMouseEvent* e);
+    void mousePressEvent(QMouseEvent* e);
+    void mouseReleaseEvent(QMouseEvent* e);
+    void timerEvent(QTimerEvent *e);
+    void leaveEvent(QEvent * e);
+    void enterEvent(QEvent * e);
+
 
 private:
 
-    struct DataSet
-    {
-        enum AttributeType
-        {
-            Neuron,
-            Connection,
-            Compound
-        };
-        DataSet ()
-        {
-            this->data = NULL;
-            this->stride = 0;
-            this->componentType = 0;
-        }
-
-        DataSet (void * data,  GLenum componentType,int tupleSize,AttributeAccess access,AttributeType type, int divisor = 0)
-        {
-            this->data = data;
-            this->componentType = componentType;
-            this->tupleSize = tupleSize;
-            this->divisor = divisor;
-            this->type = type;
-            this->access = access;
-            this->componentSize =  QGLXCore::getComponentSize(componentType);
-            this->stride = tupleSize * componentSize;
-        }
-        void * data;
-        int tupleSize, stride, componentSize;
-        int divisor;
-        GLenum componentType;
-        AttributeType type;
-        AttributeAccess access;
-    };
-
-
-    template< class T >
-    struct Parameter
-    {
-        Parameter ()
-        {
-        }
-        Parameter (T value, AttributeAccess access)
-        {
-            this->value = value;
-            this->access = access;
-        }
-        AttributeAccess access;
-        T value;
-    };
-    void setVisualizationParameters();
-    void createNetwork();
-    void createAttributes();
-    void establishWorldBounds(int numNeurons,QVector3D * neuronPositions);
-    void onViewChanged();
-    void sizeTargets();
-
+    void m_setVisualizationParameters();
+    void m_createNetwork();
+    void m_establishWorldBounds(int numNeurons,QVector3D * neuronPositions);
+    void m_performRegularRender();
+    void m_performSelectionRender();
+    QGLShaderProgram *m_neuronProgram();
+    QGLShaderProgram *m_connectionProgram();
+    void m_bindNeurons();
+    void m_bindConnections();
+    void m_releaseNeurons();
+    void m_releaseConnections();
 
     int m_frameCount;
-    QTime m_time;
+    float m_fps;
+    bool m_renderOnlySelection;
+    GLuint *m_inNeurons, *m_outNeurons;
+    Attribute *m_neuronAttribToRender, *m_connectionAttribToRender;
+    QString m_currentCamera;
+    QTime m_timer;
+    QMap<QString,Attribute> m_attributes;
+    Attribute m_translationBuffer;
+    QMap<QString,QGLXTexture2D> m_maps;
+    QGLXTexture1D * m_neuronRangeMap, * m_connectionRangeMap;
+    QMap<QString,QGLXLight *> m_lights;
     QGLXSystem m_neurons , m_connections;
-    QGLXDynamicFrameBufferObject  m_frameTargetBuffer;
-    QGLShaderProgram m_neuronProgram, m_connectionProgram, m_selectionRectProgram;
+    QGLXFrameBufferObject  m_frameBufferObject;
+    QGLShaderProgram *m_blendProgram,*m_selectionRectProgram,*m_lightingProgram,*m_selectionProgram, *m_bitNeuronProgram,
+    *m_floatNeuronProgram,*m_bitConnectionProgram,*m_floatConnectionProgram ;
     QMatrix4x4 m_neuronScale;
     QVector3D m_worldSize,m_worldCenter;
     QGLXOctree<QVector3D> m_octree;
-    RenderSetting m_renderSetting;
-    QList<QString> m_firstPassTargets;
     int m_width, m_height;
-    QGLXCamera m_camera;
+    QMap<QString,QGLXCamera *> m_cameras;
     QVector2D m_mousePosition;
     QRect m_selectionRect;
-    QMap<QString,DataSet> m_attributesToCreate;
     int m_neuronsToCreate,m_connectionsToCreate;
     float m_moveSpeed, m_turnSpeed;
-    bool m_leftMouseDown,m_rightMouseDown,m_shiftDown,m_renderNeurons,m_renderConnections,m_newVisualizationParameters;
-    SelectionState m_connectionSelectionState;
-    QMap<QString,QGLXBuffer> m_textureBuffers;
-    QGLXBuffer m_selectionRectVertices,m_screenVertices,m_screenCoords;
-    QSet<GLuint> m_selectedObjects;
+    bool m_leftMouseDown,m_rightMouseDown,m_shiftDown,m_renderNeurons,m_renderConnections,m_newVisualizationParameters,m_versionCapable,m_initialized;
 
-    QMap<const char *,Parameter<QVector2D> > m_vector2DParametersToCreate;
-    QMap<const char *,Parameter<QVector3D> > m_vector3DParametersToCreate;
-    QMap<const char *,Parameter<QMatrix4x4> > m_mat4x4ParametersToCreate;
-    QMap<const char *,Parameter<GLfloat> > m_floatParametersToCreate;
-    QMap<const char *,Parameter<GLuint> > m_uintParametersToCreate;
-    QMap<const char *,Parameter<GLint> > m_intParametersToCreate;
-    QMap<const char *,Parameter<GLubyte> > m_ubyteParametersToCreate;
+    QGLXBuffer m_selectionRectVertices,m_screenVertices,m_screenCoords;
+    QSet<GLuint> m_selectedObjects,m_selectedConnections,m_selectedNeurons;
+    QVector<Range> m_ranges;
+    int m_dividerIndex;
+    bool m_lightingEnabled;
+
 
 };
 

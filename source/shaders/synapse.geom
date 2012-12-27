@@ -1,46 +1,50 @@
 #version 400
 
-
 uniform mat4 View, Projection;
+uniform vec3 CameraDirection;
+uniform float ConnectionWidth;
 
-uniform samplerBuffer Inst_Translation;
-uniform samplerBuffer Inst_Voltage;
-uniform usamplerBuffer Inst_Selection;
-uniform usamplerBuffer Inst_Firing;
-
-flat in uint Connection_ID[1];
-flat in uint Neuron_IN[1];
-flat in uint Neuron_OUT[1];
+flat in uint Conn_ID[2];
+flat in uint Conn_Firing[2];
+in float Conn_Voltage[2];
+in vec3 End_Position[2];
 
 out vec3 WorldPos;
+out vec3 Normal;
 out float Voltage;
-
-flat out uint Selection;
-flat out uint NeuronSelection;
 flat out uint ID;
 flat out uint Firing;
 
-layout (points) in;
-layout (line_strip,max_vertices =2) out;
+layout (lines) in;
+layout (triangle_strip,max_vertices =4) out;
 
 void main( void )
 {
-    ID = Connection_ID[0];
-    Firing = texelFetch(Inst_Firing,int(ID)-1).r;
-    Voltage = texelFetch(Inst_Voltage,int(Neuron_IN[0])-1).r;
-    WorldPos = texelFetch(Inst_Translation,int(Neuron_IN[0])-1).xyz;
-    NeuronSelection = max(texelFetch(Inst_Selection,int(Neuron_OUT[0])-1).r,texelFetch(Inst_Selection,int(Neuron_IN[0])-1).r);
-    Selection = texelFetch(Inst_Selection,int(Connection_ID[0])-1).r;
-    gl_Position = Projection * View * vec4(WorldPos,1.0f);
+    vec3 lineDir = normalize(End_Position[1] - End_Position[0]);
+    vec3 tangent =  normalize(cross(normalize(CameraDirection),lineDir));
+    Normal = normalize(cross(lineDir,tangent));
+
+    ID = Conn_ID[0];
+    Firing = min(Conn_Firing[0] + Conn_Firing[1],1);
+
+    Voltage = Conn_Voltage[0];
+
+    WorldPos = End_Position[0]- (tangent * ConnectionWidth/2);
+    gl_Position = Projection * View *vec4(WorldPos,1.0f);
     EmitVertex();
 
-    ID = Connection_ID[0];
-    Firing = texelFetch(Inst_Firing,int(ID)-1).r;
-    Voltage = texelFetch(Inst_Voltage,int(Neuron_OUT[0])-1).r;
-    WorldPos = texelFetch(Inst_Translation,int(Neuron_OUT[0])-1).xyz;
-    NeuronSelection = max(texelFetch(Inst_Selection,int(Neuron_OUT[0])-1).r,texelFetch(Inst_Selection,int(Neuron_IN[0])-1).r);
-    Selection = texelFetch(Inst_Selection,int(Connection_ID[0])-1).r;
-    gl_Position = Projection * View * vec4(WorldPos,1.0f);
+    WorldPos = End_Position[0]+ (tangent * ConnectionWidth/2);
+    gl_Position = Projection * View *vec4(WorldPos,1.0f);
+    EmitVertex();
+
+    Voltage = Conn_Voltage[1];
+
+    WorldPos = End_Position[1]- (tangent * ConnectionWidth/2);
+    gl_Position = Projection * View *vec4(WorldPos,1.0f);
+    EmitVertex();
+
+    WorldPos = End_Position[1]+ (tangent * ConnectionWidth/2);
+    gl_Position = Projection * View *vec4(WorldPos ,1.0f);
     EmitVertex();
 
     EndPrimitive();

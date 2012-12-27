@@ -1,10 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "ncvwidget.h"
 #include <QMainWindow>
-#include "ncv.h"
-#include <QGLFormat>
-
 namespace Ui {
 class MainWindow;
 }
@@ -18,7 +16,7 @@ public:
     ~MainWindow();
 
 private:
-
+    NCVWidget * m_visualization;
     Ui::MainWindow *ui;
 
 };

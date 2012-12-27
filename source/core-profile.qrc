@@ -1,18 +1,18 @@
 <RCC>
     <qresource prefix="/">
         <file>assets/cube.nff</file>
-        <file>assets/neuron.obj</file>
-        <file>assets/neuronHigh.obj</file>
-        <file>shaders/final.frag</file>
-        <file>shaders/final.vert</file>
-        <file>shaders/synapse.frag</file>
-        <file>shaders/synapse.vert</file>
-        <file>shaders/neuron.frag</file>
-        <file>shaders/neuron.vert</file>
-        <file>shaders/synapse.geom</file>
         <file>shaders/selectionRect.frag</file>
-        <file>shaders/selectionRect.vert</file>
-        <file>shaders/selection.vert</file>
         <file>shaders/selection.frag</file>
+        <file>shaders/postProcess.vert</file>
+        <file>shaders/lighting.frag</file>
+        <file>shaders/bit.frag</file>
+        <file>shaders/connectionBit.geom</file>
+        <file>shaders/connectionBit.vert</file>
+        <file>shaders/connectionFloat.geom</file>
+        <file>shaders/connectionFloat.vert</file>
+        <file>shaders/neuronBit.vert</file>
+        <file>shaders/neuronFloat.vert</file>
+        <file>shaders/simpleBlend.frag</file>
+        <file>shaders/float.frag</file>
     </qresource>
 </RCC>

@@ -2,187 +2,215 @@
 
 QGLXCamera::QGLXCamera(void)
 {
-    viewMatrix = QMatrix4x4();
-    projectionMatrix = QMatrix4x4();
+    m_viewMatrix = QMatrix4x4();
+    m_projectionMatrix = QMatrix4x4();
 
 }
 
-void QGLXCamera::compileViewMatrix()
+void QGLXCamera::m_compileViewMatrix()
 {
-    viewMatrix.setToIdentity();
-    viewMatrix.lookAt(position,position + direction,up);
+    m_viewMatrix.setToIdentity();
+    m_viewMatrix.lookAt(m_position,m_position + m_direction,m_up);
 }
 
 // VIEW FUNCTIONS
 
 QMatrix4x4 QGLXCamera::getViewMatrix()
 {
-   return viewMatrix;
+   return m_viewMatrix;
 }
 
 void QGLXCamera::setViewMatrix(QVector3D pos, GLfloat horizAngle, GLfloat vertAngle)
 {
-   position = pos;
-   horizontalAngle = horizAngle;
-   verticalAngle = vertAngle;
-   direction = QVector3D(
-       cos(verticalAngle) * sin(horizontalAngle),
-       sin(verticalAngle),
-       cos(verticalAngle) * cos(horizontalAngle)
-   );
+   m_position = pos;
+   m_horizontalAngle = horizAngle;
+   m_verticalAngle = vertAngle;
+   m_direction = QVector3D(
+       cos(m_verticalAngle) * sin(m_horizontalAngle),
+       sin(m_verticalAngle),
+       cos(m_verticalAngle) * cos(m_horizontalAngle)
+   ).normalized();
 
-   right = QVector3D(
-       sin(horizontalAngle - PI/2.0),
+   m_right = QVector3D(
+       sin(m_horizontalAngle - PI/2.0),
        0,
-       cos(horizontalAngle - PI/2.0)
-   );
-   up = QVector3D::crossProduct( right, direction );
+       cos(m_horizontalAngle - PI/2.0)
+   ).normalized();
+   m_up = QVector3D::crossProduct( m_right, m_direction ).normalized();
 
-   compileViewMatrix();
+   m_compileViewMatrix();
 }
 
-void QGLXCamera::setViewMatrix(QVector3D pos, QVector3D target, QVector3D up)
+void QGLXCamera::setViewMatrix(QVector3D pos, QVector3D target, QVector3D m_up)
 {
 
-   position = pos;
-   direction = target - pos;
-   this->up = up;
+   m_position = pos;
+   m_direction = (target - pos).normalized();
+   this->m_up = m_up.normalized();
 
-   verticalAngle = asin(direction.y());
-   horizontalAngle = acos(direction.z() / cos(verticalAngle));
 
-   compileViewMatrix();
+   m_verticalAngle = asin(m_direction.y());
+   m_horizontalAngle = acos(m_direction.z() / cos(m_verticalAngle));
+
+   m_right = QVector3D(
+       sin(m_horizontalAngle - PI/2.0),
+       0,
+       cos(m_horizontalAngle - PI/2.0)
+   ).normalized();
+   m_compileViewMatrix();
 }
+
+void QGLXCamera::setForward(QVector3D dir)
+{
+    m_direction = dir.normalized();
+
+    m_verticalAngle = asin(m_direction.y());
+    m_horizontalAngle = acos(m_direction.z() / cos(m_verticalAngle));
+
+    m_right = QVector3D(
+        sin(m_horizontalAngle - PI/2.0),
+        0,
+        cos(m_horizontalAngle - PI/2.0)
+    ).normalized();
+    m_compileViewMatrix();
+}
+
+
+void QGLXCamera::setUp(QVector3D up)
+{
+    m_up = up.normalized();
+    m_compileViewMatrix();
+}
+
 
 void QGLXCamera::pan(GLfloat x, GLfloat y, GLfloat z)
 {
-    position += x * right ;
-    position += z * direction ;
-    position += y * up ;
-    compileViewMatrix();
+    m_position += x * m_right ;
+    m_position += z * m_direction ;
+    m_position += y * m_up ;
+    m_compileViewMatrix();
 }
 
 void QGLXCamera::translate(GLfloat x, GLfloat y, GLfloat z)
 {
-    position += QVector3D(x,y,z);
-    compileViewMatrix();
+    m_position += QVector3D(x,y,z);
+    m_compileViewMatrix();
 }
 
 QVector3D QGLXCamera::getPosition()
 {
-    return position;
+    return m_position;
 }
 void QGLXCamera::setPosition(QVector3D pos)
 {
 
-    position  = pos;
-    compileViewMatrix();
+    m_position  = pos;
+    m_compileViewMatrix();
 }
-
 
 QVector3D QGLXCamera::getForward()
 {
-    return direction;
+    return m_direction;
 }
 QVector3D QGLXCamera::getUp()
 {
-    return up;
+    return m_up;
 }
 
 QVector3D QGLXCamera::getRight()
 {
-    return right;
+    return m_right;
 }
 
 GLfloat QGLXCamera::getRotationX()
 {
-    return verticalAngle;
+    return m_verticalAngle;
 }
 
 GLfloat QGLXCamera::getRotationY()
 {
-    return horizontalAngle;
+    return m_horizontalAngle;
 }
 
 
 void QGLXCamera::rotate(GLfloat horizRot, GLfloat vertRot)
 {
-    horizontalAngle += horizRot;
-    verticalAngle += vertRot;
+    m_horizontalAngle += horizRot;
+    m_verticalAngle += vertRot;
 
-    direction = QVector3D(
-        cos(verticalAngle) * sin(horizontalAngle),
-        sin(verticalAngle),
-        cos(verticalAngle) * cos(horizontalAngle)
-    );
+    m_direction = QVector3D(
+        cos(m_verticalAngle) * sin(m_horizontalAngle),
+        sin(m_verticalAngle),
+        cos(m_verticalAngle) * cos(m_horizontalAngle)
+    ).normalized();
 
-    right = QVector3D(
-        sin(horizontalAngle - PI/2.0),
+    m_right = QVector3D(
+        sin(m_horizontalAngle - PI/2.0),
         0,
-        cos(horizontalAngle - PI/2.0)
-    );
-    up = QVector3D::crossProduct( right, direction );
+        cos(m_horizontalAngle - PI/2.0)
+    ).normalized();
+    m_up = QVector3D::crossProduct( m_right, m_direction ).normalized();
 
-    compileViewMatrix();
+    m_compileViewMatrix();
 }
 
 // PROJECTION FUNCTIONS
 QMatrix4x4 QGLXCamera::getProjectionMatrix()
 {
-   return projectionMatrix;
+   return m_projectionMatrix;
 }
 void QGLXCamera::setProjectionMatrix(GLfloat fov, GLfloat aspect, GLfloat nearP, GLfloat farP)
 {
-   fieldOfView = fov;
-   aspectRatio = aspect;
-   nearPlane = nearP;
-   farPlane = farP;
-   projectionMatrix.setToIdentity();
-   projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
+   m_fieldOfView = fov;
+   m_aspectRatio = aspect;
+   m_nearPlane = nearP;
+   m_farPlane = farP;
+   m_projectionMatrix.setToIdentity();
+   m_projectionMatrix.perspective(m_fieldOfView,m_aspectRatio,m_nearPlane,m_farPlane);
 }
 
-GLfloat QGLXCamera::getFieldOfView( )
+GLfloat QGLXCamera::getFieldOfView()
 {
-    return fieldOfView;
+    return m_fieldOfView;
 }
 
 void QGLXCamera::setFieldOfView(GLfloat fov)
 {
-   fieldOfView = fov;
-   projectionMatrix.setToIdentity();
-   projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
+   m_fieldOfView = fov;
+   m_projectionMatrix.setToIdentity();
+   m_projectionMatrix.perspective(m_fieldOfView,m_aspectRatio,m_nearPlane,m_farPlane);
 }
 
 GLfloat QGLXCamera::getAspectRatio( )
 {
-   return aspectRatio;
+   return m_aspectRatio;
 }
 void QGLXCamera::setAspectRatio(GLfloat aspect)
 {
-   aspectRatio = aspect;
-   projectionMatrix.setToIdentity();
-   projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
+   m_aspectRatio = aspect;
+   m_projectionMatrix.setToIdentity();
+   m_projectionMatrix.perspective(m_fieldOfView,m_aspectRatio,m_nearPlane,m_farPlane);
 }
 
 GLfloat QGLXCamera::getNearPlane( )
 {
-   return nearPlane;
+   return m_nearPlane;
 }
 void QGLXCamera::setNearPlane(GLfloat nearP)
 {
-   nearPlane = nearP;
-   projectionMatrix.setToIdentity();
-   projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
+   m_nearPlane = nearP;
+   m_projectionMatrix.setToIdentity();
+   m_projectionMatrix.perspective(m_fieldOfView,m_aspectRatio,m_nearPlane,m_farPlane);
 }
 
 GLfloat QGLXCamera::getFarPlane( )
 {
-   return farPlane;
+   return m_farPlane;
 }
 
 void QGLXCamera::setFarPlane(GLfloat farP)
 {
-   farPlane = farP;
-   projectionMatrix.setToIdentity();
-   projectionMatrix.perspective(fieldOfView,aspectRatio,nearPlane,farPlane);
+   m_farPlane = farP;
+   m_projectionMatrix.setToIdentity();
+   m_projectionMatrix.perspective(m_fieldOfView,m_aspectRatio,m_nearPlane,m_farPlane);
 }

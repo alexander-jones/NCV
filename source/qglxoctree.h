@@ -3,14 +3,17 @@
 #include "qglxboundingbox.h"
 
 template< class T>
-struct QGLXOctreeLeaf
+class QGLXOctreeLeaf
 {
+public:
     QGLXOctreeLeaf(T object, QGLXBoundingBox bounds)
     {
         this->object = object;
         this->bounds = bounds;
     }
+signals:
 
+private:
     T object;
     QGLXBoundingBox bounds;
 };
