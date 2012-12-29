@@ -14,5 +14,7 @@
         <file>shaders/neuronFloat.vert</file>
         <file>shaders/simpleBlend.frag</file>
         <file>shaders/float.frag</file>
+        <file>assets/endTriangle.png</file>
+        <file>assets/startTriangle.png</file>
     </qresource>
 </RCC>

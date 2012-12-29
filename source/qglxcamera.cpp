@@ -45,6 +45,7 @@ void QGLXCamera::setViewMatrix(QVector3D pos, QVector3D target, QVector3D m_up)
 {
 
    m_position = pos;
+
    m_direction = (target - pos).normalized();
    this->m_up = m_up.normalized();
 

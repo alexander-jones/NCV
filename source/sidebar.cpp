@@ -14,7 +14,9 @@ Sidebar::Sidebar(QWidget *parent) :
 
     m_scrollArea = new QScrollArea();
     m_scrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-    m_scrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+    m_scrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+    m_scrollArea->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
+    m_scrollArea->setWidgetResizable(true);
     m_scrollArea->setAlignment(Qt::AlignCenter);
     m_scrollArea->setFrameShape(QFrame::NoFrame);
 

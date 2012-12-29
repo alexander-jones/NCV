@@ -41,7 +41,10 @@ SOURCES += \
     qglxtexture3d.cpp \
     qglxtexture2d.cpp \
     qglxtexture.cpp \
-    qglxframebufferobject.cpp
+    qglxframebufferobject.cpp \
+    colorrangewidget.cpp \
+    attributewidget.cpp \
+    colorbitwidget.cpp
 
 HEADERS  += \
     qglxoctree.h \
@@ -64,7 +67,10 @@ HEADERS  += \
     qglxtexture1d.h \
     qglxtexture3d.h \
     qglxtexture2d.h \
-    qglxframebufferobject.h
+    qglxframebufferobject.h \
+    colorrangewidget.h \
+    attributewidget.h \
+    colorbitwidget.h
 
 FORMS    += \
     mainwindow.ui
@@ -89,7 +95,10 @@ OTHER_FILES += \
     shaders/connectionBit.vert \
     shaders/connectionFloat.vert \
     shaders/connectionFloat.geom \
-    shaders/simpleBlend.frag
+    shaders/simpleBlend.frag \
+    assets/sphere.nff \
+    assets/startTriangle.png \
+    assets/endTriangle.png
 
 RESOURCES += \
     core-profile.qrc

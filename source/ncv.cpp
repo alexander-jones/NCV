@@ -38,6 +38,8 @@ NCV::NCV(  QWidget* parent )
     m_initialized = false;
     m_connectionAttribToRender = NULL;
     m_neuronAttribToRender = NULL;
+    m_neuronRangeData = NULL;
+    m_connectionRangeData = NULL;
     srand(time(NULL));
 
 }
@@ -146,7 +148,7 @@ void NCV::initializeGL()
     glEnable(GL_POLYGON_SMOOTH);
     glEnable(GL_MULTISAMPLE);
     glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST );
-    glLineWidth(3);
+    glLineWidth(1);
 
 
     QGLXCamera *main = new QGLXCamera();
@@ -160,7 +162,6 @@ void NCV::initializeGL()
     // initialize target bufferm_neuronsToCreate
     m_frameBufferObject.create();
 
-
     QString names[7] = {"diffuse","selected","deselected","position","normal","id","depth"};
     GLenum formats[7] = {GL_RGB8,GL_RGBA8,GL_RGBA8,GL_RGB32F,GL_RGB8,GL_R32UI,GL_DEPTH_COMPONENT32};
     for(int i = 0 ; i < 7; i ++)
@@ -173,7 +174,6 @@ void NCV::initializeGL()
         m_maps[names[i]].setMagFilter(QGLXTexture2D::Linear);
         m_maps[names[i]].setWrapFunction(QGLXTexture2D::Clamp,QGLXTexture2D::Clamp);
         m_maps[names[i]].release();
-
     }
 
     // compile shader
@@ -305,11 +305,9 @@ void NCV::initializeGL()
     m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D),GL_FLOAT);
     m_screenCoords.release();
 
-    QVector3D range[2] = {QVector3D(1,0,1),QVector3D(1,0,0)};
     m_neuronRangeMap = new QGLXTexture1D();
     m_neuronRangeMap->create();
     m_neuronRangeMap->bind();
-    m_neuronRangeMap->allocate(2,GL_RGB32F,range);
     m_neuronRangeMap->setMinFilter(QGLXTexture1D::Linear);
     m_neuronRangeMap->setMagFilter(QGLXTexture1D::Linear);
     m_neuronRangeMap->setWrapFunction(QGLXTexture1D::Clamp);
@@ -319,7 +317,6 @@ void NCV::initializeGL()
     m_connectionRangeMap = new QGLXTexture1D();
     m_connectionRangeMap->create();
     m_connectionRangeMap->bind();
-    m_connectionRangeMap->allocate(2,GL_RGB32F,range);
     m_connectionRangeMap->setMinFilter(QGLXTexture1D::Linear);
     m_connectionRangeMap->setMagFilter(QGLXTexture1D::Linear);
     m_connectionRangeMap->setWrapFunction(QGLXTexture1D::Clamp);
@@ -432,14 +429,67 @@ void NCV::m_createNetwork()
 }
 
 
+
+void NCV::m_bindAttribute(NetworkAttribute  * attribute)
+{
+    if (!attribute->buffer->isCreated())
+        attribute->buffer->create();
+
+    attribute->buffer->bind();
+
+    if (attribute->unboundData != NULL)
+    {
+        int numNeurons = m_neurons.numObjects();
+        int numConnections = m_connections.numObjects();
+        if (attribute->type == NetworkAttribute::Position)
+        {
+            GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
+            GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,3,QGLXTexture::getComponentSize(GL_FLOAT));
+
+            attribute->buffer->allocate(attribute->unboundData,3* componentSize * numNeurons,textureFormat);
+        }
+        else if (attribute->type == NetworkAttribute::Range)
+        {
+            GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
+            GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,1,QGLXTexture::getComponentSize(GL_FLOAT));
+
+            if (attribute->owner == NetworkAttribute::Neuron)
+                attribute->buffer->allocate(attribute->unboundData, componentSize * numNeurons,textureFormat);
+            else
+                attribute->buffer->allocate(attribute->unboundData,componentSize * numConnections,textureFormat);
+        }
+        else if (attribute->type == NetworkAttribute::Flag)
+        {
+            GLuint componentSize = QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE);
+            GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_BYTE,1,QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE));
+
+            if (attribute->owner == NetworkAttribute::Neuron)
+            {
+                if (numNeurons %8 == 0)
+                    attribute->buffer->allocate(attribute->unboundData, componentSize * numNeurons/8,textureFormat);
+                else
+                    attribute->buffer->allocate(attribute->unboundData, componentSize * (numNeurons/8 + 1),textureFormat);
+            }
+            else
+            {
+                if (numConnections %8 == 0)
+                    attribute->buffer->allocate(attribute->unboundData, componentSize * numConnections/8,textureFormat);
+                else
+                    attribute->buffer->allocate(attribute->unboundData, componentSize * (numConnections/8 + 1),textureFormat);
+            }
+        }
+        delete [] attribute->unboundData;
+        attribute->unboundData = NULL;
+    }
+}
 QGLShaderProgram * NCV::m_neuronProgram()
 {
     if ( m_neuronAttribToRender != NULL)
     {
 
-        if (m_neuronAttribToRender->type == Attribute::Flag)
+        if (m_neuronAttribToRender->type == NetworkAttribute::Flag)
             return m_bitNeuronProgram;
-        else if (m_neuronAttribToRender->type == Attribute::Range)
+        else if (m_neuronAttribToRender->type == NetworkAttribute::Range)
             return m_floatNeuronProgram;
 
     }
@@ -452,9 +502,9 @@ QGLShaderProgram * NCV::m_connectionProgram()
     if ( m_connectionAttribToRender != NULL)
     {
 
-        if (m_connectionAttribToRender->type == Attribute::Flag)
+        if (m_connectionAttribToRender->type == NetworkAttribute::Flag)
             return m_bitConnectionProgram;
-        else if (m_connectionAttribToRender->type == Attribute::Range)
+        else if (m_connectionAttribToRender->type == NetworkAttribute::Range)
             return m_floatConnectionProgram;
 
     }
@@ -462,6 +512,7 @@ QGLShaderProgram * NCV::m_connectionProgram()
     return NULL;
 
 }
+
 
 void NCV::m_bindConnections()
 {
@@ -483,21 +534,14 @@ void NCV::m_bindConnections()
         connectionProgram->setUniformValue("WorldCenter",m_worldCenter);
         connectionProgram->setUniformValue("WorldSize",m_worldSize);
         connectionProgram->setUniformValue("DeselectionColor",QVector4D(1,1,1,0.05));
-        int rangeLoc = connectionProgram->attributeLocation("RangeMap");
 
-        if (rangeLoc != -1)
-        {
-            glActiveTexture(GL_TEXTURE3);
-            m_connectionRangeMap->bind();
-            connectionProgram->setUniformValue("RangeMap",3);
-        }
 
         m_connections.bind(connectionProgram);
 
         int textureSlot = 0;
 
         glActiveTexture(GL_TEXTURE0 + textureSlot);
-        m_translationBuffer.bindBuffer(m_neurons.numObjects(),m_connections.numObjects());
+        m_bindAttribute(&m_translationBuffer);
 
         int posLoc = connectionProgram->uniformLocation("Inst_Translation");
         connectionProgram->setUniformValue(posLoc, textureSlot);
@@ -506,20 +550,26 @@ void NCV::m_bindConnections()
 
 
         glActiveTexture(GL_TEXTURE0 + textureSlot);
-        m_connectionAttribToRender->bindBuffer(m_neurons.numObjects(),m_connections.numObjects());
+
+        m_bindAttribute(m_connectionAttribToRender);
 
         int attribLoc = connectionProgram->uniformLocation("Inst_Attribute");
         connectionProgram->setUniformValue(attribLoc, textureSlot);
 
-        if (m_connectionAttribToRender->type == Attribute::Flag)
+        if (m_connectionAttribToRender->type == NetworkAttribute::Flag)
         {
             connectionProgram->setUniformValue("OnColor", m_connectionAttribToRender->onColor);
             connectionProgram->setUniformValue("OffColor", m_connectionAttribToRender->offColor);
         }
-        else if (m_connectionAttribToRender->type == Attribute::Range)
+        else if (m_connectionAttribToRender->type == NetworkAttribute::Range)
         {
             connectionProgram->setUniformValue("MinimumValue", m_connectionAttribToRender->minValue);
             connectionProgram->setUniformValue("MaximumValue", m_connectionAttribToRender->maxValue);
+
+            glActiveTexture(GL_TEXTURE2);
+            m_connectionRangeMap->bind();
+            connectionProgram->setUniformValue("RangeMap",2);
+
         }
     }
 
@@ -527,8 +577,8 @@ void NCV::m_bindConnections()
 
 void NCV::m_releaseConnections()
 {
-    m_translationBuffer.release();
-    m_connectionAttribToRender->release();
+    m_translationBuffer.buffer->release();
+    m_connectionAttribToRender->buffer->release();
     m_connections.release(m_connectionProgram());
     m_connectionProgram()->release();
 }
@@ -553,15 +603,6 @@ void NCV::m_bindNeurons()
         neuronProgram->setUniformValue("WorldCenter",m_worldCenter);
         neuronProgram->setUniformValue("WorldSize",m_worldSize);
 
-        // if the attribute being displayed is a range attribute, bind the associated range map (pulled from ui)
-        int rangeLoc = neuronProgram->attributeLocation("RangeMap");
-        if (rangeLoc != -1)
-        {
-            glActiveTexture(GL_TEXTURE3);
-            m_neuronRangeMap->bind();
-            neuronProgram->setUniformValue("RangeMap",3);
-        }
-
         // bind geometric data associated with neurons
         m_neurons.bind(neuronProgram);
 
@@ -569,7 +610,7 @@ void NCV::m_bindNeurons()
 
         // bind neuron position buffer to first texture slot
         glActiveTexture(GL_TEXTURE0 + textureSlot);
-        m_translationBuffer.bindBuffer(m_neurons.numObjects(),m_connections.numObjects());
+        m_bindAttribute(&m_translationBuffer);
 
         // bind position buffer to current neuron shader program
         int posLoc = neuronProgram->uniformLocation("Inst_Translation");
@@ -579,22 +620,25 @@ void NCV::m_bindNeurons()
 
         // bind current neuron attribute to next texture slot
         glActiveTexture(GL_TEXTURE0 + textureSlot);
-        m_neuronAttribToRender->bindBuffer(m_neurons.numObjects(),m_connections.numObjects());
+        m_bindAttribute(m_neuronAttribToRender);
 
         // bind attribute to current shader program
         int attribLoc = neuronProgram->uniformLocation("Inst_Attribute");
         neuronProgram->setUniformValue(attribLoc, textureSlot);
 
         // depending on which type of attribute the neuron attribute is, bind related uniforms to shader program
-        if (m_neuronAttribToRender->type == Attribute::Flag)
+        if (m_neuronAttribToRender->type == NetworkAttribute::Flag)
         {
             neuronProgram->setUniformValue("OnColor", m_neuronAttribToRender->onColor);
             neuronProgram->setUniformValue("OffColor", m_neuronAttribToRender->offColor);
         }
-        else if (m_neuronAttribToRender->type  == Attribute::Range)
+        else if (m_neuronAttribToRender->type  == NetworkAttribute::Range)
         {
             neuronProgram->setUniformValue("MinimumValue", m_neuronAttribToRender->minValue);
             neuronProgram->setUniformValue("MaximumValue", m_neuronAttribToRender->maxValue);
+            glActiveTexture(GL_TEXTURE2);
+            m_neuronRangeMap->bind();
+            neuronProgram->setUniformValue("RangeMap",2);
         }
 
 
@@ -605,8 +649,8 @@ void NCV::m_bindNeurons()
 void NCV::m_releaseNeurons()
 {
 
-    m_translationBuffer.release();
-    m_neuronAttribToRender->release();
+    m_translationBuffer.buffer->release();
+    m_neuronAttribToRender->buffer->release();
     m_neurons.release(m_neuronProgram());
     m_neuronProgram()->release();
 }
@@ -626,14 +670,6 @@ void NCV::m_performRegularRender()
     // clear targets
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    // render connections
-    if (m_renderConnections && m_connectionAttribToRender != NULL)
-    {
-        m_bindConnections();
-        m_connections.draw();
-        m_releaseConnections();
-
-    }
 
     // render neurons
     if (m_renderNeurons && m_neuronAttribToRender != NULL)
@@ -641,6 +677,13 @@ void NCV::m_performRegularRender()
         m_bindNeurons();
         m_neurons.draw();
         m_releaseNeurons();
+    }
+
+    if (m_renderConnections && m_connectionAttribToRender != NULL)
+    {
+        m_bindConnections();
+        m_connections.draw();
+        m_releaseConnections();
     }
     // release frame buffer and related targets
     m_maps["diffuse"].release();
@@ -731,9 +774,9 @@ void NCV::m_performSelectionRender()
         m_maps["normal"].release();
         m_maps["id"].release();
         m_maps["depth"].release();
-        m_translationBuffer.release();
-        m_neuronAttribToRender->release();
-        m_connectionAttribToRender->release();
+        m_translationBuffer.buffer->release();
+        m_neuronAttribToRender->buffer->release();
+        m_connectionAttribToRender->buffer->release();
         m_frameBufferObject.release();
     }
     else
@@ -790,9 +833,9 @@ void NCV::m_performSelectionRender()
             m_releaseConnections();
         }
 
-        m_translationBuffer.release();
-        m_neuronAttribToRender->release();
-        m_connectionAttribToRender->release();
+        m_translationBuffer.buffer->release();
+        m_neuronAttribToRender->buffer->release();
+        m_connectionAttribToRender->buffer->release();
 
         m_maps["deselected"].release();
         m_maps["position"].release();
@@ -879,13 +922,26 @@ void NCV::paintGL()
         m_createNetwork();
 
 
-
     if (m_selectedObjects.count() >0)
         m_performSelectionRender();
     else
         m_performRegularRender();
 
+    if (m_neuronRangeData  !=NULL)
+    {
+        m_neuronRangeMap->bind();
+        m_neuronRangeMap->allocate(300,GL_RGB32F,m_neuronRangeData);
+        m_neuronRangeMap->release();
+        m_neuronRangeData = NULL;
+    }
 
+    if (m_connectionRangeData  !=NULL)
+    {
+        m_connectionRangeMap->bind();
+        m_connectionRangeMap->allocate(100,GL_RGB32F,m_connectionRangeData);
+        m_connectionRangeMap->release();
+        m_connectionRangeData = NULL;
+    }
 
     int enabledLights = 0;
     m_lightingProgram->bind();
@@ -1264,7 +1320,11 @@ void NCV::createNeurons(int number,QVector3D * positions )
     if (!isValid())
         return;
     m_neuronsToCreate = number;
-    m_translationBuffer = Attribute(Attribute::Neuron,positions);
+    m_translationBuffer = NetworkAttribute();
+    m_translationBuffer.buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
+    m_translationBuffer.owner = NetworkAttribute::Neuron;
+    m_translationBuffer.type = NetworkAttribute::Position;
+    m_translationBuffer.unboundData = positions;
 
     m_establishWorldBounds(number,positions);
 
@@ -1286,7 +1346,11 @@ void NCV::createNeurons(const QString & filename )
     // ######## Stub Protocol
     file.close();
 
-    m_translationBuffer = Attribute(Attribute::Neuron,positions);
+    m_translationBuffer = NetworkAttribute();
+    m_translationBuffer.buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
+    m_translationBuffer.owner = NetworkAttribute::Neuron;
+    m_translationBuffer.type = NetworkAttribute::Position;
+    m_translationBuffer.unboundData = positions;
     m_establishWorldBounds(m_neuronsToCreate,positions);
 }
 
@@ -1328,7 +1392,24 @@ void NCV::setNeuronRangeAttribute(QString name, GLfloat * data,GLfloat minValue,
     if (!isValid())
         return;
 
-    m_attributes[name] = Attribute(Attribute::Neuron,minValue,maxValue,data);
+    m_neuronAttributes[name] = NetworkAttribute();
+    m_neuronAttributes[name].buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
+    m_neuronAttributes[name].owner = NetworkAttribute::Neuron;
+    m_neuronAttributes[name].type = NetworkAttribute::Range;
+    m_neuronAttributes[name].unboundData = data;
+    m_neuronAttributes[name].minValue = minValue;
+    m_neuronAttributes[name].maxValue = maxValue;
+
+    m_connectionAttributes[name] = NetworkAttribute();
+    m_connectionAttributes[name].buffer =m_neuronAttributes[name].buffer;
+    m_connectionAttributes[name].owner = NetworkAttribute::Neuron;
+    m_connectionAttributes[name].type = NetworkAttribute::Range;
+    m_connectionAttributes[name].unboundData = NULL;
+    m_connectionAttributes[name].minValue = minValue;
+    m_connectionAttributes[name].maxValue = maxValue;
+
+    newNeuronRangeAttribute(name,minValue,maxValue);
+    newConnectionRangeAttribute(name,minValue,maxValue);
 }
 
 void NCV::setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor, FlagInferenceFunction func)
@@ -1337,7 +1418,25 @@ void NCV::setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor
     if (!isValid())
         return;
 
-    m_attributes[name] = Attribute(Attribute::Neuron,onColor,offColor,data);
+    m_neuronAttributes[name] = NetworkAttribute();
+    m_neuronAttributes[name].buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
+    m_neuronAttributes[name].owner = NetworkAttribute::Neuron;
+    m_neuronAttributes[name].type = NetworkAttribute::Flag;
+    m_neuronAttributes[name].unboundData = data;
+    m_neuronAttributes[name].onColor = onColor;
+    m_neuronAttributes[name].offColor = offColor;
+
+
+    m_connectionAttributes[name] = NetworkAttribute();
+    m_connectionAttributes[name].buffer =m_neuronAttributes[name].buffer;
+    m_connectionAttributes[name].owner = NetworkAttribute::Neuron;
+    m_connectionAttributes[name].type = NetworkAttribute::Flag;
+    m_connectionAttributes[name].unboundData = NULL;
+    m_connectionAttributes[name].onColor = onColor;
+    m_connectionAttributes[name].offColor = offColor;
+
+    newNeuronBitAttribute(name,QColor(offColor.x() * 255,offColor.y() * 255,offColor.z() * 255),QColor(onColor.x() * 255,onColor.y() * 255,onColor.z() * 255));
+    newConnectionBitAttribute(name,QColor(offColor.x() * 255,offColor.y() * 255,offColor.z() * 255),QColor(onColor.x() * 255,onColor.y() * 255,onColor.z() * 255));
 
 }
 
@@ -1347,7 +1446,14 @@ void NCV::setConnectionRangeAttribute(QString name, GLfloat * data,GLfloat minVa
     if (!isValid())
         return;
 
-    m_attributes[name] = Attribute(Attribute::Connection,minValue,maxValue,data);
+    m_connectionAttributes[name] = NetworkAttribute();
+    m_connectionAttributes[name].buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
+    m_connectionAttributes[name].owner = NetworkAttribute::Connection;
+    m_connectionAttributes[name].type = NetworkAttribute::Range;
+    m_connectionAttributes[name].unboundData = data;
+    m_connectionAttributes[name].minValue = minValue;
+    m_connectionAttributes[name].maxValue = maxValue;
+    newConnectionRangeAttribute(name,minValue,maxValue);
 }
 
 void NCV::setConnectionFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor)
@@ -1356,22 +1462,69 @@ void NCV::setConnectionFlagAttribute(QString name, GLubyte * data, QVector3D onC
     if (!isValid())
         return;
 
-    m_attributes[name] = Attribute(Attribute::Connection,onColor,offColor,data);
+    m_connectionAttributes[name] = NetworkAttribute();
+    m_connectionAttributes[name].buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
+    m_connectionAttributes[name].owner = NetworkAttribute::Connection;
+    m_connectionAttributes[name].type = NetworkAttribute::Flag;
+    m_connectionAttributes[name].unboundData = data;
+    m_connectionAttributes[name].onColor = onColor;
+    m_connectionAttributes[name].offColor = offColor;
+    newConnectionBitAttribute(name,QColor(offColor.x() * 255,offColor.y() * 255,offColor.z() * 255),QColor(onColor.x() * 255,onColor.y() * 255,onColor.z() * 255));
+
 }
 
 
 
 void NCV::setNeuronAttributeToRender(QString name)
 {
-    if (m_attributes.contains(name))
-        m_neuronAttribToRender = &m_attributes[name];
+    if (m_neuronAttributes.contains(name))
+        m_neuronAttribToRender = &m_neuronAttributes[name];
 
 }
 
 void NCV::setConnectionAttributeToRender(QString name)
 {
 
-    if (m_attributes.contains(name))
-        m_connectionAttribToRender = &m_attributes[name];
+    if (m_connectionAttributes.contains(name))
+        m_connectionAttribToRender = &m_connectionAttributes[name];
 }
 
+void NCV::changeCurrentNeuronRangeColoration(QRgb * data)
+{
+    QVector3D * normalizedPixels = new QVector3D[300];
+    for (int i = 0; i < 300; i ++)
+    {
+        QColor pixel = QColor::fromRgb(data[i]);
+        normalizedPixels[i] = QVector3D(pixel.redF(),pixel.greenF(),pixel.blueF());
+    }
+    m_neuronRangeData = normalizedPixels;
+}
+
+void NCV::changeCurrentNeuronFlagColoration( QColor offColor,QColor onColor)
+{
+    if (m_neuronAttribToRender != NULL )
+    {
+        m_neuronAttribToRender->onColor = QVector3D(onColor.redF(),onColor.greenF(),onColor.blueF());
+        m_neuronAttribToRender->offColor = QVector3D(offColor.redF(),offColor.greenF(),offColor.blueF());
+    }
+}
+
+void NCV::changeCurrentConnectionRangeColoration(QRgb * data)
+{
+    QVector3D * normalizedPixels = new QVector3D[300];
+    for (int i = 0; i < 300; i ++)
+    {
+        QColor pixel = QColor::fromRgb(data[i]);
+        normalizedPixels[i] = QVector3D(pixel.redF(),pixel.greenF(),pixel.blueF());
+    }
+    m_connectionRangeData = normalizedPixels;
+}
+
+void NCV::changeCurrentConnectionFlagColoration(QColor offColor,QColor onColor)
+{
+    if (m_connectionAttribToRender != NULL )
+    {
+        m_connectionAttribToRender->onColor = QVector3D(onColor.redF(),onColor.greenF(),onColor.blueF());
+        m_connectionAttribToRender->offColor = QVector3D(offColor.redF(),offColor.greenF(),offColor.blueF());
+    }
+}

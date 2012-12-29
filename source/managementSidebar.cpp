@@ -129,6 +129,10 @@ void ManagementSidebar::m_buildGroupingTab()
     m_timeScaleSlider->setValue(100);
 
     connect(m_timeScaleSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTimeScale(int)));
+
+    m_attributeWidget = new AttributeWidget("Network Attributes");
+    m_layouts["simulation"]->addWidget(m_attributeWidget);
+
     this->addPanel(m_tabs["simulation"],"Simulation Manager");
 }
 
@@ -194,4 +198,9 @@ CameraSidebar * ManagementSidebar::cameraSidebar()
 LightingSidebar * ManagementSidebar::lightingSidebar()
 {
     return m_lightingSubBar;
+}
+
+AttributeWidget * ManagementSidebar::attributeWidget()
+{
+    return m_attributeWidget;
 }

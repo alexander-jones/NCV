@@ -13,10 +13,6 @@ NCVWidget::NCVWidget(QWidget *parent) :
     m_visualization = new NCV(  );
     m_visualization->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
-
-
-
-
     m_layout->addWidget(m_managementSidebar);
     m_layout->addWidget(m_visualization);
    // m_layout->addWidget(m_statusSidebar);
@@ -37,16 +33,33 @@ NCVWidget::NCVWidget(QWidget *parent) :
     connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightDeleted(QString)),m_visualization,SLOT(deleteLight(QString)));
     connect(m_managementSidebar->lightingSidebar(),SIGNAL(newMaterial(QGLXMaterial*)),m_visualization,SLOT(setMaterial(QGLXMaterial*)));
 
+
+    connect(m_visualization,SIGNAL(newNeuronBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addNeuronBitAttribute(QString,QColor,QColor)));
+    connect(m_visualization,SIGNAL(newConnectionBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addConnectionBitAttribute(QString,QColor,QColor)));
+    connect(m_visualization,SIGNAL(newConnectionRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addConnectionRangeAttribute(QString,float,float)));
+    connect(m_visualization,SIGNAL(newNeuronRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addNeuronRangeAttribute(QString,float,float)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionRangeColorationChanged(QRgb*)),m_visualization,SLOT(changeCurrentConnectionRangeColoration(QRgb*)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronRangeColorationChanged(QRgb*)),m_visualization,SLOT(changeCurrentNeuronRangeColoration(QRgb*)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronBitColorationChanged(QColor,QColor)),m_visualization,SLOT(changeCurrentNeuronFlagColoration(QColor,QColor)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionBitColorationChanged(QColor,QColor)),m_visualization,SLOT(changeCurrentConnectionFlagColoration(QColor,QColor)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(currentConnectionAttributeSet(QString)),m_visualization,SLOT(setConnectionAttributeToRender(QString)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(currentNeuronAttributeSet(QString)),m_visualization,SLOT(setNeuronAttributeToRender(QString)));
+
     connect(m_visualization, SIGNAL(invalidGraphicsConfigurationDetected()),this,SLOT(m_reportFatalError()));
 
 
     QVector3D worldSize = QVector3D(50000 , 50000,50000);
 
-    int numNeurons = 1000;
+    int numNeurons = 2000;
 
     QVector3D * neuronPositions = new QVector3D[numNeurons];
     GLfloat * voltages = new GLfloat[numNeurons];
-    GLubyte * firings = new GLubyte[numNeurons/8];
+    GLubyte * firings;
+    if (numNeurons %8 == 0)
+        firings = new GLubyte[numNeurons/8];
+    else
+        firings = new GLubyte[(numNeurons/8) + 1];
+    int fireVal;
     for (int i = 0; i <numNeurons; i ++)
     {
         int x = (abs(rand() * rand() * rand() )% (int)worldSize.x()) - (worldSize.x()/2);
@@ -54,9 +67,13 @@ NCVWidget::NCVWidget(QWidget *parent) :
         int z = (abs(rand() * rand() * rand() ) % (int)worldSize.z()) - (worldSize.z()/2);
         neuronPositions[i] = QVector3D(x,y,z);
         voltages[i] = (float)(abs(rand()) % 100);
+        if (i %2 == 0)
+            fireVal = 1;
+        else
+            fireVal = 0;
         if(i %8 == 0)
             firings[i%8] = 0;
-        firings[i%8] += 1<<(i % 8);
+        firings[i%8] += fireVal<<(i % 8);
 
     }
 
@@ -82,8 +99,7 @@ NCVWidget::NCVWidget(QWidget *parent) :
     // share data with both neuron / connection shaders
     m_visualization->setNeuronFlagAttribute("firing",firings,QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
     m_visualization->setNeuronRangeAttribute("voltage",voltages,0,100.0f);
-    m_visualization->setNeuronAttributeToRender("voltage");
-    m_visualization->setConnectionAttributeToRender("firing");
+
     /* ###################################################################
     Neural Network Example
     ###################################################################*/

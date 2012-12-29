@@ -51,103 +51,26 @@ enum FlagInferenceFunction
     Xor
 };
 
-
-
-class Attribute : public QGLXBuffer
+struct NetworkAttribute
 {
-public:
-    enum AttributeOwner
+    enum Owner
     {
         Neuron,
         Connection
     };
-    enum AttributeType
+    enum Type
     {
         Range,
         Position,
         Flag,
         Invalid
     };
-    Attribute( )
-        :QGLXBuffer(QGLXBuffer::TextureBuffer)
-    {
-        this->owner = Neuron;
-        unboundData = NULL;
-        type = Invalid;
-    }
-
-    Attribute(AttributeOwner owner, GLvoid * unboundData)
-        :QGLXBuffer(QGLXBuffer::TextureBuffer)
-    {
-        this->owner = owner;
-        this->unboundData = unboundData;
-        type = Position;
-    }
-
-    Attribute(AttributeOwner owner, QVector3D onColor, QVector3D offColor, GLvoid * data)
-        :QGLXBuffer(QGLXBuffer::TextureBuffer)
-    {
-        this->onColor = onColor;
-        this->offColor = offColor;
-        this->owner = owner;
-        this->unboundData = data;
-        type = Flag;
-    }
-    Attribute(AttributeOwner owner,GLfloat minValue, GLfloat maxValue, GLvoid * data)
-        :QGLXBuffer(QGLXBuffer::TextureBuffer)
-    {
-        this->minValue = minValue;
-        this->maxValue = maxValue;
-        this->owner = owner;
-        this->unboundData = data;
-        type = Range;
-    }
-    void bindBuffer(GLuint numNeurons, GLuint numConnections)
-    {
-        if (!isCreated())
-            create();
-
-        bind();
-
-        if (unboundData != NULL)
-        {
-            if (type == Position)
-            {
-                GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
-                GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,3,QGLXTexture::getComponentSize(GL_FLOAT));
-
-                allocate(unboundData,3* componentSize * numNeurons,textureFormat);
-            }
-            else if (type == Range)
-            {
-                GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
-                GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,1,QGLXTexture::getComponentSize(GL_FLOAT));
-
-                if (owner == Neuron)
-                    allocate(unboundData, componentSize * numNeurons,textureFormat);
-                else
-                    allocate(unboundData,componentSize * numConnections,textureFormat);
-            }
-            else if (type == Flag)
-            {
-                GLuint componentSize = QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE);
-                GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_BYTE,1,QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE));
-
-                if (owner == Neuron)
-                    allocate(unboundData, componentSize * numNeurons/8,textureFormat);
-                else
-                    allocate(unboundData,componentSize * numConnections/8,textureFormat);
-            }
-            delete [] unboundData;
-            unboundData = NULL;
-        }
-    }
-
-    AttributeOwner owner;
-    AttributeType type;
+    QGLXBuffer * buffer;
     GLvoid * unboundData;
+    Type type;
     QVector3D onColor, offColor;
-    GLfloat minValue, maxValue;
+    float minValue, maxValue;
+    Owner owner;
 };
 
 
@@ -253,6 +176,14 @@ public slots:
 
     void setConnectionFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor);
 
+    void changeCurrentNeuronRangeColoration(QRgb * data);
+
+    void changeCurrentNeuronFlagColoration( QColor offColor,QColor onColor);
+
+    void changeCurrentConnectionRangeColoration(QRgb * data);
+
+    void changeCurrentConnectionFlagColoration(QColor offColor,QColor onColor);
+
     void setNeuronAttributeToRender(QString name);
 
     void setConnectionAttributeToRender(QString name);
@@ -270,6 +201,10 @@ signals:
     void newLight(QGLXLight* light, QString name);
     void lightDeleted(QGLXLight* light, QString name);
     void invalidGraphicsConfigurationDetected();
+    void newNeuronRangeAttribute(QString name, float minVal, float maxVal);
+    void newNeuronBitAttribute(QString name, QColor offColor, QColor onColor);
+    void newConnectionRangeAttribute(QString name, float minVal, float maxVal);
+    void newConnectionBitAttribute(QString name, QColor offColor, QColor onColor);
 
 protected:
     void initializeGL();
@@ -288,6 +223,7 @@ protected:
 
 private:
 
+    void m_bindAttribute(NetworkAttribute * attribute);
     void m_setVisualizationParameters();
     void m_createNetwork();
     void m_establishWorldBounds(int numNeurons,QVector3D * neuronPositions);
@@ -300,15 +236,17 @@ private:
     void m_releaseNeurons();
     void m_releaseConnections();
 
+    QVector3D * m_neuronRangeData, * m_connectionRangeData;
     int m_frameCount;
     float m_fps;
     bool m_renderOnlySelection;
     GLuint *m_inNeurons, *m_outNeurons;
-    Attribute *m_neuronAttribToRender, *m_connectionAttribToRender;
+    NetworkAttribute *m_neuronAttribToRender, *m_connectionAttribToRender;
     QString m_currentCamera;
     QTime m_timer;
-    QMap<QString,Attribute> m_attributes;
-    Attribute m_translationBuffer;
+    QMap<QString,NetworkAttribute> m_neuronAttributes;
+    QMap<QString,NetworkAttribute> m_connectionAttributes;
+    NetworkAttribute m_translationBuffer;
     QMap<QString,QGLXTexture2D> m_maps;
     QGLXTexture1D * m_neuronRangeMap, * m_connectionRangeMap;
     QMap<QString,QGLXLight *> m_lights;

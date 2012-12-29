@@ -17,6 +17,8 @@
 #include "qgridlayout.h"
 #include "lightingsidebar.h"
 #include "collapsiblewidget.h"
+#include "colorrangewidget.h"
+#include "attributewidget.h"
 
 
 class ManagementSidebar : public Sidebar
@@ -28,6 +30,7 @@ public:
     void addChildren(QTreeWidgetItem* item,QString filePath);
     CameraSidebar * cameraSidebar();
     LightingSidebar * lightingSidebar();
+    AttributeWidget * attributeWidget();
 
 signals:
     
@@ -46,7 +49,9 @@ private:
     QLabel * m_titleLabel, * m_cameraLabel, *m_framesPerSecond,* m_timeScale, * m_groupingHeader, * m_projectionOptions;
     QMap<QString,QLayout*>  m_layouts;
     QSlider * m_timeScaleSlider;
+    ColorRangeWidget * m_neuronRangeMap;
     CollapsibleWidget * m_cameraWidget, * m_lightingWidget ;
+    AttributeWidget * m_attributeWidget;
 };
 
 #endif // GroupingSidebar_H
