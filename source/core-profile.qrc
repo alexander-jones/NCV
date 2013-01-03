@@ -10,8 +10,6 @@
         <file>shaders/float.frag</file>
         <file>assets/linked.png</file>
         <file>assets/unlinked.png</file>
-        <file>assets/endTriangle.png</file>
-        <file>assets/startTriangle.png</file>
         <file>shaders/bit.frag</file>
         <file>shaders/neuronBit.vert</file>
         <file>shaders/connection.vert</file>

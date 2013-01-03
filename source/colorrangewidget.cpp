@@ -5,6 +5,8 @@
 ColorRangeWidget::ColorRangeWidget(QWidget *parent, int width, int height) :
     QWidget(parent)
 {
+    this->setToolTip("Interact with this widget to change the range attribute's coloration.\n Left click any space without a marker to add one.\n Left click over a marker and drag to move marker.\n Double click a marker to change it's color.\n Double click a marker's text to change it's value.\n Right click a marker or marker's text' to remove it.");
+
     m_leftMouseDown = false;
     m_rightMouseDown = false;
 

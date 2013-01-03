@@ -153,7 +153,7 @@ void QGLXSystem::draw()
 
 void * QGLXSystem::mapAttributeArray(QString attribute, QGLXBuffer::Access access)
 {
-    m_attributes[attribute].buffer->map(access);
+   return  m_attributes[attribute].buffer->map(access);
 }
 
 void QGLXSystem::unmapAttributeArray(QString attribute)

@@ -43,7 +43,8 @@ SOURCES += \
     qglxtexture.cpp \
     qglxframebufferobject.cpp \
     colorrangewidget.cpp \
-    colorbitwidget.cpp
+    colorbitwidget.cpp \
+    attributewidget.cpp
 
 HEADERS  += \
     qglxoctree.h \
