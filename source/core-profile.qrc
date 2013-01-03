@@ -5,16 +5,19 @@
         <file>shaders/selection.frag</file>
         <file>shaders/postProcess.vert</file>
         <file>shaders/lighting.frag</file>
-        <file>shaders/bit.frag</file>
-        <file>shaders/connectionBit.geom</file>
-        <file>shaders/connectionBit.vert</file>
-        <file>shaders/connectionFloat.geom</file>
-        <file>shaders/connectionFloat.vert</file>
-        <file>shaders/neuronBit.vert</file>
         <file>shaders/neuronFloat.vert</file>
         <file>shaders/simpleBlend.frag</file>
         <file>shaders/float.frag</file>
+        <file>assets/linked.png</file>
+        <file>assets/unlinked.png</file>
         <file>assets/endTriangle.png</file>
         <file>assets/startTriangle.png</file>
+        <file>shaders/bit.frag</file>
+        <file>shaders/neuronBit.vert</file>
+        <file>shaders/connection.vert</file>
+        <file>shaders/connectionBit.geom</file>
+        <file>shaders/connectionFloat.geom</file>
+        <file>assets/sphere.nff</file>
+        <file>assets/triangle.png</file>
     </qresource>
 </RCC>

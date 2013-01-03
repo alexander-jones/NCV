@@ -48,11 +48,13 @@ class Sidebar : public QWidget
 public:
     explicit Sidebar(QWidget *parent = 0);
     void addTool(QWidget * tool);
+    void removeTool(QWidget * tool);
     void addPanel(QWidget * panel,const QString& name);
     void removePanel(QWidget * panel);
     void removePanel(QString name);
     int numPanels();
     bool containsPanel(QString name);
+    bool containsTool(QWidget * tool);
     QString currentPanel();
     void setScrollBarPolicy(Qt::ScrollBarPolicy horizontal,Qt::ScrollBarPolicy vertical);
     void setVoidPanel(QWidget * panel);
@@ -63,6 +65,7 @@ public slots:
     void setPanel(const QString& name);
 
 private:
+    QMap<QWidget *, QAction *> m_toolActions;
     QScrollArea * m_scrollArea;
     QToolBar * m_toolbar;
     QComboBox * m_panelSelector;

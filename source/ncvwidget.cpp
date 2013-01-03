@@ -38,10 +38,10 @@ NCVWidget::NCVWidget(QWidget *parent) :
     connect(m_visualization,SIGNAL(newConnectionBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addConnectionBitAttribute(QString,QColor,QColor)));
     connect(m_visualization,SIGNAL(newConnectionRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addConnectionRangeAttribute(QString,float,float)));
     connect(m_visualization,SIGNAL(newNeuronRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addNeuronRangeAttribute(QString,float,float)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionRangeColorationChanged(QRgb*)),m_visualization,SLOT(changeCurrentConnectionRangeColoration(QRgb*)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronRangeColorationChanged(QRgb*)),m_visualization,SLOT(changeCurrentNeuronRangeColoration(QRgb*)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronBitColorationChanged(QColor,QColor)),m_visualization,SLOT(changeCurrentNeuronFlagColoration(QColor,QColor)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionBitColorationChanged(QColor,QColor)),m_visualization,SLOT(changeCurrentConnectionFlagColoration(QColor,QColor)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(changeCurrentConnectionRangeColoration(QString,QRgb*,int)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(changeCurrentNeuronRangeColoration(QString,QRgb*,int)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(changeCurrentNeuronFlagColoration(QString,QColor,QColor)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(changeCurrentConnectionFlagColoration(QString,QColor,QColor)));
     connect(m_managementSidebar->attributeWidget(),SIGNAL(currentConnectionAttributeSet(QString)),m_visualization,SLOT(setConnectionAttributeToRender(QString)));
     connect(m_managementSidebar->attributeWidget(),SIGNAL(currentNeuronAttributeSet(QString)),m_visualization,SLOT(setNeuronAttributeToRender(QString)));
 
@@ -50,7 +50,7 @@ NCVWidget::NCVWidget(QWidget *parent) :
 
     QVector3D worldSize = QVector3D(50000 , 50000,50000);
 
-    int numNeurons = 2000;
+    int numNeurons = 50000;
 
     QVector3D * neuronPositions = new QVector3D[numNeurons];
     GLfloat * voltages = new GLfloat[numNeurons];
@@ -77,7 +77,7 @@ NCVWidget::NCVWidget(QWidget *parent) :
 
     }
 
-    int numConnections = numNeurons *1;
+    int numConnections = numNeurons * 5;
     GLuint * neuronIN = new GLuint[numConnections];
     GLuint * neuronOUT = new GLuint[numConnections];
     for (int i = 0; i < numConnections; i++)
@@ -98,7 +98,7 @@ NCVWidget::NCVWidget(QWidget *parent) :
     // voltage data is composed of 3 component float vector, so specify that
     // share data with both neuron / connection shaders
     m_visualization->setNeuronFlagAttribute("firing",firings,QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
-    m_visualization->setNeuronRangeAttribute("voltage",voltages,0,100.0f);
+    m_visualization->setNeuronRangeAttribute("voltage",voltages,0,100.2f);
 
     /* ###################################################################
     Neural Network Example

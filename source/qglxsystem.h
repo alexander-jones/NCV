@@ -113,13 +113,10 @@ public:
     void drawSubset(GLuint start, GLuint count);
 
     /*!
-        \param attribute The name of the attribute array to edit.
-        \param start What member to starting writing at.
-        \param data The data to write.
-        \param count The total number of elements to write.
-        \brief This function edits an attribute array at a given location.
+        \param attribute The name of the attribute array to map.
+        \param access The read / write access privaledges of this mapping.
     */
-    void editAttributeArray(QString attribute, void * data,int start, int count);
+    void * mapAttributeArray(QString attribute, QGLXBuffer::Access access);
 
     /*!
         \brief This returns the number of objects.
@@ -172,7 +169,10 @@ public:
     */
     void setVertexAttributeIndices(GLuint * indices,AttributeUsage usage = Static);
 
-
+    /*!
+        \param attribute The name of the attribute array to unmap.
+    */
+    void unmapAttributeArray(QString attribute);
 
 private:
     int getComponentSize(GLenum componentType);

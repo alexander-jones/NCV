@@ -32,6 +32,7 @@ LightingSidebar::LightingSidebar(QString text, QWidget * parent)
 
 
     m_emptyWidget = new QLabel("No Lights to Manage");
+    m_emptyWidget->setAlignment(Qt::AlignCenter);
     m_sidebar->setVoidPanel(m_emptyWidget);
     m_enabled = new QCheckBox();
     m_enabled->setChecked(false);

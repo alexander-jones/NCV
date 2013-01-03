@@ -66,11 +66,14 @@ struct NetworkAttribute
         Invalid
     };
     QGLXBuffer * buffer;
-    GLvoid * unboundData;
+    GLvoid * unboundBufferData;
+    GLvoid * unboundTextureData;
     Type type;
     QVector3D onColor, offColor;
     float minValue, maxValue;
     Owner owner;
+    QString name;
+    int unboundTextureWidth;
 };
 
 
@@ -176,13 +179,13 @@ public slots:
 
     void setConnectionFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor);
 
-    void changeCurrentNeuronRangeColoration(QRgb * data);
+    void changeCurrentNeuronRangeColoration(QString name,QRgb * data, int width);
 
-    void changeCurrentNeuronFlagColoration( QColor offColor,QColor onColor);
+    void changeCurrentNeuronFlagColoration(QString name, QColor offColor,QColor onColor);
 
-    void changeCurrentConnectionRangeColoration(QRgb * data);
+    void changeCurrentConnectionRangeColoration(QString name,QRgb * data, int width);
 
-    void changeCurrentConnectionFlagColoration(QColor offColor,QColor onColor);
+    void changeCurrentConnectionFlagColoration(QString name,QColor offColor,QColor onColor);
 
     void setNeuronAttributeToRender(QString name);
 
@@ -222,6 +225,8 @@ protected:
 
 
 private:
+    bool m_compileShaderProgram(QGLShaderProgram * program, QString vertexShaderPath,  QString fragmentShaderPath );
+    bool m_compileShaderProgram(QGLShaderProgram * program, QString vertexShaderPath, QString geometryShaderPath, QString fragmentShaderPath );
 
     void m_bindAttribute(NetworkAttribute * attribute);
     void m_setVisualizationParameters();
@@ -270,6 +275,7 @@ private:
     QVector<Range> m_ranges;
     int m_dividerIndex;
     bool m_lightingEnabled;
+
 
 
 };

@@ -130,7 +130,10 @@ void ManagementSidebar::m_buildGroupingTab()
 
     connect(m_timeScaleSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTimeScale(int)));
 
-    m_attributeWidget = new AttributeWidget("Network Attributes");
+    m_attributeWidget = new AttributeWidget("Attribute Configuration");
+    m_attributeWidget->underlineHeader(true);
+    m_attributeWidget->setFrameShape(QFrame::Box);
+    m_attributeWidget->setFrameShadow(QFrame::Sunken);
     m_layouts["simulation"]->addWidget(m_attributeWidget);
 
     this->addPanel(m_tabs["simulation"],"Simulation Manager");

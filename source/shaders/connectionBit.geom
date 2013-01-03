@@ -3,49 +3,60 @@
 uniform mat4 View, Projection;
 uniform vec3 CameraDirection;
 uniform float ConnectionWidth;
+uniform vec3 CameraPosition;
+uniform float FogStart, FogEnd;
+uniform samplerBuffer Inst_Translation;
+uniform usamplerBuffer Inst_Attribute;
 
-flat in uint Vert_ID[2];
-flat in uint Vert_BitFlag[2];
-in float Vert_Depth[2];
-in vec3 Vert_Position[2];
+flat in uint Vert_ID[1];
+flat in uint Vert_Neuron_IN[1];
+flat in uint Vert_Neuron_OUT[1];
 
 flat out uint ID;
 flat out uint BitFlag;
 out vec3 WorldPos, Normal;
 out float Depth;
 
-layout (lines) in;
+layout (points) in;
 layout (triangle_strip,max_vertices =4) out;
 
 void main( void )
 {
-    vec3 lineDir = normalize(Vert_Position[1] - Vert_Position[0]);
-    vec3 tangent =  normalize(cross(normalize(CameraDirection),lineDir));
+    int inNeuronIndex = int(Vert_Neuron_IN[0])-1;
+    int outNeuronIndex = int(Vert_Neuron_OUT[0])-1;
+
+    vec3 inPosition = texelFetch(Inst_Translation,inNeuronIndex).xyz;
+    vec3 outPosition = texelFetch(Inst_Translation,outNeuronIndex).xyz;
+
+    vec3 lineDir = normalize(outPosition - inPosition);
+    vec3 tangent =  normalize(cross(CameraDirection,lineDir));
     Normal = normalize(cross(tangent,lineDir));
+    vec3 distanceToMove = (tangent * ConnectionWidth/2);
+    mat4 wvp = Projection * View;
 
     ID = Vert_ID[0];
 
-    Depth = Vert_Depth[0];
-    BitFlag = Vert_BitFlag[0];
+    Depth = min((distance(CameraPosition,inPosition) - FogStart) / (FogEnd - FogStart),1.0f);
+    BitFlag = texelFetch(Inst_Attribute,inNeuronIndex/8).r & (1 << inNeuronIndex % 8);
 
-    WorldPos = Vert_Position[0]- (tangent * ConnectionWidth/2);
-
-    gl_Position = Projection * View *vec4(WorldPos,1.0f);
+    WorldPos = inPosition- distanceToMove;
+    gl_Position = wvp *vec4(WorldPos,1.0f);
     EmitVertex();
 
-    WorldPos = Vert_Position[0]+ (tangent * ConnectionWidth/2);
-    gl_Position = Projection * View *vec4(WorldPos,1.0f);
+    WorldPos = inPosition+ distanceToMove;
+    gl_Position = wvp *vec4(WorldPos,1.0f);
     EmitVertex();
 
-    Depth = Vert_Depth[1];
-    BitFlag = Vert_BitFlag[1];
 
-    WorldPos = Vert_Position[1]- (tangent * ConnectionWidth/2);
-    gl_Position = Projection * View *vec4(WorldPos,1.0f);
+    Depth = min((distance(CameraPosition,outPosition) - FogStart) / (FogEnd - FogStart),1.0f);
+    BitFlag = texelFetch(Inst_Attribute,outNeuronIndex/8).r & (1 << inNeuronIndex % 8);
+
+    WorldPos = outPosition- distanceToMove;
+    gl_Position = wvp *vec4(WorldPos,1.0f);
     EmitVertex();
 
-    WorldPos = Vert_Position[1]+ (tangent * ConnectionWidth/2);
-    gl_Position = Projection * View *vec4(WorldPos ,1.0f);
+    WorldPos = outPosition+ distanceToMove;
+    gl_Position = wvp *vec4(WorldPos ,1.0f);
     EmitVertex();
 
     EndPrimitive();

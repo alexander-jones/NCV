@@ -13,11 +13,9 @@ Sidebar::Sidebar(QWidget *parent) :
     m_layout->addWidget(m_toolbar);
 
     m_scrollArea = new QScrollArea();
-    m_scrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-    m_scrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
     m_scrollArea->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
-    m_scrollArea->setWidgetResizable(true);
-    m_scrollArea->setAlignment(Qt::AlignCenter);
+    m_scrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+    m_scrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
     m_scrollArea->setFrameShape(QFrame::NoFrame);
 
     m_layout->addWidget(m_scrollArea);
@@ -59,8 +57,14 @@ QString Sidebar::currentPanel()
 
 void Sidebar::addTool(QWidget * tool)
 {
-    m_toolbar->addWidget(tool);
+    m_toolActions[tool] = (m_toolbar->addWidget(tool));
 }
+void Sidebar::removeTool(QWidget * tool)
+{
+    m_toolbar->removeAction(m_toolActions[tool]);
+    m_toolActions.remove(tool);
+}
+
 
 void Sidebar::setScrollBarPolicy(Qt::ScrollBarPolicy horizontal,Qt::ScrollBarPolicy vertical)
 {
@@ -75,6 +79,10 @@ void Sidebar::addPanel(QWidget * panel,const QString& name)
     if (m_panels.count() == 0)
         setPanel(name);
 
+}
+bool Sidebar::containsTool(QWidget * tool)
+{
+    return m_toolActions.contains(tool);
 }
 
 void Sidebar::setVoidPanel(QWidget * panel)
@@ -91,6 +99,7 @@ void Sidebar::setPanel(const QString& name)
         m_scrollArea->takeWidget();
         m_firstPanelAdded = true;
         m_scrollArea->setWidget(m_panels[name]);
+        m_scrollArea->setWidgetResizable(true);
 
         panelChanged(name);
     }

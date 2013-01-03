@@ -43,7 +43,6 @@ SOURCES += \
     qglxtexture.cpp \
     qglxframebufferobject.cpp \
     colorrangewidget.cpp \
-    attributewidget.cpp \
     colorbitwidget.cpp
 
 HEADERS  += \
@@ -92,13 +91,13 @@ OTHER_FILES += \
     shaders/bit.frag \
     shaders/float.frag \
     shaders/connectionBit.geom \
-    shaders/connectionBit.vert \
-    shaders/connectionFloat.vert \
     shaders/connectionFloat.geom \
     shaders/simpleBlend.frag \
     assets/sphere.nff \
     assets/startTriangle.png \
-    assets/endTriangle.png
+    assets/endTriangle.png \
+    shaders/idFeedback.vert \
+    shaders/connection.vert
 
 RESOURCES += \
     core-profile.qrc

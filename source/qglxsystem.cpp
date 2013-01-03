@@ -76,7 +76,6 @@ void QGLXSystem::setVertexAttributeArray(QString name,void * data, int stride, G
 
 
 
-
 void QGLXSystem::setInstanceAttributeArray(QString name,void * data, int stride, GLenum componentType, int divisor, AttributeUsage usage )
 {
 
@@ -152,13 +151,15 @@ void QGLXSystem::draw()
     drawSubset(0,m_numObjects);
 }
 
-void QGLXSystem::editAttributeArray(QString attribute,void * data, int index, int count)
+void * QGLXSystem::mapAttributeArray(QString attribute, QGLXBuffer::Access access)
 {
-    m_attributes[attribute].buffer->bind();
-    m_attributes[attribute].buffer->write(index * m_attributes[attribute].stride ,data,count * m_attributes[attribute].stride);
-    m_attributes[attribute].buffer->release();
+    m_attributes[attribute].buffer->map(access);
 }
 
+void QGLXSystem::unmapAttributeArray(QString attribute)
+{
+    m_attributes[attribute].buffer->unmap();
+}
 
 QGLXSystem::PrimitiveType QGLXSystem::primitiveType()
 {
