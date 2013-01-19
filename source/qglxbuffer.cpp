@@ -1,5 +1,3 @@
-
-
 #include "qglxbuffer.h"
 #include <QDebug>
 

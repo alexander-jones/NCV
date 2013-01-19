@@ -12,10 +12,26 @@
         <file>assets/unlinked.png</file>
         <file>shaders/bit.frag</file>
         <file>shaders/neuronBit.vert</file>
-        <file>shaders/connection.vert</file>
-        <file>shaders/connectionBit.geom</file>
-        <file>shaders/connectionFloat.geom</file>
         <file>assets/sphere.nff</file>
+        <file>shaders/neuronSelection.vert</file>
+        <file>shaders/neuronSelection.geom</file>
         <file>assets/triangle.png</file>
+        <file>assets/triangleSmall.png</file>
+        <file>assets/connectionIcon.png</file>
+        <file>assets/neuronIcon.png</file>
+        <file>assets/groupIcon.png</file>
+        <file>assets/cameraIcon.png</file>
+        <file>assets/hardwareIcon.png</file>
+        <file>assets/setupIcon.png</file>
+        <file>assets/visualizationIcon.png</file>
+        <file>assets/pauseIcon.png</file>
+        <file>assets/playIcon.png</file>
+        <file>assets/recordIcon.png</file>
+        <file>assets/stopIcon.png</file>
+        <file>assets/ncs.png</file>
+        <file>shaders/connectionFloat.geom</file>
+        <file>shaders/connectionBit.vert</file>
+        <file>shaders/connectionFloat.vert</file>
+        <file>shaders/connectionBit.geom</file>
     </qresource>
 </RCC>

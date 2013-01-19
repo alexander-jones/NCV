@@ -32,7 +32,7 @@ public:
         \param layer The layer of this 3d texture to bind to the frame buffer.
         \brief This function binds the texture to the current context.
     */
-    void bindAsFrameBufferTexture(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint layer);
+    void bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint layer);
 
     /*!
         \param unit The image texture unit to bind this texture to.
@@ -41,7 +41,14 @@ public:
         \param layer If layered is true, this specifies the layer to bind to.
         \brief Constructs a QGLXTexture object of type.
     */
-    void bindAsImageTexture(QGLXTexture3D::ImageUnit unit,  QGLXTexture3D::ImageTextureAccess access,GLuint layer,GLuint level = 0);
+    void bind(QGLXTexture3D::ImageUnit unit,  QGLXTexture3D::ImageTextureAccess access,GLuint layer,GLuint level = 0);
+
+
+    /*!
+        \param unit The texture unit to bind this texture to.
+        \brief This function binds the texture to the current context in a shader texture unit.
+    */
+    void bind(GLuint unit);
 
     /*!
         \brief Creates the texture.

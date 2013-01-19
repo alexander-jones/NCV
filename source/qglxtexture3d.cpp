@@ -11,14 +11,14 @@ void QGLXTexture3D::bind()
     glBindTexture(GL_TEXTURE_3D,m_id);
 }
 
-void QGLXTexture3D::bindAsFrameBufferTexture(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint layer)
+void QGLXTexture3D::bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint layer)
 {
     glBindTexture(GL_TEXTURE_3D,m_id);
     glFramebufferTexture3D(target, attachment, GL_TEXTURE_3D, m_id, 0,layer);
 }
 
 
-void QGLXTexture3D::bindAsImageTexture(QGLXTexture3D::ImageUnit unit,  QGLXTexture3D::ImageTextureAccess access,GLuint layer,GLuint level)
+void QGLXTexture3D::bind(QGLXTexture3D::ImageUnit unit,  QGLXTexture3D::ImageTextureAccess access,GLuint layer,GLuint level)
 {
     glBindTexture(GL_TEXTURE_3D,m_id);
     glBindImageTexture(unit, m_id, level, true, layer, access,m_internalFormat);
@@ -68,7 +68,7 @@ void QGLXTexture3D::allocate(GLuint width, GLuint height, GLuint depth,GLenum in
     m_pixelType = internalFormatToPixelType(m_internalFormat);
     m_pixelFormat = internalFormatToPixelFormat(m_internalFormat);
 
-    glTexImage3D(GL_TEXTURE_3D, 0, m_internalFormat, m_width,m_height,m_depth, 0, m_pixelFormat, GL_FLOAT, 0);
+    glTexImage3D(GL_TEXTURE_3D, 0, m_internalFormat, m_width,m_height,m_depth, 0, m_pixelFormat, m_pixelType, 0);
 
 
 
@@ -106,7 +106,7 @@ void QGLXTexture3D::setSize(GLuint width,GLuint height,GLuint depth)
     m_depth = depth;
 
     glBindTexture(GL_TEXTURE_3D,m_id);
-    glTexImage3D(GL_TEXTURE_3D, 0, m_internalFormat, m_width,m_height,m_depth, 0, m_pixelFormat, GL_UNSIGNED_BYTE, 0);
+    glTexImage3D(GL_TEXTURE_3D, 0, m_internalFormat, m_width,m_height,m_depth, 0, m_pixelFormat, m_pixelType, 0);
     glBindTexture(GL_TEXTURE_3D,0);
 
 }
@@ -124,4 +124,10 @@ GLuint QGLXTexture3D::height()
 GLuint QGLXTexture3D::depth()
 {
     return m_depth;
+}
+
+void QGLXTexture3D::bind(GLuint textureUnit)
+{
+    glActiveTexture(GL_TEXTURE0 +textureUnit);
+    bind();
 }

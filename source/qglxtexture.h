@@ -54,7 +54,7 @@ public:
 
     enum FrameBufferTarget
     {
-        Draw = GL_FRAMEBUFFER,
+        Draw = GL_DRAW_FRAMEBUFFER,
         Read = GL_READ_FRAMEBUFFER
     };
 
@@ -77,7 +77,8 @@ public:
         Color14 = GL_COLOR_ATTACHMENT14,
         Color15 = GL_COLOR_ATTACHMENT15,
         Depth = GL_DEPTH_ATTACHMENT,
-        DepthStencil = GL_DEPTH_STENCIL_ATTACHMENT
+        DepthStencil = GL_DEPTH_STENCIL_ATTACHMENT,
+        Unset
     };
 
     /*!
@@ -165,7 +166,6 @@ public:
         \param textureUnit The texture unit to set as active. Must be between 0 and getMaxTextureUnits() -1.
         \brief This function extrapolates size from a component type enum.
     */
-    static void setActiveTextureUnit(GLuint textureUnit);
 
 };
 

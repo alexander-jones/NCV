@@ -1,11 +1,6 @@
 #ifndef NCV_H
 #define NCV_H
 
-#ifdef WIN32
-    #pragma comment(lib,"assimp.lib")
-#endif
-
-
 #include "qglxframebufferobject.h"
 #include "qglxtexture1d.h"
 #include "qglxsystem.h"
@@ -93,7 +88,7 @@ public:
         \param parent The parent widget to house this canvas.
         \brief The OpenGL Widget housing the core NCV rendering context.
     */
-    NCV( QWidget* parent = 0 );
+    NCV( const QGLFormat&,QWidget* parent = 0 );
     ~NCV();
 
     /*!
@@ -171,13 +166,21 @@ public slots:
 
     void setMaterial(QGLXMaterial *);
 
-    void setNeuronRangeAttribute(QString name, GLfloat * data,GLfloat minValue, GLfloat maxValue, RangeInferenceFunction func = Interpolate);
+    void createNeuronRangeAttribute(QString name,GLfloat minValue, GLfloat maxValue);
 
-    void setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor, FlagInferenceFunction func = And);
+    void createNeuronFlagAttribute(QString name, QVector3D onColor,QVector3D offColor);
 
-    void setConnectionRangeAttribute(QString name, GLfloat * data,GLfloat minValue, GLfloat maxValue);
+    void createConnectionRangeAttribute(QString name,GLfloat minValue, GLfloat maxValue);
 
-    void setConnectionFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor);
+    void createConnectionFlagAttribute(QString name, QVector3D onColor,QVector3D offColor);
+
+    void setNeuronRangeAttribute(QString name, GLfloat * data);
+
+    void setNeuronFlagAttribute(QString name, GLubyte * data);
+
+    void setConnectionRangeAttribute(QString name, GLfloat * data);
+
+    void setConnectionFlagAttribute(QString name, GLubyte * data);
 
     void changeCurrentNeuronRangeColoration(QString name,QRgb * data, int width);
 
@@ -204,6 +207,7 @@ signals:
     void newLight(QGLXLight* light, QString name);
     void lightDeleted(QGLXLight* light, QString name);
     void invalidGraphicsConfigurationDetected();
+
     void newNeuronRangeAttribute(QString name, float minVal, float maxVal);
     void newNeuronBitAttribute(QString name, QColor offColor, QColor onColor);
     void newConnectionRangeAttribute(QString name, float minVal, float maxVal);
@@ -213,6 +217,7 @@ protected:
     void initializeGL();
     void resizeGL( int w, int h );
     void paintGL();
+    void paintEvent(QPaintEvent *);
     void  wheelEvent(QWheelEvent *e);
     void keyPressEvent( QKeyEvent* e );
     void keyReleaseEvent(QKeyEvent *e);
@@ -241,6 +246,7 @@ private:
     void m_releaseNeurons();
     void m_releaseConnections();
 
+    QPainter m_painter;
     QVector3D * m_neuronRangeData, * m_connectionRangeData;
     int m_frameCount;
     float m_fps;
@@ -258,7 +264,7 @@ private:
     QGLXSystem m_neurons , m_connections;
     QGLXFrameBufferObject  m_frameBufferObject;
     QGLShaderProgram *m_blendProgram,*m_selectionRectProgram,*m_lightingProgram,*m_selectionProgram, *m_bitNeuronProgram,
-    *m_floatNeuronProgram,*m_bitConnectionProgram,*m_floatConnectionProgram ;
+    *m_floatNeuronProgram,*m_bitConnectionProgram,*m_floatConnectionProgram, *m_neuronFrustumPickingProgram;
     QMatrix4x4 m_neuronScale;
     QVector3D m_worldSize,m_worldCenter;
     QGLXOctree<QVector3D> m_octree;

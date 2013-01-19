@@ -12,23 +12,41 @@ void QGLXTexture2D::bind()
 }
 
 
-void QGLXTexture2D::bindAsFrameBufferTexture(FrameBufferTarget target, FrameBufferAttachment attachment)
+void QGLXTexture2D::bind(FrameBufferTarget target, FrameBufferAttachment attachment)
 {
     bind();
+
     glFramebufferTexture2D(target, attachment, GL_TEXTURE_2D, m_id, 0);
+    m_attachment = attachment;
 }
 
-void QGLXTexture2D::bindAsImageTexture(QGLXTexture2D::ImageUnit unit,  QGLXTexture2D::ImageTextureAccess access,GLuint level)
+QGLXTexture2D::FrameBufferAttachment QGLXTexture2D::attachment()
+{
+    return m_attachment;
+}
+
+GLuint QGLXTexture2D::textureUnit()
+{
+    return m_textureUnit;
+}
+
+GLuint QGLXTexture2D::imageUnit()
+{
+    return m_imageUnit;
+}
+void QGLXTexture2D::bind(QGLXTexture2D::ImageUnit unit,  QGLXTexture2D::ImageTextureAccess access,GLuint level)
 {
     glBindTexture(GL_TEXTURE_2D,m_id);
     glBindImageTexture(unit, m_id, level, false, 0, access,m_internalFormat);
+    m_imageUnit = unit;
 
 }
 
-void QGLXTexture2D::create()
+void QGLXTexture2D::create( )
 {
     glGenTextures(1, &m_id);
     bind();
+    m_multisampled = false;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
@@ -56,7 +74,8 @@ void QGLXTexture2D::setWrapFunction(WrapFunction onWidth, WrapFunction onHeight)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, onHeight);
 }
 
-void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat, GLvoid * data)
+
+void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat,int samplesPerPixel , GLvoid * data)
 {
     m_width = width;
     m_height = height;
@@ -64,8 +83,17 @@ void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat, 
     m_pixelType = internalFormatToPixelType(m_internalFormat);
     m_pixelFormat = internalFormatToPixelFormat(m_internalFormat);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height,0, m_pixelFormat, GL_FLOAT, 0);
+    m_samples = samplesPerPixel;
+    if (m_samples == 1)
+        m_multisampled = false;
+    else
+        m_multisampled = true;
 
+
+    if (m_multisampled)
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,m_samples,m_internalFormat,m_width,m_height,GL_FALSE);
+    else
+        glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height,0, m_pixelFormat, m_pixelType, 0);
 
 }
 void QGLXTexture2D::destroy()
@@ -91,6 +119,10 @@ GLenum QGLXTexture2D::pixelType()
 }
 void QGLXTexture2D::release()
 {
+
+    m_attachment = Unset;
+    m_textureUnit = -1;
+    m_imageUnit = QGLXTexture2D::Zero;
     glBindTexture(GL_TEXTURE_2D,0);
 }
 
@@ -101,7 +133,11 @@ void QGLXTexture2D::setSize(GLuint width,GLuint height )
     m_height = height;
 
     glBindTexture(GL_TEXTURE_2D,m_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height, 0, m_pixelFormat, GL_UNSIGNED_BYTE, 0);
+
+    if (m_multisampled)
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,m_samples,m_internalFormat,m_width,m_height,GL_FALSE);
+    else
+        glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height, 0, m_pixelFormat, m_pixelType, 0);
     glBindTexture(GL_TEXTURE_2D,0);
 
 }
@@ -115,4 +151,11 @@ GLuint QGLXTexture2D::width()
 GLuint QGLXTexture2D::height()
 {
     return m_height;
+}
+
+void QGLXTexture2D::bind(GLuint textureUnit)
+{
+    glActiveTexture(GL_TEXTURE0 +textureUnit);
+    m_textureUnit = textureUnit;
+    bind();
 }

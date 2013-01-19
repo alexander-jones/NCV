@@ -1,13 +1,32 @@
 #ifndef QGLXCORE_H
 #define QGLXCORE_H
 
-#ifdef WIN32
-    #pragma comment(lib,"glew32.lib")
-#endif
 #include <GL/glew.h>
 #include <QGLShaderProgram>
 
 #include <QVector3D>
+
+class QGLXCore
+{
+public:
+    QGLXCore(){}
+    static char * getErrorString(GLenum error) { return (char *)gluErrorString(error);}
+};
+
+
+class QGLXObject3D
+{
+public:
+    QGLXObject3D(){}
+    virtual void update(float dTime){}
+    virtual QVector3D position(){}
+    virtual QVector3D forward(){}
+    virtual void setForward(QVector3D forward){}
+    virtual void setPosition(QVector3D position){}
+
+};
+
+
 struct QGLXLight
 {
     QGLXLight(){}

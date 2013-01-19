@@ -20,17 +20,20 @@ flat out uint PickData;
 
 void main( void )
 {
+    vec3 color;
+    if (BitFlag >0)
+        color = OnColor;
+    else
+        color = OffColor;
 
     if (Deselected > 0 )
-        FragData[DIFFUSE] = DeselectionColor;
-    else if (BitFlag >0)
-        FragData[DIFFUSE] =vec4(OnColor,1.0f);
+        FragData[DIFFUSE] = vec4(color/2,0.5f);
     else
-        FragData[DIFFUSE] =vec4(OffColor,1.0f);
+        FragData[DIFFUSE] = vec4(color,1.0f);
 
     vec4 FogColor = vec4(0,0,0,1.0f);
-    float intensity = pow(e,Depth*1.25f)/pow(e,1.25f);
-    FragData[DIFFUSE] = intensity * FogColor + (1.0f- intensity) * FragData[DIFFUSE];
+    float intensity = pow(Depth*e,1.0f)/pow(e,1.0f);
+    FragData[DIFFUSE].rgb = intensity * FogColor.rgb + (1.0f- intensity) * FragData[DIFFUSE].rgb;
 
 
     vec3 startPos = - WorldSize / 2.0;

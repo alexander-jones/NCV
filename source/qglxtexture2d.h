@@ -15,7 +15,24 @@ public:
         \param internalFormat The internal format of the texture to allocate.
         \brief This function allocates the texture in OpenGL memory.
     */
-    void allocate(GLuint width,GLuint height, GLenum internalFormat, GLvoid * data = NULL);
+    void allocate(GLuint width,GLuint height, GLenum internalFormat, int samplesPerPixel = 1, GLvoid * data = NULL);
+
+
+    /*!
+        \brief This function returns the current attachment of this texture if bound to a framebuffer.  If unbound to a framebuffer attchment, Unset is returned.
+    */
+    FrameBufferAttachment attachment();
+
+
+    /*!
+        \brief This function returns the texture unit this texture is bound to.  If unbound to a texture unit, -1 is returned.
+    */
+    GLuint textureUnit();
+
+    /*!
+        \brief This function returns the image unit this texture is bound to.  If unbound to a image unit, -1 is returned.
+    */
+    GLuint imageUnit();
 
     /*!
         \brief This function binds the texture to the current context.
@@ -28,7 +45,7 @@ public:
         \param attachment The frame buffer attachment slot in the currently bound framebuffer.
         \brief This function binds the texture to the current context.
     */
-    void bindAsFrameBufferTexture(FrameBufferTarget target, FrameBufferAttachment attachment) ;
+    void bind(FrameBufferTarget target, FrameBufferAttachment attachment) ;
 
     /*!
         \param unit The image texture unit to bind this texture to.
@@ -36,12 +53,19 @@ public:
         \param level The level of this texture to bind to the assocaited image texture unit.
         \brief Constructs a QGLXTexture object of type.
     */
-    void bindAsImageTexture(ImageUnit unit,ImageTextureAccess access,GLuint level=0);
+    void bind(ImageUnit unit,ImageTextureAccess access,GLuint level=0);
+
+
+    /*!
+        \param unit The texture unit to bind this texture to.
+        \brief This function binds the texture to the current context in a shader texture unit.
+    */
+    void bind(GLuint unit);
 
     /*!
         \brief Creates the texture.
     */
-    void create();
+    void create( );
 
 
     /*!
@@ -125,6 +149,11 @@ public:
     GLuint width();
 
 private:
+    bool m_multisampled;
+    FrameBufferAttachment m_attachment;
+    ImageUnit m_imageUnit;
+    GLuint m_textureUnit;
+    GLuint m_samples;
     GLuint m_id;
     GLenum m_pixelType;
     GLenum m_pixelFormat;

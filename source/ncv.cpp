@@ -5,24 +5,24 @@
 #include "time.h"
 #include <QMessageBox>
 
+#include "qcustomplot.h"
 
-NCV::NCV(  QWidget* parent )
-    : QGLWidget( parent )
+
+NCV::NCV(  const QGLFormat& format, QWidget* parent )
+    : QGLWidget( format,parent )
 {
     m_versionCapable = QGLFormat::openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_4_0);
 
     if (!m_versionCapable)
+    {
+        qDebug() << "Version Incapable";
         return;
+    }
 
-    QGLFormat glFormat;
-    glFormat.setVersion( 4,0 );
-    glFormat.setDoubleBuffer(true);
-    glFormat.setProfile( QGLFormat::CompatibilityProfile ); // Requires >=Qt-4.8.0
-    glFormat.setSampleBuffers( true );
-    this->setFormat(glFormat);
+    this->setAutoBufferSwap(false);
+    this->setAutoFillBackground(false);
     m_leftMouseDown = false;
     m_rightMouseDown = false;
-    m_frameBufferObject =  QGLXFrameBufferObject();
     m_moveSpeed = 2000;
     m_turnSpeed = 0.0025f;
     m_shiftDown = false;
@@ -53,21 +53,32 @@ NCV::~NCV()
 
 bool NCV::m_compileShaderProgram(QGLShaderProgram * program,  QString vertexShaderPath, QString fragmentShaderPath )
 {
+
     // First we load and compile the vertex shader->..
     bool success = program->addShaderFromSourceFile( QGLShader::Vertex, vertexShaderPath );
     if ( !success )
+    {
         qDebug() << program->log();
+        return false;
+    }
 
     // ...now the fragment shader->..
     success = program->addShaderFromSourceFile( QGLShader::Fragment, fragmentShaderPath );
     if ( !success )
+    {
         qDebug() << program->log();
+        return false;
+    }
+
 
     // ...and finally we link them to resolve any references.
     success = program->link();
     if ( !success )
+    {
         qDebug() << "Could not link shader program:" << program->log();
-    return success;
+        return false;
+    }
+    return true;
 }
 
 bool NCV::m_compileShaderProgram(QGLShaderProgram * program, QString vertexShaderPath, QString geometryShaderPath, QString fragmentShaderPath )
@@ -75,25 +86,38 @@ bool NCV::m_compileShaderProgram(QGLShaderProgram * program, QString vertexShade
     // First we load and compile the vertex shader->..
     bool success = program->addShaderFromSourceFile( QGLShader::Vertex, vertexShaderPath );
     if ( !success )
+    {
         qDebug() << program->log();
+        return false;
+    }
 
     // ...now the geometry shader->..
     success = program->addShaderFromSourceFile( QGLShader::Geometry, geometryShaderPath );
     if ( !success )
+    {
         qDebug() << program->log();
+        return false;
+    }
 
     // ...now the fragment shader->..
     success = program->addShaderFromSourceFile( QGLShader::Fragment, fragmentShaderPath );
     if ( !success )
+    {
         qDebug() << program->log();
+        return false;
+    }
 
 
     // ...and finally we link them to resolve any references.
     success = program->link();
     if ( !success )
+    {
         qDebug() << "Could not link shader program:" << program->log();
-    return success;
+        return false;
+    }
+    return true;
 }
+
 
 void NCV::addLight(QGLXLight * light, QString name)
 {
@@ -183,7 +207,7 @@ void NCV::initializeGL()
     }
     glewInit();
 
-    QGLFormat glFormat = QGLWidget::format();
+    QGLFormat glFormat = this->format();
     if ( !glFormat.sampleBuffers() )
         qWarning() << "Could not enable sample buffers";
 
@@ -192,12 +216,14 @@ void NCV::initializeGL()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_POLYGON_SMOOTH);
-    glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST );
-    glLineWidth(1);
+    //glEnable(GL_MULTISAMPLE);
+    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+    glHint( GL_POLYGON_SMOOTH_HINT, GL_NICEST );
+    glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
 
     QGLXCamera *main = new QGLXCamera();
-    main->setViewMatrix(QVector3D(-m_worldSize.x(),m_worldSize.y(),-m_worldSize.z()), QVector3D(0,0,1),QVector3D(0,1,0));
-    main->setProjectionMatrix(55.0, 4.0/3.0, m_worldSize.length() /2000.0f, m_worldSize.length()*2.0f );
+    main->setView(QVector3D(-m_worldSize.x(),m_worldSize.y(),-m_worldSize.z()), QVector3D(0,0,1),QVector3D(0,1,0));
+    main->setProjection(35.0, 4.0/3.0, 0.1f, m_worldSize.length()*2.0f );
     addCamera(main,"Camera 1");
     switchCamera("Camera 1");
 
@@ -207,12 +233,16 @@ void NCV::initializeGL()
 
     QString names[7] = {"diffuse","selected","deselected","position","normal","id","depth"};
     GLenum formats[7] = {GL_RGB8,GL_RGBA8,GL_RGBA8,GL_RGB32F,GL_RGB8,GL_R32UI,GL_DEPTH_COMPONENT32};
+    GLuint samples[7] = {1,1,1,1,1,1,1};
+    GLint maxSamples;
+    glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+
     for(int i = 0 ; i < 7; i ++)
     {
         m_maps.insert(names[i],QGLXTexture2D());
         m_maps[names[i]].create();
         m_maps[names[i]].bind();
-        m_maps[names[i]].allocate(1000,1000,formats[i]);
+        m_maps[names[i]].allocate(1000,1000,formats[i],samples[i]);
         m_maps[names[i]].setMinFilter(QGLXTexture2D::Linear);
         m_maps[names[i]].setMagFilter(QGLXTexture2D::Linear);
         m_maps[names[i]].setWrapFunction(QGLXTexture2D::Clamp,QGLXTexture2D::Clamp);
@@ -230,6 +260,7 @@ void NCV::initializeGL()
     }
     m_bitNeuronProgram->release();
 
+    qDebug() << "ASDF";
     //compile shader
     m_floatNeuronProgram = new QGLShaderProgram(this->context(),this);
     if (!m_compileShaderProgram(m_floatNeuronProgram,":/shaders/neuronFloat.vert",":/shaders/float.frag"))
@@ -243,7 +274,7 @@ void NCV::initializeGL()
 
     //compile shader
     m_bitConnectionProgram = new QGLShaderProgram(this->context(),this);
-    if (!m_compileShaderProgram(m_bitConnectionProgram,":/shaders/connection.vert",":/shaders/connectionBit.geom",":/shaders/bit.frag"))
+    if (!m_compileShaderProgram(m_bitConnectionProgram,":/shaders/connectionBit.vert",":/shaders/connectionBit.geom",":/shaders/bit.frag"))
         return;
     if ( !m_bitConnectionProgram->bind() )
     {
@@ -255,7 +286,7 @@ void NCV::initializeGL()
 
     //compile shader
     m_floatConnectionProgram = new QGLShaderProgram(this->context(),this);
-    if (!m_compileShaderProgram(m_floatConnectionProgram,":/shaders/connection.vert",":/shaders/connectionFloat.geom",":/shaders/float.frag"))
+    if (!m_compileShaderProgram(m_floatConnectionProgram,":/shaders/connectionFloat.vert",":/shaders/connectionFloat.geom",":/shaders/float.frag"))
         return;
     if ( !m_floatConnectionProgram->bind() )
     {
@@ -266,22 +297,7 @@ void NCV::initializeGL()
 
     // establish initial values for neuron shader uniforms
     m_neuronScale = QMatrix4x4();
-    m_neuronScale.scale((m_worldSize.length() / m_neuronsToCreate) * 200.0f );
-
-
-
-
-    // compile selection shader
-    m_selectionRectProgram = new QGLShaderProgram(this->context(),this);
-    if (!m_compileShaderProgram(m_selectionRectProgram,":/shaders/postProcess.vert",":/shaders/selectionRect.frag"))
-        return;
-    if ( !m_selectionRectProgram->bind() )
-    {
-        qDebug() << "Could not bind shader program to context";
-        return;
-    }
-    m_selectionRectProgram->setUniformValue("SelectionColor",QVector3D(1,1,1));
-    m_selectionRectProgram->release();
+    m_neuronScale.scale((m_worldSize.length() / m_neuronsToCreate) * 150.0f );
 
 
     // initialize buffer to hold selection rect draw points
@@ -332,6 +348,30 @@ void NCV::initializeGL()
         qDebug() << "Could not bind shader program to context";
         return;
     }
+
+    // compile shader
+    m_neuronFrustumPickingProgram = new QGLShaderProgram(this->context(),this);
+
+    // First we load and compile the vertex shader->..
+    bool success = m_neuronFrustumPickingProgram->addShaderFromSourceFile( QGLShader::Vertex, ":/shaders/neuronSelection.vert" );
+    if ( !success )
+        qDebug() << m_neuronFrustumPickingProgram->log();
+
+    success = m_neuronFrustumPickingProgram->addShaderFromSourceFile( QGLShader::Geometry, ":/shaders/neuronSelection.geom" );
+    if ( !success )
+        qDebug() << m_neuronFrustumPickingProgram->log();
+
+    if ( !m_neuronFrustumPickingProgram->bind() )
+    {
+        qDebug() << "Could not bind shader program to context";
+        return;
+    }
+    m_neuronFrustumPickingProgram->release();
+
+    // ...and finally we link them to resolve any references.
+    success = m_neuronFrustumPickingProgram->link();
+    if ( !success )
+        qDebug() << "Could not link shader program:" << m_neuronFrustumPickingProgram->log();
 
 
     QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
@@ -401,6 +441,10 @@ void NCV::resizeGL( int w, int h )
     int targetWidth = m_width;
     int targetHeight = m_height;
 
+    for (QMap<QString, QGLXCamera*>::iterator it = m_cameras.begin(); it != m_cameras.end(); it++)
+        (*it)->setAspectRatio((float)m_width/m_height);
+   // m_cameras[m_currentCamera]->setFieldOfView(atan((m_height)*0.5 / m_cameras[m_currentCamera]->nearPlane()));
+    //fov*0.5 =
     for (QMap<QString,QGLXTexture2D>::iterator it = m_maps.begin();it != m_maps.end(); it++)
         it.value().setSize(targetWidth,targetHeight);
 }
@@ -442,21 +486,23 @@ void NCV::m_createNetwork()
 
 
     // create connection system
-    m_connections.create(m_connectionsToCreate,1,0,0);
-    m_connections.setPrimitiveType(QGLXSystem::Point);
+    m_connections.create(m_connectionsToCreate,2,0,0);
+    m_connections.setPrimitiveType(QGLXSystem::Line);
 
     // establish system ids
-    //GLuint offset[2] = {0,1};
-    //m_connections.setVertexAttributeArray("Vert_Offset",offset,sizeof(GLuint),GL_FLOAT);
+    GLuint * connectionIDs = new GLuint[m_connectionsToCreate*2];
+    GLuint * neuronConnIDs = new GLuint[m_connectionsToCreate*2];
+    for (int i =0; i < m_connectionsToCreate*2; i ++)
+    {
+        connectionIDs[i] = m_neuronsToCreate+ (i/2) +1;
+        if(i %2 ==0)
+            neuronConnIDs[i] = m_inNeurons[i/2];
+        else
+            neuronConnIDs[i] = m_outNeurons[i/2];
+    }
 
-    // establish system ids
-    GLuint * connectionIDs = new GLuint[m_connectionsToCreate];
-    for (int i =0; i < m_connectionsToCreate; i ++)
-        connectionIDs[i] = m_neuronsToCreate+ i +1;
     m_connections.setVertexAttributeArray("Inst_ID",connectionIDs,sizeof(GLuint),GL_FLOAT);
-    m_connections.setVertexAttributeArray("Inst_Neuron_IN",m_inNeurons,sizeof(GLuint),GL_FLOAT);
-    m_connections.setVertexAttributeArray("Inst_Neuron_OUT",m_outNeurons,sizeof(GLuint),GL_FLOAT);
-
+    m_connections.setVertexAttributeArray("Neuron_ID",neuronConnIDs,sizeof(GLuint),GL_FLOAT);
 
     m_lightingProgram->bind();
     m_lightingProgram->setUniformValue("WorldSize",m_worldSize);
@@ -499,8 +545,8 @@ void NCV::m_bindAttribute(NetworkAttribute  * attribute)
         }
         else if (attribute->type == NetworkAttribute::Flag)
         {
-            GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
-            GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,1,QGLXTexture::getComponentSize(GL_FLOAT));
+            GLuint componentSize = QGLXTexture::getComponentSize(GL_UNSIGNED_INT);
+            GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_INT,1,QGLXTexture::getComponentSize(GL_UNSIGNED_INT));
 
             if (attribute->owner == NetworkAttribute::Neuron)
             {
@@ -562,14 +608,13 @@ void NCV::m_bindConnections()
         QGLShaderProgram  *connectionProgram = m_connectionProgram();
 
         connectionProgram->bind();
-        connectionProgram->setUniformValue("View",m_cameras[m_currentCamera]->getViewMatrix());
-        connectionProgram->setUniformValue("Projection",m_cameras[m_currentCamera]->getProjectionMatrix());
+        connectionProgram->setUniformValue("View",m_cameras[m_currentCamera]->view());
+        connectionProgram->setUniformValue("Projection",m_cameras[m_currentCamera]->projection());
         connectionProgram->setUniformValue("ScreenSize",QVector2D(m_width,m_height));
-        connectionProgram->setUniformValue("CameraPosition",m_cameras[m_currentCamera]->getPosition());
-        connectionProgram->setUniformValue("ConnectionWidth",(float)(m_worldSize.length()/m_neurons.numObjects())* 10.0f);
-        connectionProgram->setUniformValue("CameraDirection",m_cameras[m_currentCamera]->getForward());
-        connectionProgram->setUniformValue("FogEnd",m_cameras[m_currentCamera]->getFarPlane());
-        connectionProgram->setUniformValue("FogStart",m_cameras[m_currentCamera]->getNearPlane());
+        connectionProgram->setUniformValue("CameraPosition",m_cameras[m_currentCamera]->position());
+        connectionProgram->setUniformValue("ConnectionWidth",(float)(m_worldSize.length()/m_neurons.numObjects()) * 5.0f );
+        connectionProgram->setUniformValue("FogEnd",m_cameras[m_currentCamera]->farPlane());
+        connectionProgram->setUniformValue("FogStart",m_cameras[m_currentCamera]->nearPlane());
         connectionProgram->setUniformValue("WorldCenter",m_worldCenter);
         connectionProgram->setUniformValue("WorldSize",m_worldSize);
         connectionProgram->setUniformValue("DeselectionColor",QVector4D(1,1,1,0.05));
@@ -621,6 +666,7 @@ void NCV::m_bindConnections()
 
 void NCV::m_releaseConnections()
 {
+    m_connectionRangeMap->release();
     m_translationBuffer.buffer->release();
     m_connectionAttribToRender->buffer->release();
     m_connections.release(m_connectionProgram());
@@ -636,13 +682,13 @@ void NCV::m_bindNeurons()
         // bind current state of neurons to current neuron program being rendered. (as it could have been switched)
         QGLShaderProgram * neuronProgram = m_neuronProgram();
         neuronProgram->bind();
-        neuronProgram->setUniformValue("View",m_cameras[m_currentCamera]->getViewMatrix());
-        neuronProgram->setUniformValue("Projection",m_cameras[m_currentCamera]->getProjectionMatrix());
+        neuronProgram->setUniformValue("View",m_cameras[m_currentCamera]->view());
+        neuronProgram->setUniformValue("Projection",m_cameras[m_currentCamera]->projection());
         neuronProgram->setUniformValue("ScreenSize",QVector2D(m_width,m_height));
         neuronProgram->setUniformValue("Scale",m_neuronScale);
-        neuronProgram->setUniformValue("CameraPosition",m_cameras[m_currentCamera]->getPosition());
-        neuronProgram->setUniformValue("FogEnd",m_cameras[m_currentCamera]->getFarPlane());
-        neuronProgram->setUniformValue("FogStart",m_cameras[m_currentCamera]->getNearPlane());
+        neuronProgram->setUniformValue("CameraPosition",m_cameras[m_currentCamera]->position());
+        neuronProgram->setUniformValue("FogEnd",m_cameras[m_currentCamera]->farPlane());
+        neuronProgram->setUniformValue("FogStart",m_cameras[m_currentCamera]->nearPlane());
         neuronProgram->setUniformValue("DeselectionColor",QVector4D(1,1,1,0.05));
         neuronProgram->setUniformValue("WorldCenter",m_worldCenter);
         neuronProgram->setUniformValue("WorldSize",m_worldSize);
@@ -697,6 +743,7 @@ void NCV::m_bindNeurons()
 void NCV::m_releaseNeurons()
 {
 
+    m_neuronRangeMap->release();
     m_translationBuffer.buffer->release();
     m_neuronAttribToRender->buffer->release();
     m_neurons.release(m_neuronProgram());
@@ -707,16 +754,24 @@ void NCV::m_performRegularRender()
 
     // bind fbo and related targets
     m_frameBufferObject.bind();
-
+    glEnable(GL_MULTISAMPLE);
     m_frameBufferObject.enableColorAttachments(4);
-    m_maps["diffuse"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
-    m_maps["position"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
-    m_maps["normal"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color2);
-    m_maps["id"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color3);
-    m_maps["depth"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["position"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+    m_maps["normal"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color2);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color3);
+    m_maps["depth"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
 
     // clear targets
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+
+    if (m_renderConnections && m_connectionAttribToRender != NULL)
+    {
+        m_bindConnections();
+        m_connections.draw();
+        m_releaseConnections();
+    }
 
 
     // render neurons
@@ -727,13 +782,6 @@ void NCV::m_performRegularRender()
         m_releaseNeurons();
     }
 
-    if (m_renderConnections && m_connectionAttribToRender != NULL)
-    {
-        m_bindConnections();
-        m_connections.draw();
-        m_releaseConnections();
-    }
-
 
     // release frame buffer and related targets
     m_maps["diffuse"].release();
@@ -742,6 +790,7 @@ void NCV::m_performRegularRender()
     m_maps["id"].release();
     m_maps["depth"].release();
     m_frameBufferObject.enableColorAttachments(0);
+    glDisable(GL_MULTISAMPLE);
     m_frameBufferObject.release();
 }
 
@@ -751,11 +800,11 @@ void NCV::m_performSelectionRender()
     // bind frame buffer and all first pass targets
     m_frameBufferObject.bind();
     m_frameBufferObject.enableColorAttachments(4);
-    m_maps["selected"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
-    m_maps["position"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
-    m_maps["normal"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color2);
-    m_maps["id"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color3);
-    m_maps["depth"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
+    m_maps["selected"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["position"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+    m_maps["normal"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color2);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color3);
+    m_maps["depth"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
 
     // clear targets, enable alpha blending
     glEnable(GL_ALPHA_TEST);
@@ -782,7 +831,8 @@ void NCV::m_performSelectionRender()
             else
                 m_neurons.drawSubset(range.start-1,range.end-range.start);
         }
-        program->setUniformValue("Deselected",1);
+        if (!m_renderOnlySelection)
+            program->setUniformValue("Deselected",1);
         m_releaseNeurons();
     }
     if (m_renderConnections && m_connectionAttribToRender != NULL)
@@ -804,7 +854,9 @@ void NCV::m_performSelectionRender()
                 m_connections.drawSubset(range.start-1 - m_neurons.numObjects(),range.end-range.start);
 
         }
-        program->setUniformValue("Deselected",1);
+
+        if (!m_renderOnlySelection)
+            program->setUniformValue("Deselected",1);
         m_releaseConnections();
 
     }
@@ -824,12 +876,47 @@ void NCV::m_performSelectionRender()
         m_translationBuffer.buffer->release();
         m_neuronAttribToRender->buffer->release();
         m_connectionAttribToRender->buffer->release();
+
+
+        m_frameBufferObject.enableColorAttachments(1);
+        m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+        glClear(GL_COLOR_BUFFER_BIT );
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_DEPTH_TEST);
+
+        m_blendProgram->bind();
+        m_screenVertices.bind();
+        m_blendProgram->setAttributeBuffer( "Vert_Position", GL_FLOAT,  0 ,3,sizeof(GL_FLOAT) * 3);
+        m_blendProgram->enableAttributeArray("Vert_Position");
+        glVertexAttribDivisor( m_blendProgram->attributeLocation("Vert_Position"),0);
+
+        m_screenCoords.bind();
+        m_blendProgram->setAttributeBuffer( "Vert_Coord", GL_FLOAT,  0 ,2,sizeof(GL_FLOAT) * 2);
+        m_blendProgram->enableAttributeArray("Vert_Coord");
+        glVertexAttribDivisor( m_blendProgram->attributeLocation("Vert_Coord"), 0);
+
+        glEnable(GL_TEXTURE_2D);
+        m_maps["selected"].bind(0);
+        m_blendProgram->setUniformValue("BlendMap",0);
+
+        glDrawArrays(GL_QUADS,0,4);
+
+        m_maps["diffuse"].release();
+        glBindTexture(GL_TEXTURE_2D,0);
+        m_screenCoords.release();
+        m_screenVertices.release();
+        m_blendProgram->release();
         m_frameBufferObject.release();
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+
     }
     else
     {
+
         m_maps["id"].release();
-        m_maps["deselected"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+        m_maps["deselected"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
 
         // clear only the deselected texture to keep contents of id / normal /position maps.
         m_frameBufferObject.enableColorAttachments(1);
@@ -894,7 +981,7 @@ void NCV::m_performSelectionRender()
 
 
         m_frameBufferObject.enableColorAttachments(1);
-        m_maps["diffuse"].bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+        m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
 
         glClear(GL_COLOR_BUFFER_BIT );
         glEnable(GL_BLEND);
@@ -913,14 +1000,12 @@ void NCV::m_performSelectionRender()
         glVertexAttribDivisor( m_blendProgram->attributeLocation("Vert_Coord"), 0);
 
         glEnable(GL_TEXTURE_2D);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,m_maps["selected"].id());
+        m_maps["selected"].bind(0);
         m_blendProgram->setUniformValue("BlendMap",0);
 
         glDrawArrays(GL_QUADS,0,4);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,m_maps["deselected"].id());
+        m_maps["deselected"].bind(0);
         m_blendProgram->setUniformValue("BlendMap",0);
 
         glDrawArrays(GL_QUADS,0,4);
@@ -950,8 +1035,16 @@ void NCV::setMaterial(QGLXMaterial * mat)
 
 }
 
+void NCV::paintEvent(QPaintEvent *e)
+{
+
+    updateGL();
+
+}
+
 void NCV::paintGL()
 {
+
     if (!isValid())
         return;
 
@@ -986,6 +1079,8 @@ void NCV::paintGL()
         m_connectionAttribToRender->unboundTextureData = NULL;
         QString name = m_connectionAttribToRender->name;
     }
+
+
 
     if (m_selectedObjects.count() >0)
         m_performSelectionRender();
@@ -1025,9 +1120,9 @@ void NCV::paintGL()
     {
         GLuint diffuseID = m_maps["diffuse"].id();
         m_lightingProgram->bind();
-        QVector3D cameraPosition = m_cameras[m_currentCamera]->getPosition();
+        QVector3D cameraPosition = m_cameras[m_currentCamera]->position();
         m_lightingProgram->setUniformValue("CameraPosition",cameraPosition);
-        m_lightingProgram->setUniformValue("CameraDirection",m_cameras[m_currentCamera]->getForward());
+        m_lightingProgram->setUniformValue("CameraDirection",m_cameras[m_currentCamera]->forward());
         m_lightingProgram->setUniformValue("NumLights",enabledLights);
 
         m_screenVertices.bind();
@@ -1068,40 +1163,50 @@ void NCV::paintGL()
     }
 
     else
-        m_frameBufferObject.blitTarget(m_maps["diffuse"],QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
+    {
+        //glEnable(GL_MULTISAMPLE);
+        m_frameBufferObject.blitTarget(m_maps["diffuse"],QGLXTexture::Color0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
+        //m_frameBufferObject.blitTarget(m_maps["depth"],QGLXTexture::Depth,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
+
+        //glDisable(GL_MULTISAMPLE);
+    }
 
 
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    glFinish();
+    m_painter.begin(this);
+    m_painter.setRenderHint(QPainter::Antialiasing);
+
+    QPen pen = m_painter.pen();
+    pen.setColor(QColor(255,255,255));
+    pen.setStyle(Qt::DashLine);
+    m_painter.setPen(pen);
+
+
+    QVector3D direction = m_cameras[m_currentCamera]->forward();
+    //qDebug() <<direction;
+    //m_painter.drawText(0,0,100,100,0,("Dir: " + QString::number(direction.x()) +  "  " +QString::number(direction.y()) + "  " +QString::number(direction.z())) );
+    //m_painter.drawImage(0,0,QImage(":/assets/visualizationIcon.png") );
 
     // if user is currently selecting objects, render a selection rectangle.
     if (m_leftMouseDown)
     {
-        QRect selectionRect = m_selectionRect;
-        m_selectionRectProgram->bind();
-        m_selectionRectVertices.bind();
-        QPoint selectionPoints2D[5] = {selectionRect.topLeft(),selectionRect.topRight(),selectionRect.bottomRight(),selectionRect.bottomLeft(),selectionRect.topLeft()};
-        QVector3D selectionPoints[5];
-        QVector3D texCoords[5];
-        for (int i = 0 ; i < 5; i ++)
-            selectionPoints[i] = QVector3D(2*((float)selectionPoints2D[i].x() / (float)m_width) - 1.0f,2.0f * (1.0f - (float)selectionPoints2D[i].y()/(float)m_height) - 1.0f,0.5);
+        QBrush brush = m_painter.brush();
+        brush.setColor(QColor(0,0,75));
+        brush.setStyle(Qt::Dense4Pattern);
+        m_painter.fillRect(m_selectionRect,brush);
+        m_painter.drawRect(m_selectionRect);
 
-        m_selectionRectVertices.write(0,selectionPoints,5 * sizeof(QVector3D));
-        m_selectionRectProgram->setAttributeBuffer( "Vert_Position", GL_FLOAT,  0 ,3, sizeof(QVector3D));
-        m_selectionRectProgram->enableAttributeArray("Vert_Position");
-        glVertexAttribDivisor( m_selectionRectProgram->attributeLocation("Vert_Position"), 0);
-
-
-        /*m_selectionRectVertices.write(0,texCoords,5 * sizeof(QVector2D));
-        m_selectionRectProgram->setAttributeBuffer( "Vert_Coord", GL_FLOAT,  0 ,2, sizeof(QVector2D));
-        m_selectionRectProgram->enableAttributeArray("Vert_Coord");
-        glVertexAttribDivisor( m_selectionRectProgram->attributeLocation("Vert_Coord"), 0);*/
-
-        glClear( GL_DEPTH_BUFFER_BIT );
-        glDrawArrays(GL_LINE_STRIP,0,5);
-        m_selectionRectVertices.release();
-        m_selectionRectProgram->release();
     }
 
+    m_painter.end();
+
     this->swapBuffers();
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
 }
 
@@ -1284,7 +1389,7 @@ void NCV::keyPressEvent( QKeyEvent* e )
 
 
         case Qt::Key_R:
-            m_cameras[m_currentCamera]->pan(0.0f,0.0f,m_moveSpeed/ 10.0f);
+            m_cameras[m_currentCamera]->pan(0.0f,0.0f,m_moveSpeed/ 25.0f);
             cameraUpdated(m_currentCamera);
             break;
 
@@ -1437,17 +1542,15 @@ void NCV::createConnections(const QString & filename )
 }
 
 
-void NCV::setNeuronRangeAttribute(QString name, GLfloat * data,GLfloat minValue, GLfloat maxValue, RangeInferenceFunction func)
+void NCV::createNeuronRangeAttribute(QString name,GLfloat minValue, GLfloat maxValue)
 {
-    if (!isValid())
-        return;
 
     m_neuronAttributes[name] = NetworkAttribute();
     m_neuronAttributes[name].buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
     m_neuronAttributes[name].owner = NetworkAttribute::Neuron;
     m_neuronAttributes[name].type = NetworkAttribute::Range;
     m_neuronAttributes[name].name = name;
-    m_neuronAttributes[name].unboundBufferData = data;
+    m_neuronAttributes[name].unboundBufferData = NULL;
     m_neuronAttributes[name].unboundTextureData = NULL;
     m_neuronAttributes[name].minValue = minValue;
     m_neuronAttributes[name].maxValue = maxValue;
@@ -1457,7 +1560,7 @@ void NCV::setNeuronRangeAttribute(QString name, GLfloat * data,GLfloat minValue,
     m_connectionAttributes[name].owner = NetworkAttribute::Neuron;
     m_connectionAttributes[name].type = NetworkAttribute::Range;
     m_connectionAttributes[name].name = name;
-    m_connectionAttributes[name].unboundBufferData = data;
+    m_connectionAttributes[name].unboundBufferData = NULL;
     m_connectionAttributes[name].unboundTextureData = NULL;
     m_connectionAttributes[name].minValue = minValue;
     m_connectionAttributes[name].maxValue = maxValue;
@@ -1465,8 +1568,23 @@ void NCV::setNeuronRangeAttribute(QString name, GLfloat * data,GLfloat minValue,
     newNeuronRangeAttribute(name,minValue,maxValue);
     newConnectionRangeAttribute(name,minValue,maxValue);
 }
+void NCV::createConnectionRangeAttribute(QString name,GLfloat minValue, GLfloat maxValue)
+{
+    m_connectionAttributes[name] = NetworkAttribute();
+    m_connectionAttributes[name].buffer =m_neuronAttributes[name].buffer;
+    m_connectionAttributes[name].owner = NetworkAttribute::Neuron;
+    m_connectionAttributes[name].type = NetworkAttribute::Range;
+    m_connectionAttributes[name].name = name;
+    m_connectionAttributes[name].unboundBufferData = NULL;
+    m_connectionAttributes[name].unboundTextureData = NULL;
+    m_connectionAttributes[name].minValue = minValue;
+    m_connectionAttributes[name].maxValue = maxValue;
 
-void NCV::setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor, FlagInferenceFunction func)
+    newConnectionRangeAttribute(name,minValue,maxValue);
+}
+
+
+void NCV::createNeuronFlagAttribute(QString name, QVector3D onColor,QVector3D offColor)
 {
 
     if (!isValid())
@@ -1477,7 +1595,7 @@ void NCV::setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor
     m_neuronAttributes[name].owner = NetworkAttribute::Neuron;
     m_neuronAttributes[name].type = NetworkAttribute::Flag;
     m_neuronAttributes[name].name = name;
-    m_neuronAttributes[name].unboundBufferData = data;
+    m_neuronAttributes[name].unboundBufferData = NULL;
     m_neuronAttributes[name].unboundTextureData = NULL;
     m_neuronAttributes[name].onColor = onColor;
     m_neuronAttributes[name].offColor = offColor;
@@ -1488,7 +1606,7 @@ void NCV::setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor
     m_connectionAttributes[name].owner = NetworkAttribute::Neuron;
     m_connectionAttributes[name].type = NetworkAttribute::Flag;
     m_connectionAttributes[name].name = name;
-    m_connectionAttributes[name].unboundBufferData = data;
+    m_connectionAttributes[name].unboundBufferData = NULL;
     m_connectionAttributes[name].unboundTextureData = NULL;
     m_connectionAttributes[name].onColor = onColor;
     m_connectionAttributes[name].offColor = offColor;
@@ -1498,41 +1616,73 @@ void NCV::setNeuronFlagAttribute(QString name, GLubyte * data, QVector3D onColor
 
 }
 
-void NCV::setConnectionRangeAttribute(QString name, GLfloat * data,GLfloat minValue, GLfloat maxValue)
+void NCV::createConnectionFlagAttribute(QString name, QVector3D onColor,QVector3D offColor)
 {
 
     if (!isValid())
         return;
 
     m_connectionAttributes[name] = NetworkAttribute();
-    m_connectionAttributes[name].buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
-    m_connectionAttributes[name].owner = NetworkAttribute::Connection;
-    m_connectionAttributes[name].type = NetworkAttribute::Range;
-    m_connectionAttributes[name].name = name;
-    m_connectionAttributes[name].unboundBufferData = data;
-
-    m_connectionAttributes[name].unboundTextureData = NULL;
-    m_connectionAttributes[name].minValue = minValue;
-    m_connectionAttributes[name].maxValue = maxValue;
-    newConnectionRangeAttribute(name,minValue,maxValue);
-}
-
-void NCV::setConnectionFlagAttribute(QString name, GLubyte * data, QVector3D onColor,QVector3D offColor)
-{
-
-    if (!isValid())
-        return;
-
-    m_connectionAttributes[name] = NetworkAttribute();
-    m_connectionAttributes[name].buffer = new QGLXBuffer(QGLXBuffer::TextureBuffer);
-    m_connectionAttributes[name].owner = NetworkAttribute::Connection;
+    m_connectionAttributes[name].buffer =m_neuronAttributes[name].buffer;
+    m_connectionAttributes[name].owner = NetworkAttribute::Neuron;
     m_connectionAttributes[name].type = NetworkAttribute::Flag;
     m_connectionAttributes[name].name = name;
-    m_connectionAttributes[name].unboundBufferData = data;
+    m_connectionAttributes[name].unboundBufferData = NULL;
     m_connectionAttributes[name].unboundTextureData = NULL;
     m_connectionAttributes[name].onColor = onColor;
     m_connectionAttributes[name].offColor = offColor;
+
     newConnectionBitAttribute(name,QColor(offColor.x() * 255,offColor.y() * 255,offColor.z() * 255),QColor(onColor.x() * 255,onColor.y() * 255,onColor.z() * 255));
+
+}
+
+void NCV::setNeuronRangeAttribute(QString name, GLfloat * data)
+{
+    if (!isValid())
+        return;
+
+    if (m_neuronAttributes.contains(name))
+    {
+        m_neuronAttributes[name].unboundBufferData = data;
+        m_connectionAttributes[name].unboundBufferData = data;
+    }
+
+}
+
+void NCV::setNeuronFlagAttribute(QString name, GLubyte * data)
+{
+
+    if (!isValid())
+        return;
+
+    if (m_neuronAttributes.contains(name))
+    {
+        m_neuronAttributes[name].unboundBufferData = data;
+        m_connectionAttributes[name].unboundBufferData = data;
+    }
+
+
+}
+
+void NCV::setConnectionRangeAttribute(QString name, GLfloat * data)
+{
+
+    if (!isValid())
+        return;
+    if (m_connectionAttributes.contains(name))
+        m_connectionAttributes[name].unboundBufferData = data;
+
+}
+
+void NCV::setConnectionFlagAttribute(QString name, GLubyte * data)
+{
+
+    if (!isValid())
+        return;
+
+    if (m_connectionAttributes.contains(name))
+        m_connectionAttributes[name].unboundBufferData = data;
+
 
 }
 

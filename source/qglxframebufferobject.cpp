@@ -34,7 +34,7 @@ void QGLXFrameBufferObject::release()
 }
 
 
-void QGLXFrameBufferObject::blitTarget(QGLXTexture2D& source,QRect from,QRect to, GLenum destMode )
+void QGLXFrameBufferObject::blitTarget(QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,QRect from,QRect to, GLenum destMode )
 {
     GLuint preCallError = glGetError();
 
@@ -43,22 +43,37 @@ void QGLXFrameBufferObject::blitTarget(QGLXTexture2D& source,QRect from,QRect to
     // set our framebuffer object as read buffer
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
 
-    glDrawBuffer(destMode);
+
+    if (sourceAttachment != QGLXTexture2D::Depth && sourceAttachment != QGLXTexture2D::DepthStencil)
+        glDrawBuffer(destMode);
 
     // tell OpenGL to read this target and blit it onto the rectangle specified
-    source.bindAsFrameBufferTexture(QGLXTexture2D::Read,QGLXTexture2D::Color0);
+    source.bind(QGLXTexture2D::Read,sourceAttachment);
 
-    glReadBuffer(QGLXTexture2D::Color0);
 
-    glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
-                      to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    if (sourceAttachment == QGLXTexture2D::Depth)
+        glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
+                          to.left(),to.top(), to.width(), to.height(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    else if (sourceAttachment == QGLXTexture2D::DepthStencil)
+    {
+        glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
+                          to.left(),to.top(), to.width(), to.height(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
+                          to.left(),to.top(), to.width(), to.height(), GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+    }
+    else
+    {
+        glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
+                          to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    }
 
     // release this framebuffer from reading, exit to default
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
     GLuint postCallError = glGetError();
     if (postCallError != 0  && preCallError ==0)
-        qDebug() << postCallError << " GL error in QGLXFrameBufferObject::blitTarget." ;
+        qDebug() <<  QGLXCore::getErrorString(postCallError) <<"error in QGLXFrameBufferObject::blitTarget." ;
+
 }
 
 void QGLXFrameBufferObject::blitTarget(QGLXTexture2D & source,QRect from,  QGLXTexture2D& dest,QRect to )
@@ -70,11 +85,11 @@ void QGLXFrameBufferObject::blitTarget(QGLXTexture2D & source,QRect from,  QGLXT
     // set our framebuffer object as read buffer
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
 
-    dest.bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    dest.bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
     glDrawBuffer(QGLXTexture2D::Color0);
 
     // tell OpenGL to read this target and blit it onto the rectangle specified
-    source.bindAsFrameBufferTexture(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+    source.bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
     glReadBuffer(QGLXTexture2D::Color1);
     glBlitFramebuffer(from.left(),from.top(), from.width(), from.height(),
                       to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_LINEAR);
@@ -95,7 +110,7 @@ void QGLXFrameBufferObject::getTargetPixels(QGLXTexture2D tex,QRect area, void *
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
 
-    tex.bindAsFrameBufferTexture(QGLXTexture2D::Read,QGLXTexture2D::Color0);
+    tex.bind(QGLXTexture2D::Read,QGLXTexture2D::Color0);
     glReadBuffer(QGLXTexture2D::Color0);
     glReadPixels(area.left(),tex.height() - area.bottom(),area.width(),area.height(),tex.pixelFormat(),tex.pixelType() ,data);
     glReadBuffer(GL_BACK);

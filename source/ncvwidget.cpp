@@ -1,19 +1,47 @@
 #include "ncvwidget.h"
 
+
 NCVWidget::NCVWidget(QWidget *parent) :
     QWidget(parent)
 {
     m_layout = new QBoxLayout(QBoxLayout::LeftToRight);
+    m_layout->setSpacing(0);
+
     m_managementSidebar= new ManagementSidebar();
     m_managementSidebar->show();
+    m_layout->addWidget(m_managementSidebar);
+
     //m_statusSidebar= new RightToolBar();
     //m_statusSidebar->show();
 
     // Create a GLWidget requesting our format
-    m_visualization = new NCV(  );
-    m_visualization->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
-    m_layout->addWidget(m_managementSidebar);
+    m_collapsed = false;
+
+    m_expandText = ">";
+    m_collapseText = "<";
+    m_collapseButton = new OrientationButton();
+    QFont font = m_collapseButton->font();
+    font.setPointSize(5);
+    m_collapseButton->setFont(font);
+    //m_collapseButton->setOrientation(Qt::Vertical);
+   // m_collapseButton->setMirrored(true);
+    m_collapseButton->setToolTip("Click to collapse the management sidebar");
+    m_collapseButton->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Expanding);
+    m_collapseButton->setMaximumWidth(10);
+    m_collapseButton->setText(m_collapseText);
+    //m_collapseButton->setAlignment(Qt::AlignCenter);
+
+    connect(m_collapseButton,SIGNAL(clicked()),this,SLOT(m_collapseButtonPressed()));
+    m_layout->addWidget(m_collapseButton);
+
+    QGLFormat glFormat;
+    glFormat.setVersion( 4,0 );
+    glFormat.setDoubleBuffer(true);
+    glFormat.setProfile( QGLFormat::CompatibilityProfile ); // Requires >=Qt-4.8.0
+    glFormat.setSampleBuffers( true );
+    m_visualization = new NCV( glFormat );
+    m_visualization->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     m_layout->addWidget(m_visualization);
    // m_layout->addWidget(m_statusSidebar);
 
@@ -29,9 +57,9 @@ NCVWidget::NCVWidget(QWidget *parent) :
     connect(m_managementSidebar->cameraSidebar(),SIGNAL(cameraSwitched(QString)),m_visualization,SLOT(switchCamera(QString)));
     connect(m_managementSidebar->cameraSidebar(),SIGNAL(cameraDeleted(QString)),m_visualization,SLOT(deleteCamera(QString)));
 
-    connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightCreated(QGLXLight *,QString)),m_visualization,SLOT(addLight(QGLXLight *,QString)));
-    connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightDeleted(QString)),m_visualization,SLOT(deleteLight(QString)));
-    connect(m_managementSidebar->lightingSidebar(),SIGNAL(newMaterial(QGLXMaterial*)),m_visualization,SLOT(setMaterial(QGLXMaterial*)));
+    //connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightCreated(QGLXLight *,QString)),m_visualization,SLOT(addLight(QGLXLight *,QString)));
+    //connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightDeleted(QString)),m_visualization,SLOT(deleteLight(QString)));
+    //connect(m_managementSidebar->lightingSidebar(),SIGNAL(newMaterial(QGLXMaterial*)),m_visualization,SLOT(setMaterial(QGLXMaterial*)));
 
 
     connect(m_visualization,SIGNAL(newNeuronBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addNeuronBitAttribute(QString,QColor,QColor)));
@@ -50,7 +78,7 @@ NCVWidget::NCVWidget(QWidget *parent) :
 
     QVector3D worldSize = QVector3D(50000 , 50000,50000);
 
-    int numNeurons = 50000;
+    int numNeurons = 100000;
 
     QVector3D * neuronPositions = new QVector3D[numNeurons];
     GLfloat * voltages = new GLfloat[numNeurons];
@@ -60,6 +88,7 @@ NCVWidget::NCVWidget(QWidget *parent) :
     else
         firings = new GLubyte[(numNeurons/8) + 1];
     int fireVal;
+    float threshold = 80.0f;
     for (int i = 0; i <numNeurons; i ++)
     {
         int x = (abs(rand() * rand() * rand() )% (int)worldSize.x()) - (worldSize.x()/2);
@@ -67,22 +96,22 @@ NCVWidget::NCVWidget(QWidget *parent) :
         int z = (abs(rand() * rand() * rand() ) % (int)worldSize.z()) - (worldSize.z()/2);
         neuronPositions[i] = QVector3D(x,y,z);
         voltages[i] = (float)(abs(rand()) % 100);
-        if (i %2 == 0)
+        if (voltages[i] >= threshold)
             fireVal = 1;
         else
             fireVal = 0;
         if(i %8 == 0)
-            firings[i%8] = 0;
-        firings[i%8] += fireVal<<(i % 8);
+            firings[i/8] = 0;
+        firings[i/8] += fireVal<<(i % 8);
 
     }
 
-    int numConnections = numNeurons * 5;
+    int numConnections = numNeurons ;
     GLuint * neuronIN = new GLuint[numConnections];
     GLuint * neuronOUT = new GLuint[numConnections];
     for (int i = 0; i < numConnections; i++)
     {
-        neuronIN[i] = (i % numNeurons) +1;
+        neuronIN[i] = (i % numNeurons) ;
         neuronOUT[i] = neuronIN[i];
         while (neuronOUT[i] == neuronIN[i])
             neuronOUT[i] = (rand() % numNeurons) +1;
@@ -97,12 +126,36 @@ NCVWidget::NCVWidget(QWidget *parent) :
     // attach voltage data to Inst_Voltage parameter
     // voltage data is composed of 3 component float vector, so specify that
     // share data with both neuron / connection shaders
-    m_visualization->setNeuronFlagAttribute("firing",firings,QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
-    m_visualization->setNeuronRangeAttribute("voltage",voltages,0,100.2f);
+    m_visualization->createNeuronFlagAttribute("firing",QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
+    m_visualization->createNeuronRangeAttribute("voltage",0,100.2f);
+    m_visualization->setNeuronFlagAttribute("firing",firings);
+    m_visualization->setNeuronRangeAttribute("voltage",voltages);
 
     /* ###################################################################
     Neural Network Example
     ###################################################################*/
+
+}
+
+void NCVWidget::m_collapseButtonPressed()
+{
+    if (!m_collapsed)
+    {
+        m_collapsed = true;
+        m_layout->removeWidget(m_managementSidebar);
+        m_managementSidebar->hide();
+        m_collapseButton->setText(m_expandText);
+        m_collapseButton->setToolTip("Click to expand the management sidebar");
+
+    }
+    else
+    {
+        m_collapsed = false;
+        m_layout->insertWidget(0,m_managementSidebar);
+        m_managementSidebar->show();
+        m_collapseButton->setText(m_collapseText);
+        m_collapseButton->setToolTip("Click to collapse the management sidebar");
+    }
 
 }
 

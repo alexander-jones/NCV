@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QTreeWidget>
 #include <QBoxLayout>
-#include "righttoolbar.h"
+#include "orientationbutton.h"
 #include "managementSidebar.h"
 #include "ncv.h"
 
@@ -22,14 +22,20 @@ public:
     ~NCVWidget();
     
 signals:
+
     
-public slots:
+private slots:
+    void m_collapseButtonPressed();
     void m_reportFatalError();
-    
+
 private:
+    bool m_collapsed;
     QBoxLayout * m_layout;
     ManagementSidebar * m_managementSidebar;
-    RightToolBar *m_statusSidebar;
+    OrientationButton * m_collapseButton;
+    QString m_expandText, m_collapseText;
+
+    //RightToolBar *m_statusSidebar;
     NCV * m_visualization;
 };
 

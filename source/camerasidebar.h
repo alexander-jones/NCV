@@ -1,20 +1,20 @@
 #ifndef CAMERASIDEBAR_H
 #define CAMERASIDEBAR_H
 
-#include "sidebar.h"
+#include "combowidget.h"
 #include "qglxcamera.h"
-#include "collapsiblewidget.h"
 #include "spinbox3d.h"
 #include <QVector3D>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QToolButton>
+#include <QwwTaskPanel>
 
-class CameraSidebar : public CollapsibleWidget
+class CameraSidebar : public ComboWidget
 {
     Q_OBJECT
 public:
-    CameraSidebar(QString text = "Camera Settings",QWidget * parent = 0);
+    CameraSidebar(QWidget * parent = 0);
     ~CameraSidebar();
 
 signals:
@@ -33,8 +33,7 @@ private slots:
     void m_attribChanged();
 
 private:
-    Sidebar * m_sidebar;
-    CollapsibleWidget * m_projectionSection, * m_orientationSection;
+    ComboWidget * m_sidebar;
     QMap<QString, QGLXCamera * >m_cameras;
     QMap<QWidget * ,LabeledWidget* > m_labeledWidgets;
     QLabel * m_titleLabel, * m_framesPerSecond,* m_timeScale, * m_groupingHeader, * m_projectionOptions;

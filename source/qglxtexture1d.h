@@ -22,18 +22,25 @@ public:
     /*!
         \param target The logical frame buffer target to use for this texture
         \param attachment The frame buffer attachment slot in the currently bound framebuffer.
-        \brief This function binds the texture to the current context.
+        \brief This function binds the texture to the current context as a frame buffer texture.
     */
-    void bindAsFrameBufferTexture(FrameBufferTarget target, FrameBufferAttachment attachment) ;
+    void bind(FrameBufferTarget target, FrameBufferAttachment attachment) ;
 
 
     /*!
         \param unit The image texture unit to bind this texture to.
         \param access Defines how this texture will be accessed from within a shader program.
         \param level The level of this texture to bind to the assocaited image texture unit.
-        \brief Constructs a QGLXTexture object of type.
+        \brief This function binds the texture to the current context as an image (atomic read/write access) texture;
     */
-    void bindAsImageTexture(ImageUnit unit,ImageTextureAccess access,GLuint level=0);
+    void bind(ImageUnit unit,ImageTextureAccess access,GLuint level=0);
+
+
+    /*!
+        \param unit The texture unit to bind this texture to.
+        \brief This function binds the texture to the current context in a shader texture unit.
+    */
+    void bind(GLuint unit);
 
     /*!
         \brief Creates the texture.

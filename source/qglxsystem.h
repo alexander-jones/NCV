@@ -8,6 +8,7 @@
 #include <map>
 
 
+
 struct AttributeArray
 {
     AttributeArray( )
@@ -87,6 +88,10 @@ public:
         \brief This function binds the system to the current context.
     */
     void bind(QGLShaderProgram * program);
+
+    void bindAttributeToShader(QString key, QGLShaderProgram * program,const QString & shaderAttributeName);
+    void releaseAttributeFromShader(QString key, QGLShaderProgram * program,const QString & shaderAttributeName);
+
     /*!
         \param numObjects The number of objects in this system.
         \param vertsPerObject How many vertices are described per object.
@@ -139,6 +144,7 @@ public:
     */
     void setPrimitiveType(PrimitiveType type);
 
+    void setGrouping(QString group, int startIndex,int number);
     /*!
         \param name The name to associate this attribute array with.
         \param data The data of this attribute array.
@@ -175,10 +181,11 @@ public:
     void unmapAttributeArray(QString attribute);
 
 private:
+
     int getComponentSize(GLenum componentType);
     LayoutType m_LayoutType;
     PrimitiveType m_primType;
-    QGLShaderProgram * m_program;
+    QGLShaderProgram * m_currentProgram;
     QGLXBuffer m_indexBuffer;
     int  m_numObjects, m_vertsPerObject,m_elementsPerObject,m_instancesPerObject;
     QMap<QString,AttributeArray> m_attributes;

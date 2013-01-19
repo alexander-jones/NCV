@@ -12,12 +12,12 @@ void QGLXTexture1D::bind()
 }
 
 
-void QGLXTexture1D::bindAsFrameBufferTexture(FrameBufferTarget target, FrameBufferAttachment attachment)
+void QGLXTexture1D::bind(FrameBufferTarget target, FrameBufferAttachment attachment)
 {
     glBindTexture(GL_TEXTURE_1D,m_id);
     glFramebufferTexture1D(target, attachment, GL_TEXTURE_1D, m_id, 0);
 }
-void QGLXTexture1D::bindAsImageTexture(QGLXTexture1D::ImageUnit unit,  QGLXTexture1D::ImageTextureAccess access,GLuint level)
+void QGLXTexture1D::bind(QGLXTexture1D::ImageUnit unit,  QGLXTexture1D::ImageTextureAccess access,GLuint level)
 {
 
     glBindTexture(GL_TEXTURE_1D,m_id);
@@ -90,16 +90,24 @@ void QGLXTexture1D::release()
 }
 
 
+
+
 void QGLXTexture1D::setSize(GLuint width)
 {
     m_width = width;
 
     glBindTexture(GL_TEXTURE_1D,m_id);
-    glTexImage1D(GL_TEXTURE_1D, 0, m_internalFormat, m_width, 0, m_pixelFormat, GL_UNSIGNED_BYTE, 0);
+    glTexImage1D(GL_TEXTURE_1D, 0, m_internalFormat, m_width, 0, m_pixelFormat, m_pixelType, 0);
     glBindTexture(GL_TEXTURE_1D,0);
 
 }
 GLuint QGLXTexture1D::width()
 {
     return m_width;
+}
+
+void QGLXTexture1D::bind(GLuint textureUnit)
+{
+    glActiveTexture(GL_TEXTURE0 +textureUnit);
+    bind();
 }

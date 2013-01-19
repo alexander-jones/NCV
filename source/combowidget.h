@@ -3,19 +3,16 @@
 
 
 #include <QWidget>
-#include <QTreeWidget>
 #include <QLabel>
-#include <QDirModel>
 #include <QCheckBox>
 #include <QSignalMapper>
 #include <QSpinBox>
-#include <QToolBar>
 #include <QComboBox>
-#include <QGridLayout>
-#include <QScrollArea>
+#include <QHBoxLayout>
 
 class LabeledWidget:public QWidget
 {
+    Q_OBJECT
 public:
     LabeledWidget(const QString & label, QWidget * widget, QWidget * parent =0)
         :QWidget(parent)
@@ -42,39 +39,37 @@ private:
 
 };
 
-class Sidebar : public QWidget
+class ComboWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Sidebar(QWidget *parent = 0);
+    explicit ComboWidget(QWidget *parent = 0);
     void addTool(QWidget * tool);
     void removeTool(QWidget * tool);
-    void addPanel(QWidget * panel,const QString& name);
-    void removePanel(QWidget * panel);
-    void removePanel(QString name);
-    int numPanels();
-    bool containsPanel(QString name);
+    void addWidget(QWidget * panel,const QString& name);
+    void removeWidget(QString name);
+    int count();
+    bool containsWidget(QString name);
     bool containsTool(QWidget * tool);
-    QString currentPanel();
-    void setScrollBarPolicy(Qt::ScrollBarPolicy horizontal,Qt::ScrollBarPolicy vertical);
-    void setVoidPanel(QWidget * panel);
-    
+    QWidget * currentWidget();
+    QWidget * voidWidget();
+    QString currentWidgetName();
+    void setVoidWidget(QWidget * panel);
+
 signals:
-    void panelChanged(QString name);
+    void widgetChanged(QString name);
 public slots:
-    void setPanel(const QString& name);
+    void setWidget( QString name);
 
 private:
-    QMap<QWidget *, QAction *> m_toolActions;
-    QScrollArea * m_scrollArea;
-    QToolBar * m_toolbar;
+    QVector<QWidget *> m_tools;
+    QWidget * m_currentWidget, *m_toolbar;
     QComboBox * m_panelSelector;
     QHBoxLayout * m_toolbarLayout;
     QVBoxLayout * m_layout;
-    QWidget * m_voidPanel;
+    QWidget * m_voidWidget;
     QFrame *m_separator;
     QMap<QString, QWidget *> m_panels;
-    bool m_firstPanelAdded;
 };
 
 #endif // SIDEBAR_H

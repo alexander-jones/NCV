@@ -1,18 +1,17 @@
 #ifndef LIGHTINGSIDEBAR_H
 #define LIGHTINGSIDEBAR_H
-#include "sidebar.h"
+#include "combowidget.h"
 #include "spinbox3d.h"
-#include "collapsiblewidget.h"
 #include "qglxcore.h"
 #include <QVector3D>
 #include <QLineEdit>
-#include <QPushButton>
+#include <QToolButton>
 
-class LightingSidebar : public CollapsibleWidget
+class LightingSidebar : public QWidget
 {
     Q_OBJECT
 public:
-    LightingSidebar(QString text = "Render Settings",QWidget * parent = 0);
+    LightingSidebar(QWidget * parent = 0);
     ~LightingSidebar();
     void addLight(QGLXLight * light, QString  name);
 
@@ -37,7 +36,7 @@ private slots:
 private:
     QGLXMaterial * m_material;
     QMap<QString,QGLXLight *> m_lights;
-    Sidebar * m_sidebar;
+    ComboWidget * m_sidebar;
     QLabel * m_emptyWidget;
     QGLXLight * m_defaultLight;
     QCheckBox * m_enabled;
@@ -45,10 +44,9 @@ private:
     SpinBox3D * m_position, * m_color;
     QGridLayout * m_intensityLayout, * m_attenuationLayout;
     QVBoxLayout *m_sidebarPanelLayout, * m_wholeLayout;
-    CollapsibleWidget * m_intensitySection, * m_attenuationSection, * m_lightSection;
     QSpinBox * m_radius;
     QDoubleSpinBox * m_ambientIntensity, * m_diffuseIntensity, * m_specularIntensity, * m_constantAttenuation, * m_linearAttenuation, *m_quadraticAttenuation, * m_specularPower;
-    QWidget * m_sidebarPanel, * m_intensityWidget, *m_attenuationWidget, * m_wholeWidget;
+    QWidget * m_sidebarPanel, * m_intensityWidget, *m_attenuationWidget;
     QLineEdit * m_newLightName;
     QToolButton * m_addButton,* m_deleteButton;
 };

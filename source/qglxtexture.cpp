@@ -286,3 +286,4 @@ GLenum QGLXTexture::bufferFormatToTextureFormat(GLenum componentType,  int tuple
     }
     return GL_INVALID_ENUM;
 }
+

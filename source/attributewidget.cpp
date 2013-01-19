@@ -2,15 +2,17 @@
 #include <QDebug>
 
 AttributeWidget::AttributeWidget(QString text,QWidget *parent) :
-    CollapsibleWidget(NULL,text,parent)
+    QObject(parent)
 {
     m_widget = new QWidget();
-    m_layout = new QVBoxLayout();
+    m_neuronMapper = new QSignalMapper(this);
+    m_connectionMapper = new QSignalMapper(this);
 
 
-    m_neuronLinkButton = new QPushButton();
+
+    m_neuronLinkButton = new QToolButton();
     m_neuronLinkButton->setToolTip("Set whether neuron and connection colorations should be linked for this attribute.");
-    m_connectionLinkButton = new QPushButton();
+    m_connectionLinkButton = new QToolButton();
     m_connectionLinkButton->setToolTip("Set whether neuron and connection colorations should be linked for this attribute.");
     connect(m_neuronLinkButton,SIGNAL(pressed()),this,SLOT(m_neuronLinkButtonPressed()));
     connect(m_connectionLinkButton,SIGNAL(pressed()),this,SLOT(m_connectionLinkButtonPressed()));
@@ -18,24 +20,22 @@ AttributeWidget::AttributeWidget(QString text,QWidget *parent) :
     m_linkedIcon = QIcon(":/assets/linked.png");
     m_unlinkedIcon = QIcon(":/assets/unlinked.png");
 
-    m_neuronSidebar = new Sidebar();
-    m_neuronSection = new CollapsibleWidget(m_neuronSidebar,"Neuron Attribute Coloration");
-    m_neuronSection->setFixedWidth(300);
-    m_neuronSection->underlineHeader(true);
-    m_neuronSection->expand();
-    m_layout->addWidget(m_neuronSection);
+    m_neuronSidebar = new ComboWidget();
 
-    m_connectionSidebar = new Sidebar();
-    m_connectionSection = new CollapsibleWidget(m_connectionSidebar,"Connection Attribute Coloration");
-    m_connectionSection->setFixedWidth(300);
-    m_connectionSection->underlineHeader(true);
-    m_connectionSection->expand();
-    m_layout->addWidget(m_connectionSection);
+    m_connectionSidebar = new ComboWidget();
 
-    m_widget->setLayout(m_layout);
-    this->setWidget(m_widget);
-    connect(m_neuronSidebar,SIGNAL(panelChanged(QString)),this,SLOT(m_currentNeuronAttributeSet(QString)));
-    connect(m_connectionSidebar,SIGNAL(panelChanged(QString)),this,SLOT(m_currentConnectionAttributeSet(QString)));
+    connect(m_neuronSidebar,SIGNAL(widgetChanged(QString)),this,SLOT(m_currentNeuronAttributeSet(QString)));
+    connect(m_connectionSidebar,SIGNAL(widgetChanged(QString)),this,SLOT(m_currentConnectionAttributeSet(QString)));
+}
+
+QWidget * AttributeWidget::neuronWidget()
+{
+    return m_neuronSidebar;
+}
+
+QWidget * AttributeWidget::connectionWidget()
+{
+    return m_connectionSidebar;
 }
 
 bool AttributeWidget::m_isSharedAttribute(QString name)
@@ -115,7 +115,7 @@ void AttributeWidget::m_checkAndFixInconsistantColorations(QString attributeName
 }
 void AttributeWidget::m_neuronLinkButtonPressed()
 {
-    QString attributeName = m_neuronSidebar->currentPanel();
+    QString attributeName = m_neuronSidebar->currentWidgetName();
     m_attributeLinked[attributeName] = !m_attributeLinked[attributeName];
     m_checkAndFixInconsistantColorations(attributeName);
     m_updateNeuronLinkIcon();
@@ -125,7 +125,7 @@ void AttributeWidget::m_neuronLinkButtonPressed()
 
 void AttributeWidget::m_connectionLinkButtonPressed()
 {
-    QString attributeName = m_connectionSidebar->currentPanel();
+    QString attributeName = m_connectionSidebar->currentWidgetName();
     m_attributeLinked[attributeName] = !m_attributeLinked[attributeName];
 
     m_checkAndFixInconsistantColorations(attributeName);
@@ -136,7 +136,7 @@ void AttributeWidget::m_connectionLinkButtonPressed()
 
 void AttributeWidget::m_updateNeuronLinkIcon()
 {
-    if (m_attributeLinked[m_neuronSidebar->currentPanel()])
+    if (m_attributeLinked[m_neuronSidebar->currentWidgetName()])
         m_neuronLinkButton->setIcon(m_linkedIcon);
     else
         m_neuronLinkButton->setIcon(m_unlinkedIcon);
@@ -144,7 +144,7 @@ void AttributeWidget::m_updateNeuronLinkIcon()
 
 void AttributeWidget::m_updateConnectionLinkIcon()
 {
-    if (m_attributeLinked[m_connectionSidebar->currentPanel()])
+    if (m_attributeLinked[m_connectionSidebar->currentWidgetName()])
         m_connectionLinkButton->setIcon(m_linkedIcon);
     else
         m_connectionLinkButton->setIcon(m_unlinkedIcon);
@@ -153,158 +153,196 @@ void AttributeWidget::m_updateConnectionLinkIcon()
 void AttributeWidget::m_currentNeuronAttributeSet(QString name)
 {
     currentNeuronAttributeSet(name);
-    if (m_isSharedAttribute(name))
+    if (m_attributeShared[name])
     {
 
-        if ( !m_neuronSidebar->containsTool(m_neuronLinkButton))
-            m_neuronSidebar->addTool(m_neuronLinkButton);
 
-        if ( m_connectionSidebar->currentPanel() == name && !m_connectionSidebar->containsTool(m_connectionLinkButton))
+        if (!m_neuronSidebar->containsTool(m_neuronLinkButton))
+            m_neuronSidebar->addTool(m_neuronLinkButton);
+        if ( m_connectionSidebar->currentWidgetName() == name && !m_connectionSidebar->containsTool(m_connectionLinkButton))
             m_connectionSidebar->addTool(m_connectionLinkButton);
 
+        m_updateNeuronLinkIcon();
+        m_updateConnectionLinkIcon();
     }
     else if ( m_connectionSidebar->containsTool(m_neuronLinkButton))
             m_neuronSidebar->removeTool(m_neuronLinkButton);
 
-    m_updateNeuronLinkIcon();
-    m_updateConnectionLinkIcon();
 }
 
 
 void AttributeWidget::m_currentConnectionAttributeSet(QString name)
 {
     currentConnectionAttributeSet(name);
-    if (m_isSharedAttribute(name))
+    if (m_attributeShared[name])
     {
 
         if ( !m_connectionSidebar->containsTool(m_connectionLinkButton))
             m_connectionSidebar->addTool(m_connectionLinkButton);
 
-        if ( m_neuronSidebar->currentPanel() == name && !m_neuronSidebar->containsTool(m_neuronLinkButton))
+        if ( m_neuronSidebar->currentWidgetName() == name && !m_neuronSidebar->containsTool(m_neuronLinkButton))
             m_neuronSidebar->addTool(m_neuronLinkButton);
+
+        m_updateNeuronLinkIcon();
+        m_updateConnectionLinkIcon();
     }
     else if ( m_connectionSidebar->containsTool(m_connectionLinkButton))
             m_connectionSidebar->removeTool(m_connectionLinkButton);
 
-    m_updateNeuronLinkIcon();
-    m_updateConnectionLinkIcon();
 }
+
 
 void AttributeWidget::addNeuronRangeAttribute(QString name, float minVal, float maxVal)
 {
     m_neuronRangeWidgets[name] = new ColorRangeWidget();
+    if (m_connectionRangeWidgets.contains(name))
+    {
+        m_attributeShared[name] = true;
+        m_attributeLinked[name] = true;
+
+    }
+
     m_neuronRangeWidgets[name]->setLowThreshold(minVal);
     m_neuronRangeWidgets[name]->setHighThreshold(maxVal);
     m_neuronRangeWidgets[name]->setImageSize(300,25);
     m_neuronRangeWidgets[name]->setRangeToGradient(minVal,maxVal,QColor(0,255,0),QColor(255,0,255));
-    m_neuronSidebar->addPanel(m_neuronRangeWidgets[name],name);
-    m_attributeLinked[name] = true;
+    m_neuronSidebar->addWidget(m_neuronRangeWidgets[name],name);
     neuronRangeColorationChanged(name,m_neuronRangeWidgets[name]->getData(),m_neuronRangeWidgets[name]->getImageSize().width());
 
-    connect(m_neuronRangeWidgets[name],SIGNAL(markersChanged(QList<Cursor>)),this,SLOT(m_neuronRangeColorationChanged(QList<Cursor>)));
 
+    connect(m_neuronRangeWidgets[name],SIGNAL(colorRangeChanged()),m_neuronMapper,SLOT(map()));
+    m_neuronMapper->setMapping(m_neuronRangeWidgets[name],name);
+    connect(m_neuronMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_neuronColorationChanged(const QString& )));
 
 }
 
 void AttributeWidget::addNeuronBitAttribute(QString name, QColor offColor, QColor onColor)
 {
     m_neuronFlagWidgets[name] = new ColorBitWidget();
-    connect(m_neuronFlagWidgets[name] ,SIGNAL(colorsChanged(QColor,QColor)),this,SLOT(m_neuronBitColorationChanged(QColor,QColor)));
+    if (m_connectionFlagWidgets.contains(name))
+    {
+        m_attributeShared[name] = true;
+        m_attributeLinked[name] = true;
+    }
+
+    connect(m_neuronFlagWidgets[name],SIGNAL(colorsChanged(QColor,QColor)),m_neuronMapper,SLOT(map()));
+    m_neuronMapper->setMapping(m_neuronFlagWidgets[name],name);
+    connect(m_neuronMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_neuronColorationChanged(const QString&)));
+
     m_neuronFlagWidgets[name]->setOffColor(offColor);
     m_neuronFlagWidgets[name]->setOnColor(onColor);
-    m_neuronSidebar->addPanel(m_neuronFlagWidgets[name],name);
-    m_attributeLinked[name] = true;
+    m_neuronSidebar->addWidget(m_neuronFlagWidgets[name],name);
 }
 
 void AttributeWidget::addConnectionRangeAttribute(QString name, float minVal, float maxVal)
 {
     m_connectionRangeWidgets[name] = new ColorRangeWidget();
+    if (m_neuronRangeWidgets.contains(name))
+    {
+        m_attributeShared[name] = true;
+        m_attributeLinked[name] = true;
+    }
+
+
     m_connectionRangeWidgets[name]->setLowThreshold(minVal);
     m_connectionRangeWidgets[name]->setHighThreshold(maxVal);
     m_connectionRangeWidgets[name]->setImageSize(300,25);
     m_connectionRangeWidgets[name]->setRangeToGradient(minVal,maxVal,QColor(0,255,0),QColor(255,0,255));
-    m_connectionSidebar->addPanel(m_connectionRangeWidgets[name],name);
-    m_attributeLinked[name] = true;
+    m_connectionSidebar->addWidget(m_connectionRangeWidgets[name],name);
     connectionRangeColorationChanged(name,m_connectionRangeWidgets[name]->getData(),m_connectionRangeWidgets[name]->getImageSize().width());
 
-    connect(m_connectionRangeWidgets[name],SIGNAL(markersChanged(QList<Cursor>)),this,SLOT(m_connectionRangeColorationChanged(QList<Cursor>)));
 
+    connect(m_connectionRangeWidgets[name],SIGNAL(colorRangeChanged()),m_connectionMapper,SLOT(map()));
+    m_connectionMapper->setMapping(m_connectionRangeWidgets[name],name);
+    connect(m_connectionMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_connectionColorationChanged(const QString&  )));
 }
 
 void AttributeWidget::addConnectionBitAttribute(QString name, QColor offColor, QColor onColor)
 {
     m_connectionFlagWidgets[name] = new ColorBitWidget();
-    connect(m_connectionFlagWidgets[name],SIGNAL(colorsChanged(QColor,QColor)),this,SLOT(m_connectionBitColorationChanged(QColor,QColor)));
+    if (m_neuronFlagWidgets.contains(name))
+    {
+        m_attributeShared[name] = true;
+        m_attributeLinked[name] = true;
+    }
+
+    connect(m_connectionFlagWidgets[name],SIGNAL(colorsChanged(QColor,QColor)),m_connectionMapper,SLOT(map()));
+    m_connectionMapper->setMapping(m_connectionFlagWidgets[name],name);
+    connect(m_connectionMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_connectionColorationChanged(const QString& )));
+
     m_connectionFlagWidgets[name]->setOffColor(offColor);
     m_connectionFlagWidgets[name]->setOnColor(onColor);
-    m_connectionSidebar->addPanel(m_connectionFlagWidgets[name],name);
-    m_attributeLinked[name] = true;
+    m_connectionSidebar->addWidget(m_connectionFlagWidgets[name],name);
 }
 
-
-void AttributeWidget::m_neuronBitColorationChanged(QColor offColor,QColor onColor)
-{
-    QString attributeName = m_neuronSidebar->currentPanel();
-    if (m_neuronSidebar->containsTool(m_neuronLinkButton) && m_neuronLinkButton->icon().cacheKey() == m_linkedIcon.cacheKey() )
-    {
-
-        if (m_connectionSidebar->containsPanel(attributeName)  && m_connectionFlagWidgets.contains(attributeName) && !m_flagAttributeConsistent(attributeName))
-                m_connectionFlagWidgets[attributeName]->setColors(offColor,onColor);
-
-    }
-    neuronBitColorationChanged(attributeName, offColor,onColor);
-}
-void AttributeWidget::m_neuronRangeColorationChanged(QList<Cursor> markers)
+void AttributeWidget::m_neuronColorationChanged(const QString & attributeName)
 {
 
-    QString attributeName = m_neuronSidebar->currentPanel();
-    if(m_neuronRangeWidgets.contains(attributeName))
+    if (m_neuronFlagWidgets.contains(attributeName))
     {
-        if ( m_attributeLinked[attributeName] && m_connectionRangeWidgets.contains(attributeName))
-            m_connectionRangeWidgets[attributeName]->setMarkers(markers);
+        if (m_neuronSidebar->containsTool(m_neuronLinkButton) && m_neuronLinkButton->icon().cacheKey() == m_linkedIcon.cacheKey() )
+        {
 
+            if (m_connectionSidebar->containsWidget(attributeName)  && m_connectionFlagWidgets.contains(attributeName) && !m_flagAttributeConsistent(attributeName))
+                    m_connectionFlagWidgets[attributeName]->setColors(m_neuronFlagWidgets[attributeName]->getOffColor(),m_neuronFlagWidgets[attributeName]->getOnColor());
 
-        neuronRangeColorationChanged(attributeName,m_neuronRangeWidgets[attributeName]->getData(),m_neuronRangeWidgets[attributeName]->getImageSize().width());
+        }
+        neuronBitColorationChanged(attributeName, m_neuronFlagWidgets[attributeName]->getOffColor(),m_neuronFlagWidgets[attributeName]->getOnColor());
+
     }
     else
     {
-        QString attributeName = m_connectionSidebar->currentPanel();
-        if ( m_attributeLinked[attributeName] && m_connectionRangeWidgets.contains(attributeName))
-            m_connectionRangeWidgets[attributeName]->setMarkers(markers);
+        if(m_neuronRangeWidgets.contains(attributeName))
+        {
+            if ( m_attributeLinked[attributeName] && m_connectionRangeWidgets.contains(attributeName))
+                m_connectionRangeWidgets[attributeName]->setMarkers(m_neuronRangeWidgets[attributeName]->getMarkers());
+
+
+            neuronRangeColorationChanged(attributeName,m_neuronRangeWidgets[attributeName]->getData(),m_neuronRangeWidgets[attributeName]->getImageSize().width());
+        }
+        else
+        {
+            if ( m_attributeLinked[attributeName] && m_connectionRangeWidgets.contains(attributeName))
+                m_connectionRangeWidgets[attributeName]->setMarkers(m_neuronRangeWidgets[attributeName]->getMarkers());
+        }
     }
+
 
 }
 
-void AttributeWidget::m_connectionBitColorationChanged(QColor offColor,QColor onColor)
+void AttributeWidget::m_connectionColorationChanged(const QString & attributeName)
 {
-    QString attributeName = m_connectionSidebar->currentPanel();
-    if (m_connectionSidebar->containsTool(m_connectionLinkButton)&&  m_connectionLinkButton->icon().cacheKey() == m_linkedIcon.cacheKey() )
+    if (m_connectionFlagWidgets.contains(attributeName))
     {
-        if (m_neuronSidebar->containsPanel(attributeName) && m_neuronFlagWidgets.contains(attributeName) && !m_flagAttributeConsistent(attributeName))
-            m_neuronFlagWidgets[attributeName]->setColors(offColor,onColor);
+        if (m_connectionSidebar->containsTool(m_connectionLinkButton)&&  m_connectionLinkButton->icon().cacheKey() == m_linkedIcon.cacheKey() )
+        {
+            if (m_neuronSidebar->containsWidget(attributeName) && m_neuronFlagWidgets.contains(attributeName) && !m_flagAttributeConsistent(attributeName))
+                m_neuronFlagWidgets[attributeName]->setColors(m_connectionFlagWidgets[attributeName]->getOffColor(),m_connectionFlagWidgets[attributeName]->getOnColor());
 
-    }
-    connectionBitColorationChanged(attributeName,offColor,onColor);
-}
+        }
+        connectionBitColorationChanged(attributeName,m_connectionFlagWidgets[attributeName]->getOffColor(),m_connectionFlagWidgets[attributeName]->getOnColor());
 
-void AttributeWidget::m_connectionRangeColorationChanged(QList<Cursor> markers)
-{
-    QString attributeName = m_connectionSidebar->currentPanel();
-    if(m_connectionRangeWidgets.contains(attributeName))
-    {
-        if ( m_attributeLinked[attributeName] && m_neuronRangeWidgets.contains(attributeName))
-            m_neuronRangeWidgets[attributeName]->setMarkers(markers);
-
-
-        connectionRangeColorationChanged(attributeName,m_connectionRangeWidgets[attributeName]->getData(),m_connectionRangeWidgets[attributeName]->getImageSize().width());
     }
     else
     {
-        QString attributeName = m_neuronSidebar->currentPanel();
-        if ( m_attributeLinked[attributeName] && m_neuronRangeWidgets.contains(attributeName))
-            m_neuronRangeWidgets[attributeName]->setMarkers(markers);
+        if(m_connectionRangeWidgets.contains(attributeName))
+        {
+            if ( m_attributeLinked[attributeName] && m_neuronRangeWidgets.contains(attributeName))
+                    m_neuronRangeWidgets[attributeName]->setMarkers(m_connectionRangeWidgets[attributeName]->getMarkers());
+
+
+            connectionRangeColorationChanged(attributeName,m_connectionRangeWidgets[attributeName]->getData(),m_connectionRangeWidgets[attributeName]->getImageSize().width());
+        }
+        else
+        {
+            if ( m_attributeLinked[attributeName] && m_neuronRangeWidgets.contains(attributeName))
+                m_neuronRangeWidgets[attributeName]->setMarkers(m_connectionRangeWidgets[attributeName]->getMarkers());
+        }
+
     }
 
-
 }
+
+
+
 

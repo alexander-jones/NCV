@@ -1,24 +1,18 @@
 #include "lightingsidebar.h"
 #include <QMessageBox>
-LightingSidebar::LightingSidebar(QString text, QWidget * parent)
-    :CollapsibleWidget(NULL,text,parent)
+LightingSidebar::LightingSidebar( QWidget * parent)
+    :QWidget(parent)
 {
     m_material = new QGLXMaterial();
 
-    m_wholeWidget = new QWidget();
-    m_wholeWidget->setFixedWidth(325);
     m_wholeLayout = new QVBoxLayout();
 
-    QFont font = m_wholeWidget->font();
+    QFont font = this->font();
     font.setPointSize(8);
 
-    m_sidebar = new Sidebar();
-    m_lightSection = new CollapsibleWidget(m_sidebar,"Lights");
-    m_lightSection->setFixedWidth(300);
-    m_lightSection->underlineHeader(true);
-    m_lightSection->expand();
-    m_wholeLayout->addWidget(m_lightSection);
-    connect(m_sidebar,SIGNAL(panelChanged(QString)),this,SLOT(updateLight(QString)));
+    m_sidebar = new ComboWidget();
+    m_wholeLayout->addWidget(m_sidebar);
+    connect(m_sidebar,SIGNAL(widgetChanged(QString)),this,SLOT(updateLight(QString)));
 
     m_defaultLight  = new QGLXLight();
     m_defaultLight->position = QVector3D(0,0,0);
@@ -33,7 +27,7 @@ LightingSidebar::LightingSidebar(QString text, QWidget * parent)
 
     m_emptyWidget = new QLabel("No Lights to Manage");
     m_emptyWidget->setAlignment(Qt::AlignCenter);
-    m_sidebar->setVoidPanel(m_emptyWidget);
+    m_sidebar->setVoidWidget(m_emptyWidget);
     m_enabled = new QCheckBox();
     m_enabled->setChecked(false);
     m_sidebar->addTool(m_enabled);
@@ -120,11 +114,7 @@ LightingSidebar::LightingSidebar(QString text, QWidget * parent)
     m_attenuationLayout->addWidget(m_labeledWidgets[m_quadraticAttenuation],0,1);
 
     m_attenuationWidget->setLayout(m_attenuationLayout);
-    m_attenuationSection = new CollapsibleWidget(m_attenuationWidget,"Attenuation");
-    m_attenuationSection->underlineHeader(true);
-    m_attenuationSection->setFixedWidth(300);
-    m_attenuationSection->expand();
-    m_sidebarPanelLayout->addWidget(m_attenuationSection);
+    m_sidebarPanelLayout->addWidget(m_attenuationWidget);
 
     m_sidebarPanel->setLayout(m_sidebarPanelLayout);
     m_wholeLayout->addWidget(m_sidebar);
@@ -162,58 +152,15 @@ LightingSidebar::LightingSidebar(QString text, QWidget * parent)
     m_intensityLayout->addWidget(m_labeledWidgets[m_specularIntensity],0,1);
 
     m_intensityWidget->setLayout(m_intensityLayout);
-    m_intensitySection = new CollapsibleWidget(m_intensityWidget, "System Material Levels");
-    m_intensitySection->setFixedWidth(300);
-    m_intensitySection->underlineHeader(true);
-    m_intensitySection->expand();
-    m_wholeLayout->addWidget(m_intensitySection);
+    m_wholeLayout->addWidget(m_intensityWidget);
 
 
-    m_wholeWidget->setLayout(m_wholeLayout);
-    this->setWidget(m_wholeWidget);
+    this->setLayout(m_wholeLayout);
 
 }
 
 LightingSidebar::~LightingSidebar()
 {
-   delete m_material;
-   delete m_sidebar;
-
-   delete m_emptyWidget;
-   delete m_defaultLight;
-
-   delete m_enabled;
-   delete m_position;
-   delete m_color;
-   delete m_intensityLayout;
-
-   delete m_attenuationLayout;
-   delete m_sidebarPanelLayout;
-   delete m_wholeLayout;
-   delete m_attenuationSection;
-   delete m_lightSection;
-   delete m_intensitySection;
-   delete m_radius;
-   delete m_ambientIntensity;
-   delete m_diffuseIntensity;
-   delete m_specularIntensity;
-   delete m_constantAttenuation;
-   delete m_linearAttenuation;
-   delete m_quadraticAttenuation;
-   delete m_specularPower;
-
-
-   delete m_sidebarPanel;
-   delete m_intensityWidget;
-   delete m_attenuationWidget;
-   delete m_wholeWidget;
-   delete m_newLightName;
-   delete m_addButton;
-   delete m_deleteButton;
-
-
-   for (QMap<QWidget * ,LabeledWidget*>::iterator it = m_labeledWidgets.begin(); it != m_labeledWidgets.end();it++)
-       delete it.value();
 
 }
 
@@ -225,10 +172,10 @@ void LightingSidebar::setLightDefault(QGLXLight * light)
 
 void LightingSidebar::addLight(QGLXLight * light, QString  name)
 {
-    if (!m_sidebar->containsPanel(name))
+    if (!m_sidebar->containsWidget(name))
     {
         m_lights[name] = light;
-        m_sidebar->addPanel(m_sidebarPanel,name);
+        m_sidebar->addWidget(m_sidebarPanel,name);
         updateLight(name);
     }
 }
@@ -236,7 +183,7 @@ void LightingSidebar::addLight(QGLXLight * light, QString  name)
 
 void LightingSidebar::updateLight(QString name)
 {
-    if (name == m_sidebar->currentPanel())
+    if (name == m_sidebar->currentWidgetName())
     {
         m_constantAttenuation->setValue(m_lights[name]->constantAttenuation);
         m_linearAttenuation->setValue(m_lights[name]->linearAttenuation);
@@ -252,9 +199,9 @@ void LightingSidebar::updateLight(QString name)
 
 void LightingSidebar::m_lightingAttributeChanged()
 {
-    if (m_sidebar->numPanels() == 0)
+    if (m_sidebar->count() == 0)
         return;
-    QString name = m_sidebar->currentPanel();
+    QString name = m_sidebar->currentWidgetName();
     m_lights[name]->constantAttenuation = m_constantAttenuation->value();
     m_lights[name]->linearAttenuation = m_linearAttenuation->value();
     m_lights[name]->quadtraticAttenuation = m_quadraticAttenuation->value();
@@ -262,7 +209,7 @@ void LightingSidebar::m_lightingAttributeChanged()
     m_lights[name]->position = m_position->value();
     m_lights[name]->specularPower = m_specularPower->value();
     m_lights[name]->radius = m_radius->value();
-    if (m_sidebar->numPanels() ==0 && m_enabled->isChecked())
+    if (m_sidebar->count() ==0 && m_enabled->isChecked())
         m_enabled->setChecked(false);
     else
         m_lights[name]->enabled = m_enabled->isChecked();
@@ -286,12 +233,12 @@ void LightingSidebar::m_addPressed()
 
     QString lightToAdd = m_newLightName->text();
     bool cameraNameGiven = lightToAdd.length() > 0;
-    bool alreadyCreated = m_sidebar->containsPanel(lightToAdd);
+    bool alreadyCreated = m_sidebar->containsWidget(lightToAdd);
 
     if (cameraNameGiven && !alreadyCreated)
     {
         QGLXLight * light;
-        if (m_sidebar->numPanels() == 0)
+        if (m_sidebar->count() == 0)
         {
             light = m_defaultLight;
         }
@@ -331,13 +278,13 @@ void LightingSidebar::m_deletePressed()
 {
     QString lightToDelete = m_newLightName->text();
     bool lightNameGiven = lightToDelete.length() > 0;
-    bool alreadyCreated = m_sidebar->containsPanel(lightToDelete);
-    if (m_sidebar->numPanels() == 0 || !lightNameGiven || !alreadyCreated)
+    bool alreadyCreated = m_sidebar->containsWidget(lightToDelete);
+    if (m_sidebar->count() == 0 || !lightNameGiven || !alreadyCreated)
     {
         QMessageBox msgBox;
         msgBox.setText("Light Could Not Be Deleted.");
 
-        if (m_sidebar->numPanels() == 0)
+        if (m_sidebar->count() == 0)
             msgBox.setInformativeText("No lights exist.");
         else if (!alreadyCreated)
             msgBox.setInformativeText("No light with that name exists.");
@@ -349,7 +296,7 @@ void LightingSidebar::m_deletePressed()
     }
     else
     {
-        m_sidebar->removePanel(lightToDelete);
+        m_sidebar->removeWidget(lightToDelete);
         m_lights.remove(lightToDelete);
         lightDeleted(lightToDelete);
     }

@@ -22,6 +22,10 @@ QGLXSystem::~QGLXSystem()
     }
 }
 
+void QGLXSystem::setGrouping(QString group, int startIndex,int number)
+{
+}
+
 void QGLXSystem::create(int numObjects, int vertsPerObject, int elementsPerObject,int instancesPerObject)
 {
     m_numObjects = numObjects;
@@ -102,6 +106,9 @@ void QGLXSystem::setInstanceAttributeArray(QString name,void * data, int stride,
 
 void QGLXSystem::bind(QGLShaderProgram * program)
 {
+    m_currentProgram = program;
+    if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
+        m_indexBuffer.bind();
     for (QMap<QString,AttributeArray>::iterator it =  m_attributes.begin(); it != m_attributes.end();it++)
     {
         QString name = it.key();
@@ -112,15 +119,35 @@ void QGLXSystem::bind(QGLShaderProgram * program)
         program->enableAttributeArray( location);
         glVertexAttribDivisor( location, attrib.divisor);
     }
-    if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
-        m_indexBuffer.bind();
 
+}
+
+void QGLXSystem::bindAttributeToShader(QString key, QGLShaderProgram * program,const QString & shaderAttributeName)
+{
+    if (m_attributes.contains(key))
+    {
+        AttributeArray attrib = m_attributes[key];
+        attrib.buffer->bind();
+        int location = program->attributeLocation(shaderAttributeName);
+        program->setAttributeBuffer( location, attrib.componentType,  0 ,attrib.stride  / attrib.componentSize, attrib.stride);
+        program->enableAttributeArray( location);
+        glVertexAttribDivisor( location, attrib.divisor);
+    }
+}
+void QGLXSystem::releaseAttributeFromShader(QString key, QGLShaderProgram * program,const QString & shaderAttributeName)
+{
+    if (m_attributes.contains(key))
+    {
+        AttributeArray attrib = m_attributes[key];
+        attrib.buffer->bind();
+        int location = program->attributeLocation(shaderAttributeName);
+        program->disableAttributeArray( location );
+        attrib.buffer->release();
+    }
 }
 
 void QGLXSystem::release(QGLShaderProgram * program)
 {
-    if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
-        m_indexBuffer.release();
 
     for (QMap<QString,AttributeArray>::iterator it =  m_attributes.begin(); it != m_attributes.end();it++)
     {
@@ -130,6 +157,8 @@ void QGLXSystem::release(QGLShaderProgram * program)
         program->disableAttributeArray( location );
         attrib.buffer->release();
     }
+    if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
+        m_indexBuffer.release();
 }
 
 void QGLXSystem::drawSubset(GLuint start, GLuint count)

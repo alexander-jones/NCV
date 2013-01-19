@@ -14,6 +14,7 @@ ColorRangeWidget::ColorRangeWidget(QWidget *parent, int width, int height) :
     m_highThreshold = 1.0;
 
     m_cursorImage = new QImage(":/assets/triangle.png");
+    m_smallCursorImage =new QImage(":/assets/triangleSmall.png");
     m_layout = new QVBoxLayout();
     m_layout->setAlignment(Qt::AlignCenter);
     m_rangeLayerPadding = 100;
@@ -85,7 +86,6 @@ void ColorRangeWidget:: setMarkers(const QList<Cursor> & markers)
             m_cursors.insert(0,cursor);
         }
         m_updateRange();
-        markersChanged(m_cursors);
         m_updateValueLayerContainer();
 
     }
@@ -163,7 +163,7 @@ void ColorRangeWidget::setRangeToColor(float start,float end, QRgb color)
             startCursor.color = color;
             startCursor.value = start;
             startCursor.position = startPixel;
-            startCursor.cursorImage = new QImage(*m_cursorImage);
+            startCursor.cursorImage = new QImage(*m_smallCursorImage);
             for (int y = 0; y < startCursor.cursorImage->height(); y++)
                 for (int x = 0; x < startCursor.cursorImage->width(); x++)
                 {
@@ -177,7 +177,7 @@ void ColorRangeWidget::setRangeToColor(float start,float end, QRgb color)
             endCursor.color = color;
             endCursor.value = end;
             endCursor.position = endPixel;
-            endCursor.cursorImage = new QImage(*m_cursorImage);
+            endCursor.cursorImage = new QImage(*m_smallCursorImage);
             for (int y = 0; y < endCursor.cursorImage->height(); y++)
                 for (int x = 0; x < endCursor.cursorImage->width(); x++)
                 {
@@ -186,10 +186,9 @@ void ColorRangeWidget::setRangeToColor(float start,float end, QRgb color)
                         endCursor.cursorImage->setPixel(x,y,color);
                 }
             m_cursors.insert(0,endCursor);
-            markersChanged(m_cursors);
 
         }
-        colorRangeChanged(getData());
+        colorRangeChanged();
         m_updateCursorRangeContainer();
 
     }
@@ -219,35 +218,24 @@ void ColorRangeWidget::setRangeToGradient(float start,float end, QColor startCol
             startCursor.color = startColor;
             startCursor.value = start;
             startCursor.position = startPixel;
-            startCursor.cursorImage = new QImage(*m_cursorImage);
-            for (int y = 0; y < startCursor.cursorImage->height(); y++)
-                for (int x = 0; x < startCursor.cursorImage->width(); x++)
-                {
-                    QColor pixel = startCursor.cursorImage->pixel(x,y);
-                    if (pixel.redF()  >0.05f && pixel.blueF() >0.05f  && pixel.greenF() >0.05f)
-                        startCursor.cursorImage->setPixel(x,y,startColor.rgb());
-                }
+            startCursor.cursorImage = new QImage(*m_smallCursorImage);
+
+            m_colorCursor(startCursor.cursorImage,startCursor.color);
             m_cursors.insert(0,startCursor);
 
             Cursor endCursor;
             endCursor.color = endColor;
             endCursor.value = end;
             endCursor.position = endPixel;
-            endCursor.cursorImage = new QImage(*m_cursorImage);
-            for (int y = 0; y < endCursor.cursorImage->height(); y++)
-                for (int x = 0; x < endCursor.cursorImage->width(); x++)
-                {
-                    QColor pixel = endCursor.cursorImage->pixel(x,y);
-                    if (pixel.redF()  >0.05f && pixel.blueF() >0.05f  && pixel.greenF() >0.05f)
-                        endCursor.cursorImage->setPixel(x,y,endColor.rgb());
-                }
+            endCursor.cursorImage = new QImage(*m_smallCursorImage);
+
+            m_colorCursor(endCursor.cursorImage,endCursor.color);
             m_cursors.insert(0,endCursor);
-            markersChanged(m_cursors);
             m_updateValueLayerContainer();
 
         }
 
-        colorRangeChanged(getData());
+        colorRangeChanged();
         m_updateCursorRangeContainer();
 
 
@@ -284,9 +272,9 @@ void ColorRangeWidget::m_updateCursorRangeContainer()
     m_cursorLayer->fill(QColor(0,0,0,0));
     QPainter painter(m_cursorLayer);
 
-    painter.drawImage(QPoint(m_rangeLayerPadding/4,0),*m_rangeLayer);
+    painter.drawImage(QPoint(m_rangeLayerPadding/2,0),*m_rangeLayer);
     for (int i =0; i < m_cursors.size(); i ++)
-        painter.drawImage(QPoint(m_rangeLayerPadding/4 + m_cursors[i].position-(m_cursorImage->width()/2),m_cursorLayer->height() - m_cursorImage->height()),*m_cursors[i].cursorImage);
+        painter.drawImage(QPoint(m_rangeLayerPadding/2 + m_cursors[i].position-(m_cursors[i].cursorImage->width()/2),m_cursorLayer->height() - m_cursors[i].cursorImage->height()),*m_cursors[i].cursorImage);
     m_cursorRangeContainer->setPixmap(QPixmap::fromImage(*m_cursorLayer));
 }
 
@@ -302,7 +290,7 @@ void ColorRangeWidget::m_updateValueLayerContainer()
         painter.setFont(font);
         QString text = QString::number(m_cursors[i].value);
         QSize size = QFontMetrics(text).size(Qt::TextSingleLine,text);
-        int width = m_cursors[i].position + m_rangeLayerPadding/4;
+        int width = m_cursors[i].position + m_rangeLayerPadding/2;
         QRect rect = QRect(width-size.width()/2,0,size.width(),size.height() );
         painter.drawText(rect,Qt::AlignCenter,text);
         if (i ==0 && m_leftMouseDown)
@@ -318,6 +306,26 @@ void ColorRangeWidget::m_updateValueLayerContainer()
     m_valueLayerContainer->setPixmap(QPixmap::fromImage(*m_valueLayer));
 }
 
+void ColorRangeWidget::m_colorCursor(QImage * cursorImage, QColor color)
+{
+
+    for (int y = 0; y < cursorImage->height(); y++)
+    {
+        QRgb *pixelData = (QRgb *)cursorImage->scanLine(y);
+        for (int col = 0 ; col < cursorImage->width(); col ++)
+        {
+            QColor pixel = QColor::fromRgb(pixelData[col]);
+            int alpha = qAlpha(pixelData[col]);
+
+            if (pixel.redF()  >0.5f && pixel.blueF() >0.5f  && pixel.greenF() >0.5f)
+                pixelData[col] = color.rgb();
+
+            else if (alpha > 50)
+                pixelData[col] = QColor(255 - color.red(),255- color.green(),255- color.blue()).rgb();
+        }
+
+    }
+}
 void ColorRangeWidget::m_cursorRangeDoubleClicked(Qt::MouseButton button,QPoint pos)
 {
     if (button == Qt::LeftButton)
@@ -333,17 +341,10 @@ void ColorRangeWidget::m_cursorRangeDoubleClicked(Qt::MouseButton button,QPoint 
             {
                 m_cursors[0].color = color;
                 delete m_cursors[0].cursorImage;
-                m_cursors[0].cursorImage = new QImage(*m_cursorImage);
-                for (int y = 0; y < m_cursors[0].cursorImage->height(); y++)
-                    for (int x = 0; x < m_cursors[0].cursorImage->width(); x++)
-                    {
-                        QColor pixel = m_cursors[0].cursorImage->pixel(x,y);
-                        if (pixel.redF()  >0.05f && pixel.blueF() >0.05f  && pixel.greenF() >0.05f)
-                            m_cursors[0].cursorImage->setPixel(x,y,color.rgb());
-                    }
+                m_cursors[0].cursorImage = new QImage(*m_smallCursorImage);
+                m_colorCursor(m_cursors[0].cursorImage,color);
 
                 m_updateRange();
-                markersChanged(m_cursors);
             }
 
             m_updateValueLayerContainer();
@@ -391,7 +392,7 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
             m_rightMouseDown = false;
     }
 
-    int imageWidth = qMin(qMax(me->pos().x(),m_rangeLayerPadding/4),m_rangeLayer->width()+m_rangeLayerPadding/4)-m_rangeLayerPadding/4;
+    int imageWidth = qMin(qMax(me->pos().x(),m_rangeLayerPadding/2),m_rangeLayer->width()+m_rangeLayerPadding/2)-m_rangeLayerPadding/2;
     float val = (((float)(imageWidth)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
     val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
     val = float(qCeil(val * 10)) / 10;
@@ -406,7 +407,7 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
             if (!overCursor && event->type() == QEvent::MouseButtonPress)
             {
                 Cursor cursor;
-                cursor.cursorImage = new QImage(*m_cursorImage);
+                cursor.cursorImage = new QImage(*m_smallCursorImage);
                 cursor.color = QColor(255,255,255);
                 m_cursors.insert(0,cursor);
 
@@ -414,7 +415,6 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
             m_cursors[0].position =imageWidth;
             m_cursors[0].value =val;
             m_updateRange();
-            markersChanged(m_cursors);
             m_updateValueLayerContainer();
 
         }
@@ -425,7 +425,6 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
             if (m_cursors.size() > 0)
                 m_cursors.removeAt(0);
             m_updateRange();
-            markersChanged(m_cursors);
             m_updateValueLayerContainer();
             }
 
@@ -449,7 +448,6 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
             m_cursors[0].value =val;
             m_updateRange();
 
-            markersChanged(m_cursors);
             m_updateValueLayerContainer();
 
         }
@@ -461,7 +459,6 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
                     m_cursors.removeAt(0);
                 m_updateRange();
 
-                markersChanged(m_cursors);
                 m_updateValueLayerContainer();
             }
 
@@ -483,7 +480,7 @@ bool ColorRangeWidget::m_valueSelected(QPoint pos)
     {
         QString text = QString::number(m_cursors[i].value);
         QSize size = QFontMetrics(text).size(Qt::TextSingleLine,text);
-        int width = m_cursors[i].position + m_rangeLayerPadding/4;
+        int width = m_cursors[i].position + m_rangeLayerPadding/2;
         int relativeWidth  =  (position - width) + size.width()/2;
         if (relativeWidth >= 0 && relativeWidth < size.width())
         {
@@ -505,24 +502,19 @@ bool ColorRangeWidget::m_markerSelected(QPoint pos)
 {
 
 
-    int imageWidth = qMin(qMax(pos.x(),m_rangeLayerPadding/4),m_rangeLayer->width()+m_rangeLayerPadding/4)-m_rangeLayerPadding/4;
+    int imageWidth = qMin(qMax(pos.x(),m_rangeLayerPadding/2),m_rangeLayer->width()+m_rangeLayerPadding/2)-m_rangeLayerPadding/2;
     float val = (((float)(imageWidth)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
     val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
     int height = pos.y();
-    int cursorImagePos = (m_cursorLayer->height() - m_cursorImage->height());
-    bool overCursor;
-    if (height >= 0 && height < cursorImagePos)
-        overCursor =false;
-    else if (height >=cursorImagePos && height < m_cursorLayer->height())
-    {
-        int relativeHeight = height - cursorImagePos;
-        overCursor = false;
+    m_cursorOver = -1;
         for (int i = 0; i < m_cursors.size(); i ++)
         {
-            int relativeWidth  =  (imageWidth -m_cursors[i].position) + m_cursorImage->width()/2;
-            if (m_cursorImage->rect().contains(relativeWidth,relativeHeight))
+            int cursorImagePos = (m_cursorLayer->height() - m_cursors[i].cursorImage->height());
+            int relativeHeight = height - cursorImagePos;
+            int relativeWidth  =  (imageWidth -m_cursors[i].position) + m_cursors[i].cursorImage->width()/2;
+            if (m_cursors[i].cursorImage->rect().contains(relativeWidth,relativeHeight))
             {
-                QColor atCursor = QColor::fromRgba(m_cursorImage->pixel(relativeWidth,relativeHeight));
+                QColor atCursor = QColor::fromRgba(m_cursors[i].cursorImage->pixel(relativeWidth,relativeHeight));
                 if (atCursor.alpha() > 0)
                 {
                     if (i != 0)
@@ -531,14 +523,14 @@ bool ColorRangeWidget::m_markerSelected(QPoint pos)
                         m_cursors.removeAt(i);
                         m_cursors.insert(0,cursor);
                     }
-                    overCursor = true;
-                    break;
+                    m_cursorOver = i;
+                    return true;
                 }
             }
 
         }
-    }
-    return overCursor;
+   // }
+    return false;
 }
 
 
@@ -547,7 +539,7 @@ void ColorRangeWidget::setColorRange(QRgb * newRange)
     for (int y = 0; y < m_rangeLayer->height(); y++)
         for (int x = 0; x < m_rangeLayer->width(); x++)
             m_rangeLayer->setPixel(x,y,newRange[x]);
-    colorRangeChanged(getData());
+    colorRangeChanged();
 
     m_updateCursorRangeContainer();
 }

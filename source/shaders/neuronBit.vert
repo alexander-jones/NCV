@@ -8,7 +8,7 @@ uniform float FogStart, FogEnd;
 
 in vec3 Vert_Position;
 in vec3 Vert_Normal;
-flat in uint Inst_ID;
+in uint Inst_ID;
 
 flat out uint ID;
 flat out uint BitFlag;

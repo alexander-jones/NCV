@@ -55,8 +55,8 @@ public:
 
         \brief This function blits a target onto another target.
         This function cannot be called between BindTargets and ReleaseTargets.
-    */
-    void blitTarget( QGLXTexture2D& source,QRect from,QRect to, GLenum destMode = GL_BACK );
+    */    
+    void blitTarget( QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,QRect from,QRect to, GLenum destMode = GL_BACK );
 
     /*!
         \param source The name of the target to blit from.
@@ -76,6 +76,7 @@ public:
 private:
 
     GLuint  m_fbo;
+
 };
 
 #endif // QGLXFRAMEBUFFEROBJECT_H

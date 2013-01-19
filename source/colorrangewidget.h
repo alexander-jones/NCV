@@ -63,8 +63,7 @@ public:
     void setEditable(bool editable);
 
 signals:
-    void colorRangeChanged(QRgb * newRange);
-    void markersChanged(const QList<Cursor> & markers);
+    void colorRangeChanged();
 
 public slots:
     void setMarkers(const QList<Cursor> &markers);
@@ -87,9 +86,11 @@ private:
     bool m_markerSelected(QPoint pos);
     void m_colorCursorWidget(QColor color);
     void m_updateRange();
+    void m_colorCursor(QImage * cursorImage, QColor color);
 
     QColorDialog * m_colorPicker;
-    QImage * m_rangeLayer, * m_cursorLayer, * m_cursorImage,* m_valueLayer;
+    int m_cursorOver;
+    QImage * m_rangeLayer, * m_cursorLayer, * m_cursorImage,* m_smallCursorImage,* m_valueLayer;
     ImageContainer  *m_cursorRangeContainer, * m_valueLayerContainer;
     QVBoxLayout * m_layout;
     QList<Cursor> m_cursors;

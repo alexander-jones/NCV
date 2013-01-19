@@ -6,7 +6,8 @@
 #include <QLabel>
 #include <QColorDialog>
 #include <QEvent>
-#include "sidebar.h"
+#include "combowidget.h"
+#include "qcustomplot.h"
 
 class ColorBitWidget : public QWidget
 {
@@ -17,6 +18,7 @@ public:
     QColor getOffColor();
     
 signals:
+    void changed();
     void colorsChanged(QColor offColor, QColor onColor);
 
 public slots:
@@ -25,9 +27,15 @@ public slots:
     void setOnColor(QColor color);
     
 private:
+
+    void m_setOffColor(QColor color);
+    void m_setOnColor(QColor color);
     bool eventFilter( QObject* watched, QEvent* event ) ;
+
     QHBoxLayout * m_layout;
-    QImage * m_offColor, * m_onColor;
+    QColor m_offColor, m_onColor;
+    QString m_offColorText, m_onColorText;
+    QImage * m_offColorImage, * m_onColorImage;
     QLabel *m_offColorContainer, *m_onColorContainer;
     LabeledWidget * m_offColorLabel, *m_onColorLabel;
 

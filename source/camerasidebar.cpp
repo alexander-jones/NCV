@@ -1,22 +1,20 @@
 #include "camerasidebar.h"
 #include <QDebug>
-CameraSidebar::CameraSidebar(QString text, QWidget * parent)
-    :CollapsibleWidget(NULL,text ,parent)
+CameraSidebar::CameraSidebar( QWidget * parent)
+    :ComboWidget(parent)
 {
-    m_sidebar = new Sidebar();
-    connect(m_sidebar,SIGNAL(panelChanged(QString)),this,SIGNAL(cameraSwitched(QString)));
-    this->setWidget(m_sidebar);
+    connect(this,SIGNAL(widgetChanged(QString)),this,SIGNAL(cameraSwitched(QString)));
 
     m_newCameraName = new QLineEdit();
-    m_sidebar->addTool(m_newCameraName);
+    this->addTool(m_newCameraName);
     m_addButton = new QToolButton();
     m_addButton->setText("+");
-    m_sidebar->addTool(m_addButton);
+    this->addTool(m_addButton);
     connect(m_addButton,SIGNAL(pressed()),this,SLOT(m_addPressed()));
 
     m_deleteButton = new QToolButton();
     m_deleteButton->setText("-");
-    m_sidebar->addTool(m_deleteButton);
+    this->addTool(m_deleteButton);
     connect(m_deleteButton,SIGNAL(pressed()),this,SLOT(m_deletePressed()));
 
     m_widget = new QWidget();
@@ -30,7 +28,7 @@ CameraSidebar::CameraSidebar(QString text, QWidget * parent)
     m_projectionLayout = new QGridLayout();
 
     QFont font = m_projectionWidget->font();
-    font.setPointSize(8);
+    font.setPointSize(5);
 
     m_fov = new QDoubleSpinBox();
     m_fov->setMinimum(0);
@@ -38,6 +36,7 @@ CameraSidebar::CameraSidebar(QString text, QWidget * parent)
     m_fov->setFont(font);
     connect(m_fov,SIGNAL(editingFinished()),this,SLOT(m_attribChanged()));
     m_labeledWidgets[m_fov] = new LabeledWidget("FOV:",m_fov);
+
     m_projectionLayout->addWidget(m_labeledWidgets[m_fov],0,0);
 
 
@@ -66,18 +65,7 @@ CameraSidebar::CameraSidebar(QString text, QWidget * parent)
 
 
     m_projectionWidget->setLayout(m_projectionLayout);
-
-    m_projectionSection = new CollapsibleWidget(m_projectionWidget,"Projection");
-    m_projectionSection->setFixedWidth(300);
-    m_projectionSection->underlineHeader(true);
-    m_projectionSection->expand();
-    m_widgetLayout->addWidget(m_projectionSection);
-
-
-
-
-
-
+    m_widgetLayout->addWidget(m_projectionWidget);
 
     m_orientationWidget = new QWidget();
     m_orientationLayout = new QVBoxLayout();
@@ -108,12 +96,9 @@ CameraSidebar::CameraSidebar(QString text, QWidget * parent)
     m_orientationLayout->addWidget(m_labeledWidgets[m_forward]);
     connect(m_forward,SIGNAL(valueEdited()),this,SLOT(m_attribChanged()));
 
+
     m_orientationWidget->setLayout(m_orientationLayout);
-    m_orientationSection = new CollapsibleWidget(m_orientationWidget,"Orientation");
-    m_orientationSection->setFixedWidth(300);
-    m_orientationSection->underlineHeader(true);
-    m_orientationSection->expand();
-    m_widgetLayout->addWidget(m_orientationSection);
+    m_widgetLayout->addWidget(m_orientationWidget);
 
     m_widget->setLayout(m_widgetLayout);
 
@@ -122,41 +107,6 @@ CameraSidebar::CameraSidebar(QString text, QWidget * parent)
 
  CameraSidebar::~CameraSidebar()
 {
-    delete m_widget;
-    delete m_widgetLayout;
-    delete m_sidebar;
-
-    delete m_projectionSection;
-    delete m_orientationSection;
-
-    delete m_titleLabel;
-    delete m_framesPerSecond;
-    delete m_timeScale;
-    delete m_groupingHeader;
-    delete m_projectionOptions;
-
-    delete m_cameraLayout;
-    delete m_projectionLayout;
-    delete m_addButton;
-    delete m_deleteButton;
-    delete m_newCameraName;
-    delete m_widgetLayout;
-    delete m_orientationLayout;
-    delete m_signalMapper;
-    delete m_fov;
-    delete m_nearPlane;
-    delete m_farPlane;
-
-    delete m_aspectRatio;
-    delete m_timeScaleSlider;
-    delete m_position;
-    delete m_forward;
-    delete m_up;
-    delete m_projectionWidget;
-    delete m_orientationWidget;
-
-    for (QMap<QWidget * ,LabeledWidget*>::iterator it = m_labeledWidgets.begin(); it != m_labeledWidgets.end();it++)
-        delete it.value();
 
 }
 
@@ -164,12 +114,12 @@ void CameraSidebar::m_addPressed()
 {
     QString cameraToAdd = m_newCameraName->text();
     bool cameraNameGiven = cameraToAdd.length() > 0;
-    bool alreadyCreated = m_sidebar->containsPanel(cameraToAdd);
+    bool alreadyCreated = this->containsWidget(cameraToAdd);
     if (cameraNameGiven && !alreadyCreated)
     {
         QGLXCamera * newCam = new QGLXCamera();
-        newCam->setProjectionMatrix((GLfloat)m_fov->value(),(GLfloat)m_aspectRatio->value(),(GLfloat)m_nearPlane->value(),(GLfloat)m_farPlane->value());
-        newCam->setViewMatrix(m_position->value(),m_position->value() + m_forward->value(), m_up->value());
+        newCam->setProjection((GLfloat)m_fov->value(),(GLfloat)m_aspectRatio->value(),(GLfloat)m_nearPlane->value(),(GLfloat)m_farPlane->value());
+        newCam->setView(m_position->value(),m_position->value() + m_forward->value(), m_up->value());
         addCamera(newCam,cameraToAdd);
         cameraCreated(newCam,cameraToAdd);
     }
@@ -191,21 +141,21 @@ void CameraSidebar::m_addPressed()
 
 void CameraSidebar::switchCamera(QString name)
 {
-    if (m_sidebar->currentPanel() != name)
+    if (this->currentWidgetName() != name)
     {
-        if (!m_sidebar->containsPanel(name))
-            m_sidebar->addPanel(m_widget,name);
-        if (m_sidebar->currentPanel() != name)
-            m_sidebar->setPanel(name);
+        if (!this->containsWidget(name))
+            this->addWidget(m_widget,name);
+        if (this->currentWidgetName() != name)
+            this->setWidget(name);
     }
 }
 
 void CameraSidebar::addCamera(QGLXCamera * camera, QString name)
 {
-    if (!m_sidebar->containsPanel(name))
+    if (!this->containsWidget(name))
     {
         m_cameras[name] = camera;
-        m_sidebar->addPanel(m_widget,name);
+        this->addWidget(m_widget,name);
         updateCamera(name);
     }
 }
@@ -215,11 +165,11 @@ void CameraSidebar::m_deletePressed()
     QString cameraToDelete = m_newCameraName->text();
 
     bool cameraNameGiven = cameraToDelete.length() > 0;
-    bool alreadyCreated = m_sidebar->containsPanel(cameraToDelete);
+    bool alreadyCreated = this->containsWidget(cameraToDelete);
 
-    if (m_sidebar->numPanels() > 1 && cameraNameGiven && alreadyCreated)
+    if (this->count() > 1 && cameraNameGiven && alreadyCreated)
     {
-        m_sidebar->removePanel(cameraToDelete);
+        this->removeWidget(cameraToDelete);
         cameraDeleted(cameraToDelete);
     }
     else
@@ -243,23 +193,23 @@ void CameraSidebar::m_deletePressed()
 
 void CameraSidebar::updateCamera(QString name)
 {
-    if (name == m_sidebar->currentPanel())
+    if (name == this->currentWidgetName())
     {
-        m_fov->setValue(m_cameras[name]->getFieldOfView());
-        m_aspectRatio->setValue(m_cameras[name]->getAspectRatio());
-        m_nearPlane->setValue(m_cameras[name]->getNearPlane());
-        m_farPlane->setValue(m_cameras[name]->getFarPlane());
-        m_position->setValue(m_cameras[name]->getPosition());
-        m_forward->setValue(m_cameras[name]->getForward());
-        m_up->setValue(m_cameras[name]->getUp());
+        m_fov->setValue(m_cameras[name]->fieldOfView());
+        m_aspectRatio->setValue(m_cameras[name]->aspectRatio());
+        m_nearPlane->setValue(m_cameras[name]->nearPlane());
+        m_farPlane->setValue(m_cameras[name]->farPlane());
+        m_position->setValue(m_cameras[name]->position());
+        m_forward->setValue(m_cameras[name]->forward());
+        m_up->setValue(m_cameras[name]->up());
     }
 }
 
 void CameraSidebar::m_attribChanged()
 {
-    QString name = m_sidebar->currentPanel();
-    m_cameras[name]->setViewMatrix(m_position->value(),m_position->value() + m_forward->value(), m_up->value());
-    m_cameras[name]->setProjectionMatrix(m_fov->value(),m_aspectRatio->value(),m_nearPlane->value(),m_farPlane->value());
+    QString name = this->currentWidgetName();
+    m_cameras[name]->setView(m_position->value(),m_position->value() + m_forward->value(), m_up->value());
+    m_cameras[name]->setProjection(m_fov->value(),m_aspectRatio->value(),m_nearPlane->value(),m_farPlane->value());
     //lightUpdated(name);
 
 }

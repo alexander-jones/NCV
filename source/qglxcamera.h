@@ -7,12 +7,14 @@
 #include "math.h"
 
 #define PI 3.141592653589793238462643383
+
+
 /*!
     \class QGLXCamera
     \author Alex Jones
     \brief An QGL extension class for manipulating view and projection in 3D.
 */
-class QGLXCamera
+class QGLXCamera: public QGLXObject3D
 {
 public:
     /*!
@@ -23,64 +25,64 @@ public:
     /*!
         \brief This function returns the current aspect ratio of the projection.
     */
-    GLfloat getAspectRatio( );
+    GLfloat aspectRatio( );
 
     /*!
         \brief This function returns the current direction the camera is facing.
     */
-    QVector3D getForward();
+    QVector3D forward();
 
     /*!
         \brief This function returns the camera's current up vector;
     */
 
-    QVector3D getUp();
+    QVector3D up();
 
     /*!
         \brief This function returns the camera's current right vector;
     */
 
-    QVector3D getRight();
+    QVector3D right();
 
     /*!
         \brief This function returns the current far plane of the projection.
     */
-    GLfloat getFarPlane( );
+    GLfloat farPlane( );
 
     /*!
         \brief This function returns the current field of view of the projection.
     */
-    GLfloat getFieldOfView();
+    GLfloat fieldOfView();
 
     /*!
         \brief This function returns the currently set aspectRatio.
     */
-    QVector3D getPosition();
+    QVector3D position();
 
     /*!
         \brief This function returns the current position of the camera.
     */
-    GLfloat getNearPlane( );
+    GLfloat nearPlane( );
 
     /*!
         \brief This function returns the current projection matrix.
     */
-    QMatrix4x4 getProjectionMatrix();
+    QMatrix4x4 projection();
 
     /*!
         \brief This function returns the camera's current rotation about the x axis.
     */
-    GLfloat getRotationX();
+    GLfloat rotationX();
 
     /*!
         \brief This function returns the camera's current rotation about the y axis.
     */
-    GLfloat getRotationY();
+    GLfloat rotationY();
 
     /*!
         \brief This function returns the camera's current view matrix.
     */
-    QMatrix4x4 getViewMatrix();
+    QMatrix4x4 view();
 
     /*!
         \param horizAngle Angle about the x axis to rotate.
@@ -127,7 +129,7 @@ public:
         \param far The field of view to use.
         \brief This function set's the camera's current projection matrix.
     */
-    void setProjectionMatrix(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat far);
+    void setProjection(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat far);
 
 
     /*!
@@ -148,7 +150,7 @@ public:
         \param vertAngle  The angle about the y axis to rotate the camera.
         \brief This function set's the camera's current view matrix.
     */
-    void setViewMatrix(QVector3D pos, GLfloat horizAngle, GLfloat vertAngle);
+    void setView(QVector3D pos, GLfloat horizAngle, GLfloat vertAngle);
 
 
     /*!
@@ -157,7 +159,7 @@ public:
         \param up The up vector to use.
         \brief This function set's the camera's current view matrix.
     */
-    void setViewMatrix(QVector3D pos, QVector3D target, QVector3D up);
+    void setView(QVector3D pos, QVector3D target, QVector3D up);
 
     /*!
         \param x The amount to translate along the x axis of the current view space.

@@ -7,14 +7,16 @@
 QT  += core gui opengl
 TARGET = source
 TEMPLATE = app
+CONFIG+= wwwidgets
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lGLEW  -lassimp
+    LIBS +=  -lGLEW  -lassimp -lGLU
 }
 
 #windows specific settings
-winx{
+win32{
+    LIBS += -lglew32 -lassimp -lwwwidgets4d
 }
 
 #mac specific settings
@@ -29,14 +31,11 @@ SOURCES += \
     qglxsystem.cpp \
     qglxbuffer.cpp \
     ncv.cpp \
-    righttoolbar.cpp \
     ncvwidget.cpp \
     managementSidebar.cpp \
-    sidebar.cpp \
     camerasidebar.cpp \
     spinbox3d.cpp \
     lightingsidebar.cpp \
-    collapsiblewidget.cpp \
     qglxtexture1d.cpp \
     qglxtexture3d.cpp \
     qglxtexture2d.cpp \
@@ -44,33 +43,42 @@ SOURCES += \
     qglxframebufferobject.cpp \
     colorrangewidget.cpp \
     colorbitwidget.cpp \
-    attributewidget.cpp
+    attributewidget.cpp \
+    combowidget.cpp \
+    qcustomplot.cpp \
+    orientationbutton.cpp \
+    distributewidget.cpp
 
 HEADERS  += \
+    qglxcore.h \
     qglxoctree.h \
     qglxcamera.h \
     qglxboundingbox.h \
     mainwindow.h \
     qglxsystem.h \
     qglxbuffer.h \
-    qglxcore.h \
     ncv.h \
-    righttoolbar.h \
     ncvwidget.h \
     qglxtexture.h \
-    managementSidebar.h \
-    sidebar.h \
-    camerasidebar.h \
+    managementcombowidget.h \
+    cameracombowidget.h \
     spinbox3d.h \
-    lightingsidebar.h \
-    collapsiblewidget.h \
+    lightingcombowidget.h \
     qglxtexture1d.h \
     qglxtexture3d.h \
     qglxtexture2d.h \
     qglxframebufferobject.h \
     colorrangewidget.h \
     attributewidget.h \
-    colorbitwidget.h
+    colorbitwidget.h \
+    groupingtree.h \
+    combowidget.h \
+    managementSidebar.h \
+    lightingsidebar.h \
+    camerasidebar.h \
+    qcustomplot.h \
+    orientationbutton.h \
+    distributewidget.h
 
 FORMS    += \
     mainwindow.ui
@@ -97,10 +105,12 @@ OTHER_FILES += \
     assets/sphere.nff \
     assets/startTriangle.png \
     assets/endTriangle.png \
-    shaders/idFeedback.vert \
-    shaders/connection.vert
+    shaders/neuronSelection.vert \
+    shaders/neuronSelection.geom \
+    shaders/depthOfField.frag \
+    shaders/connectionBit.vert \
+    shaders/connectionFloat.vert
 
 RESOURCES += \
     core-profile.qrc
 
-#QMAKE_CXXFLAGS += -std=c++0x
