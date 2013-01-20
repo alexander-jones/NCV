@@ -16,8 +16,8 @@ Martins
 changelog:
 
 2.4:
-- physically accurate DoF simulation calculated from "focalDepth" ,"focalLength", "f-stop" and "CoC" parameters.
-- option for artist controlled DoF simulation calculated only from "focalDepth" and individual controls for near and far blur
+- physically accurate DoF simulation calculated from "FocalDepth" ,"FocalLength", "f-stop" and "CoC" parameters.
+- option for artist controlled DoF simulation calculated only from "FocalDepth" and individual controls for near and far blur
 - added "circe of confusion" (CoC) parameter in mm to accurately simulate DoF with different camera sensor or film sizes
 - cleaned up the code
 - some optimization
@@ -34,7 +34,7 @@ changelog:
 2.0:
 - variable sample count to increase quality/performance
 - option to blur depth buffer to reduce hard edges
-- option to dither the samples with noise or pattern
+- option to dither the Samples with noise or pattern
 - bokeh chromatic aberration/fringing
 - bokeh bias to bring out bokeh edges
 - image thresholding to bring out highlights when image is out of focus
@@ -46,6 +46,8 @@ uniform sampler2D DepthTexture;
 uniform float TextureWidth;
 uniform float TextureHeight;
 
+in vec2 TextureCoordinate;
+out vec4 Color;
 #define PI  3.14159265
 
 float width = TextureWidth; //texture width
@@ -55,23 +57,23 @@ vec2 texel = vec2(1.0/width,1.0/height);
 
 //uniform variables from external script
 
-uniform float focalDepth;  //focal distance value in meters, but you may use autofocus option below
-uniform float focalLength; //focal length in mm
-uniform float fstop; //f-stop value
-uniform bool showFocus; //show debug focus point and focal range (red = focal point, green = focal range)
+uniform float FocalDepth;  //focal distance value in meters, but you may use autofocus option below
+uniform float FocalLength; //focal length in mm
+uniform float FStop; //f-stop value
+uniform bool ShowFocus; //show debug focus point and focal range (red = focal point, green = focal range)
 
 /*
 make sure that these two values are the same for your camera, otherwise distances will be wrong.
 */
 
-float znear = 0.1; //camera clipping start
-float zfar = 100.0; //camera clipping end
+uniform float ZNear ; //camera clipping start
+uniform float ZFar ;
 
 //------------------------------------------
 //user variables
 
-int samples = 3; //samples on the first ring
-int rings = 3; //ring count
+uniform int Samples; //Samples on the first ring
+uniform int Rings ; //ring count
 
 bool manualdof = false; //manual dof calculation
 float ndofstart = 1.0; //near dof blur start
@@ -81,12 +83,12 @@ float fdofdist = 3.0; //far dof blur falloff distance
 
 float CoC = 0.03;//circle of confusion size in mm (35mm film = 0.03mm)
 
-bool vignetting = true; //use optical lens vignetting?
+bool vignetting = false; //use optical lens vignetting?
 float vignout = 1.3; //vignetting outer border
 float vignin = 0.0; //vignetting inner border
 float vignfade = 22.0; //f-stops till vignete fades
 
-bool autofocus = false; //use autofocus in shader? disable if you use external focalDepth value
+bool autofocus = true; //use autofocus in shader? disable if you use external FocalDepth value
 vec2 focus = vec2(0.5,0.5); // autofocus point on screen (0.0,0.0 - left lower corner, 1.0,1.0 - upper right)
 float maxblur = 1.0; //clamp value of max blur (0.0 = no blur,1.0 default)
 
@@ -105,7 +107,7 @@ float dbsize = 1.25; //depthblursize
 /*
 next part is experimental
 not looking good with small sample and ring count
-looks okay starting from samples = 4, rings = 4
+looks okay starting from Samples = 4, Rings = 4
 */
 
 bool pentagon = false; //use pentagon as bokeh shape?
@@ -116,7 +118,7 @@ float feather = 0.4; //pentagon shape feather
 
 float penta(vec2 coords) //pentagonal shape
 {
-        float scale = float(rings) - 1.3;
+        float scale = float(Rings) - 1.3;
         vec4  HS0 = vec4( 1.0,         0.0,         0.0,  1.0);
         vec4  HS1 = vec4( 0.309016994, 0.951056516, 0.0,  1.0);
         vec4  HS2 = vec4(-0.809016994, 0.587785252, 0.0,  1.0);
@@ -225,13 +227,15 @@ vec3 debugFocus(vec3 col, float blur, float depth)
 
 float linearize(float depth)
 {
-        return -zfar * znear / (depth * (zfar - znear) - zfar);
+
+    float z_n = 2.0 * depth - 1.0;
+    return 2.0 * ZNear * ZFar / (ZFar + ZNear - z_n * (ZFar - ZNear));
 }
 
 float vignette()
 {
-        float dist = distance(gl_TexCoord[3].xy, vec2(0.5,0.5));
-        dist = smoothstep(vignout+(fstop/vignfade), vignin+(fstop/vignfade), dist);
+        float dist = distance(TextureCoordinate.xy, vec2(0.5,0.5));
+        dist = smoothstep(vignout+(FStop/vignfade), vignin+(FStop/vignfade), dist);
         return clamp(dist,0.0,1.0);
 }
 
@@ -239,16 +243,16 @@ void main()
 {
         //scene depth calculation
 
-        float depth = linearize(texture2D(DepthTexture,gl_TexCoord[0].xy).x);
+        float depth = linearize(texture2D(DepthTexture,TextureCoordinate.xy).x);
 
         if (depthblur)
         {
-                depth = linearize(bdepth(gl_TexCoord[0].xy));
+                depth = linearize(bdepth(TextureCoordinate.xy));
         }
 
         //focal plane calculation
 
-        float fDepth = focalDepth;
+        float fDepth = FocalDepth;
 
         if (autofocus)
         {
@@ -269,13 +273,13 @@ void main()
 
         else
         {
-                float f = focalLength; //focal length in mm
+                float f = FocalLength; //focal length in mm
                 float d = fDepth*1000.0; //focal plane in mm
                 float o = depth*1000.0; //depth in mm
 
                 float a = (o*f)/(o-f);
                 float b = (d*f)/(d-f);
-                float c = (d-f)/(d*fstop*CoC);
+                float c = (d-f)/(d*FStop*CoC);
 
                 blur = abs(a-b)*c;
         }
@@ -284,7 +288,7 @@ void main()
 
         // calculation of pattern for ditering
 
-        vec2 noise = rand(gl_TexCoord[0].xy)*namount*blur;
+        vec2 noise = rand(TextureCoordinate.xy)*namount*blur;
 
         // getting blur x and y step factor
 
@@ -297,22 +301,22 @@ void main()
 
         if(blur < 0.05) //some optimization thingy
         {
-                col = texture2D(DiffuseTexture, gl_TexCoord[0].xy).rgb;
+                col = texture2D(DiffuseTexture, TextureCoordinate.xy).rgb;
         }
 
         else
         {
-                col = texture2D(DiffuseTexture, gl_TexCoord[0].xy).rgb;
+                col = texture2D(DiffuseTexture, TextureCoordinate.xy).rgb;
                 float s = 1.0;
-                int ringsamples;
+                int Ringsamples;
 
-                for (int i = 1; i <= rings; i += 1)
+                for (int i = 1; i <= Rings; i += 1)
                 {
-                        ringsamples = i * samples;
+                        Ringsamples = i * Samples;
 
-                        for (int j = 0 ; j < ringsamples ; j += 1)
+                        for (int j = 0 ; j < Ringsamples ; j += 1)
                         {
-                                float step = PI*2.0 / float(ringsamples);
+                                float step = PI*2.0 / float(Ringsamples);
                                 float pw = (cos(float(j)*step)*float(i));
                                 float ph = (sin(float(j)*step)*float(i));
                                 float p = 1.0;
@@ -320,14 +324,14 @@ void main()
                                 {
                                         p = penta(vec2(pw,ph));
                                 }
-                                col += color(gl_TexCoord[0].xy + vec2(pw*w,ph*h),blur)*mix(1.0,(float(i))/(float(rings)),bias)*p;
-                                s += 1.0*mix(1.0,(float(i))/(float(rings)),bias)*p;
+                                col += color(TextureCoordinate.xy + vec2(pw*w,ph*h),blur)*mix(1.0,(float(i))/(float(Rings)),bias)*p;
+                                s += 1.0*mix(1.0,(float(i))/(float(Rings)),bias)*p;
                         }
                 }
                 col /= s; //divide by sample count
         }
 
-        if (showFocus)
+        if (ShowFocus)
         {
                 col = debugFocus(col, blur, depth);
         }
@@ -337,6 +341,6 @@ void main()
                 col *= vignette();
         }
 
-        gl_FragColor.rgb = col;
-        gl_FragColor.a = 1.0;
+        Color.rgb = col;
+        Color.a = 1.0;
 }

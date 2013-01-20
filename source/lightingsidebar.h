@@ -43,7 +43,7 @@ private:
     QMap<QWidget * ,LabeledWidget* > m_labeledWidgets;
     SpinBox3D * m_position, * m_color;
     QGridLayout * m_intensityLayout, * m_attenuationLayout;
-    QVBoxLayout *m_sidebarPanelLayout, * m_wholeLayout;
+    QVBoxLayout *m_sidebarPanelLayout, * m_layout;
     QSpinBox * m_radius;
     QDoubleSpinBox * m_ambientIntensity, * m_diffuseIntensity, * m_specularIntensity, * m_constantAttenuation, * m_linearAttenuation, *m_quadraticAttenuation, * m_specularPower;
     QWidget * m_sidebarPanel, * m_intensityWidget, *m_attenuationWidget;

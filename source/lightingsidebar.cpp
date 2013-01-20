@@ -5,13 +5,13 @@ LightingSidebar::LightingSidebar( QWidget * parent)
 {
     m_material = new QGLXMaterial();
 
-    m_wholeLayout = new QVBoxLayout();
+    m_layout = new QVBoxLayout();
 
     QFont font = this->font();
     font.setPointSize(8);
 
     m_sidebar = new ComboWidget();
-    m_wholeLayout->addWidget(m_sidebar);
+    m_layout->addWidget(m_sidebar);
     connect(m_sidebar,SIGNAL(widgetChanged(QString)),this,SLOT(updateLight(QString)));
 
     m_defaultLight  = new QGLXLight();
@@ -117,7 +117,7 @@ LightingSidebar::LightingSidebar( QWidget * parent)
     m_sidebarPanelLayout->addWidget(m_attenuationWidget);
 
     m_sidebarPanel->setLayout(m_sidebarPanelLayout);
-    m_wholeLayout->addWidget(m_sidebar);
+    m_layout->addWidget(m_sidebar);
 
 
     m_intensityWidget = new QWidget();
@@ -152,10 +152,10 @@ LightingSidebar::LightingSidebar( QWidget * parent)
     m_intensityLayout->addWidget(m_labeledWidgets[m_specularIntensity],0,1);
 
     m_intensityWidget->setLayout(m_intensityLayout);
-    m_wholeLayout->addWidget(m_intensityWidget);
+    m_layout->addWidget(m_intensityWidget);
 
 
-    this->setLayout(m_wholeLayout);
+    this->setLayout(m_layout);
 
 }
 
@@ -231,6 +231,7 @@ void LightingSidebar::m_materialPropertyChanged()
 void LightingSidebar::m_addPressed()
 {
 
+    qDebug() << "ASDF";
     QString lightToAdd = m_newLightName->text();
     bool cameraNameGiven = lightToAdd.length() > 0;
     bool alreadyCreated = m_sidebar->containsWidget(lightToAdd);

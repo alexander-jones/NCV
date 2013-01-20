@@ -49,14 +49,20 @@ ManagementSidebar::ManagementSidebar(QWidget *parent) :
     m_taskPanel->addTask(tree,QIcon(":/assets/groupIcon.png"),"Grouping Settings");
 
 
-    m_cameraSubBar = new CameraSidebar();
-    m_cameraSubBar->setFixedWidth(300);
-    m_taskPanel->addTask(m_cameraSubBar,QIcon(":/assets/cameraIcon.png"),"Camera Settings");
 
     m_attributeWidget = new AttributeWidget("Attribute Configuration");
     m_taskPanel->addTask(m_attributeWidget->neuronWidget(), QIcon(":/assets/neuronIcon.png"),"Neuron Attribute Settings");
     m_taskPanel->addTask(m_attributeWidget->connectionWidget(), QIcon(":/assets/connectionIcon.png"),"Connection Attribute Settings");
 
+
+
+    m_cameraSubBar = new CameraSidebar();
+    m_cameraSubBar->setFixedWidth(300);
+    m_taskPanel->addTask(m_cameraSubBar,QIcon(":/assets/cameraIcon.png"),"Camera Settings");
+
+
+    m_lightingSubBar = new LightingSidebar();
+    m_taskPanel->addTask(m_lightingSubBar, QIcon(":/assets/neuronIcon.png"),"Lighting Settings");
     m_layout->addWidget(m_taskPanel);
 
 
@@ -77,6 +83,10 @@ ManagementSidebar::~ManagementSidebar()
 }
 
 
+LightingSidebar * ManagementSidebar::lightingSidebar()
+{
+    return m_lightingSubBar;
+}
 
 void ManagementSidebar::addChildren(QTreeWidgetItem* item,QString filePath)
 {

@@ -217,8 +217,7 @@ protected:
     void initializeGL();
     void resizeGL( int w, int h );
     void paintGL();
-    void paintEvent(QPaintEvent *);
-    void  wheelEvent(QWheelEvent *e);
+    void wheelEvent(QWheelEvent *e);
     void keyPressEvent( QKeyEvent* e );
     void keyReleaseEvent(QKeyEvent *e);
     void mouseMoveEvent(QMouseEvent* e);
@@ -230,6 +229,8 @@ protected:
 
 
 private:
+    bool m_performLighting(QGLXTexture2D * diffuse,QGLXTexture2D * output = NULL);
+    void m_performDepthOfField(QGLXTexture2D * diffuse,QGLXTexture2D * output = NULL);
     bool m_compileShaderProgram(QGLShaderProgram * program, QString vertexShaderPath,  QString fragmentShaderPath );
     bool m_compileShaderProgram(QGLShaderProgram * program, QString vertexShaderPath, QString geometryShaderPath, QString fragmentShaderPath );
 
@@ -263,7 +264,7 @@ private:
     QMap<QString,QGLXLight *> m_lights;
     QGLXSystem m_neurons , m_connections;
     QGLXFrameBufferObject  m_frameBufferObject;
-    QGLShaderProgram *m_blendProgram,*m_selectionRectProgram,*m_lightingProgram,*m_selectionProgram, *m_bitNeuronProgram,
+    QGLShaderProgram *m_blendProgram,*m_depthOfFieldProgram,*m_lightingProgram,*m_selectionProgram, *m_bitNeuronProgram,
     *m_floatNeuronProgram,*m_bitConnectionProgram,*m_floatConnectionProgram, *m_neuronFrustumPickingProgram;
     QMatrix4x4 m_neuronScale;
     QVector3D m_worldSize,m_worldCenter;

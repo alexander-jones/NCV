@@ -260,7 +260,6 @@ void NCV::initializeGL()
     }
     m_bitNeuronProgram->release();
 
-    qDebug() << "ASDF";
     //compile shader
     m_floatNeuronProgram = new QGLShaderProgram(this->context(),this);
     if (!m_compileShaderProgram(m_floatNeuronProgram,":/shaders/neuronFloat.vert",":/shaders/float.frag"))
@@ -348,30 +347,16 @@ void NCV::initializeGL()
         qDebug() << "Could not bind shader program to context";
         return;
     }
-
-    // compile shader
-    m_neuronFrustumPickingProgram = new QGLShaderProgram(this->context(),this);
-
-    // First we load and compile the vertex shader->..
-    bool success = m_neuronFrustumPickingProgram->addShaderFromSourceFile( QGLShader::Vertex, ":/shaders/neuronSelection.vert" );
-    if ( !success )
-        qDebug() << m_neuronFrustumPickingProgram->log();
-
-    success = m_neuronFrustumPickingProgram->addShaderFromSourceFile( QGLShader::Geometry, ":/shaders/neuronSelection.geom" );
-    if ( !success )
-        qDebug() << m_neuronFrustumPickingProgram->log();
-
-    if ( !m_neuronFrustumPickingProgram->bind() )
+    m_depthOfFieldProgram = new QGLShaderProgram(this->context(),this);
+    if (!m_compileShaderProgram(m_depthOfFieldProgram,":/shaders/postProcess.vert",":/shaders/depthOfField.frag"))
+        return;
+    if ( !m_depthOfFieldProgram->bind() )
     {
         qDebug() << "Could not bind shader program to context";
         return;
     }
-    m_neuronFrustumPickingProgram->release();
 
-    // ...and finally we link them to resolve any references.
-    success = m_neuronFrustumPickingProgram->link();
-    if ( !success )
-        qDebug() << "Could not link shader program:" << m_neuronFrustumPickingProgram->log();
+
 
 
     QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
@@ -1035,58 +1020,9 @@ void NCV::setMaterial(QGLXMaterial * mat)
 
 }
 
-void NCV::paintEvent(QPaintEvent *e)
+
+bool NCV::m_performLighting(QGLXTexture2D * diffuse,QGLXTexture2D * output)
 {
-
-    updateGL();
-
-}
-
-void NCV::paintGL()
-{
-
-    if (!isValid())
-        return;
-
-
-    // FPS counter
-    m_frameCount ++;
-    if (m_timer.elapsed() >= 1000)
-    {
-        m_fps = (float)m_frameCount/((float)m_timer.elapsed() /1000.0f) ;
-        m_timer.start();
-        m_frameCount = 0;
-    }
-    // check to see if any changes were requested externally
-    if (m_neuronsToCreate >0 || m_connectionsToCreate > 0)
-        m_createNetwork();
-
-
-    if (m_neuronAttribToRender->unboundTextureData  !=NULL)
-    {
-        m_neuronRangeMap->bind();
-        m_neuronRangeMap->allocate(m_neuronAttribToRender->unboundTextureWidth,GL_RGB32F,m_neuronAttribToRender->unboundTextureData);
-        m_neuronRangeMap->release();
-        m_neuronAttribToRender->unboundTextureData = NULL;
-        QString name = m_neuronAttribToRender->name;
-    }
-
-    if (m_connectionAttribToRender->unboundTextureData  !=NULL)
-    {
-        m_connectionRangeMap->bind();
-        m_connectionRangeMap->allocate(m_connectionAttribToRender->unboundTextureWidth,GL_RGB32F,m_connectionAttribToRender->unboundTextureData);
-        m_connectionRangeMap->release();
-        m_connectionAttribToRender->unboundTextureData = NULL;
-        QString name = m_connectionAttribToRender->name;
-    }
-
-
-
-    if (m_selectedObjects.count() >0)
-        m_performSelectionRender();
-    else
-        m_performRegularRender();
-
 
     int enabledLights = 0;
     m_lightingProgram->bind();
@@ -1118,7 +1054,14 @@ void NCV::paintGL()
     m_lightingProgram->release();
     if (enabledLights > 0)
     {
-        GLuint diffuseID = m_maps["diffuse"].id();
+        if (output != NULL)
+        {
+            m_frameBufferObject.bind();
+            m_frameBufferObject.enableColorAttachments(1);
+            output->bind(QGLXTexture::Draw,QGLXTexture::Color0);
+        }
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         m_lightingProgram->bind();
         QVector3D cameraPosition = m_cameras[m_currentCamera]->position();
         m_lightingProgram->setUniformValue("CameraPosition",cameraPosition);
@@ -1136,20 +1079,16 @@ void NCV::paintGL()
         glVertexAttribDivisor( m_lightingProgram->attributeLocation("Vert_Coord"), 0);
 
         glEnable(GL_TEXTURE_2D);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,diffuseID);
+        diffuse->bind(0);
         m_lightingProgram->setUniformValue("DiffuseMap",0);
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D,m_maps["normal"].id() );
+        m_maps["normal"].bind(1);
         m_lightingProgram->setUniformValue("NormalMap",1);
 
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D,m_maps["position"].id() );
+        m_maps["position"].bind(2);
         m_lightingProgram->setUniformValue("PositionMap",2);
 
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D,m_maps["id"].id() );
+        m_maps["id"].bind(3);
         m_lightingProgram->setUniformValue("IdentityMap",3);
 
         glClear( GL_DEPTH_BUFFER_BIT );
@@ -1160,55 +1099,125 @@ void NCV::paintGL()
         m_screenVertices.release();
         m_lightingProgram->release();
 
+
+        if (output != NULL)
+        {
+            output->release();
+            m_frameBufferObject.enableColorAttachments(0);
+            m_frameBufferObject.release();
+        }
+        return true;
+    }
+    return false;
+}
+
+void NCV::m_performDepthOfField(QGLXTexture2D * diffuse,QGLXTexture2D * output)
+{
+
+    if (output != NULL)
+    {
+        m_frameBufferObject.bind();
+        m_frameBufferObject.enableColorAttachments(1);
+        output->bind(QGLXTexture::Draw,QGLXTexture::Color0);
     }
 
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    m_depthOfFieldProgram->bind();
+    m_depthOfFieldProgram->setUniformValue("TextureWidth",(float)m_width);
+    m_depthOfFieldProgram->setUniformValue("TextureHeight",(float)m_height);
+    m_depthOfFieldProgram->setUniformValue("FocalDepth",1000.0f);
+    m_depthOfFieldProgram->setUniformValue("FocalLength",700.0f);
+    m_depthOfFieldProgram->setUniformValue("ZNear",m_cameras[m_currentCamera]->nearPlane());
+    m_depthOfFieldProgram->setUniformValue("ZFar",m_cameras[m_currentCamera]->farPlane());
+    m_depthOfFieldProgram->setUniformValue("FStop",2.0f);
+    m_depthOfFieldProgram->setUniformValue("Samples",5);
+    m_depthOfFieldProgram->setUniformValue("Rings",10);
+    m_depthOfFieldProgram->setUniformValue("ShowFocus",false);
+
+    m_screenVertices.bind();
+    m_depthOfFieldProgram->setAttributeBuffer( "Vert_Position", GL_FLOAT,  0 ,3,sizeof(GL_FLOAT) * 3);
+    m_depthOfFieldProgram->enableAttributeArray("Vert_Position");
+    glVertexAttribDivisor( m_depthOfFieldProgram->attributeLocation("Vert_Position"),0);
+
+    m_screenCoords.bind();
+    m_depthOfFieldProgram->setAttributeBuffer( "Vert_Coord", GL_FLOAT,  0 ,2,sizeof(GL_FLOAT) * 2);
+    m_depthOfFieldProgram->enableAttributeArray("Vert_Coord");
+    glVertexAttribDivisor( m_depthOfFieldProgram->attributeLocation("Vert_Coord"), 0);
+
+    diffuse->bind(0);
+    m_depthOfFieldProgram->setUniformValue("DiffuseTexture",0);
+
+    m_maps["depth"].bind(1);
+    m_depthOfFieldProgram->setUniformValue("DepthTexture",1);
+
+    glDrawArrays(GL_QUADS,0,4);
+    m_screenCoords.release();
+    m_screenVertices.release();
+    m_depthOfFieldProgram->release();
+
+    if (output != NULL)
+    {
+        output->release();
+        m_frameBufferObject.enableColorAttachments(0);
+        m_frameBufferObject.release();
+    }
+}
+
+void NCV::paintGL()
+{
+
+    if (!isValid())
+        return;
+
+
+    // FPS counter
+    m_frameCount ++;
+    if (m_timer.elapsed() >= 1000)
+    {
+        m_fps = (float)m_frameCount/((float)m_timer.elapsed() /1000.0f) ;
+        m_timer.start();
+        m_frameCount = 0;
+    }
+    // check to see if any changes were requested externally
+    if (m_neuronsToCreate >0 || m_connectionsToCreate > 0)
+        m_createNetwork();
+
+
+    if (m_neuronAttribToRender->unboundTextureData  !=NULL)
+    {
+        m_neuronRangeMap->bind();
+        m_neuronRangeMap->allocate(m_neuronAttribToRender->unboundTextureWidth,GL_RGB32F,m_neuronAttribToRender->unboundTextureData);
+        m_neuronRangeMap->release();
+        delete [] m_neuronAttribToRender->unboundTextureData;
+        m_neuronAttribToRender->unboundTextureData = NULL;
+    }
+
+    if (m_connectionAttribToRender->unboundTextureData  !=NULL)
+    {
+        m_connectionRangeMap->bind();
+        m_connectionRangeMap->allocate(m_connectionAttribToRender->unboundTextureWidth,GL_RGB32F,m_connectionAttribToRender->unboundTextureData);
+        m_connectionRangeMap->release();
+        delete [] m_connectionAttribToRender->unboundTextureData;
+        m_connectionAttribToRender->unboundTextureData = NULL;
+    }
+
+    if (m_selectedObjects.count() >0)
+        m_performSelectionRender();
     else
+        m_performRegularRender();
+
+    if (!m_performLighting(&m_maps["diffuse"]))
     {
-        //glEnable(GL_MULTISAMPLE);
+        // m_performDepthOfField(&m_maps["diffuse"]);
         m_frameBufferObject.blitTarget(m_maps["diffuse"],QGLXTexture::Color0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
-        //m_frameBufferObject.blitTarget(m_maps["depth"],QGLXTexture::Depth,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
-
-        //glDisable(GL_MULTISAMPLE);
-    }
-
-
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-
-    glFinish();
-    m_painter.begin(this);
-    m_painter.setRenderHint(QPainter::Antialiasing);
-
-    QPen pen = m_painter.pen();
-    pen.setColor(QColor(255,255,255));
-    pen.setStyle(Qt::DashLine);
-    m_painter.setPen(pen);
-
-
-    QVector3D direction = m_cameras[m_currentCamera]->forward();
-    //qDebug() <<direction;
-    //m_painter.drawText(0,0,100,100,0,("Dir: " + QString::number(direction.x()) +  "  " +QString::number(direction.y()) + "  " +QString::number(direction.z())) );
-    //m_painter.drawImage(0,0,QImage(":/assets/visualizationIcon.png") );
-
-    // if user is currently selecting objects, render a selection rectangle.
-    if (m_leftMouseDown)
-    {
-        QBrush brush = m_painter.brush();
-        brush.setColor(QColor(0,0,75));
-        brush.setStyle(Qt::Dense4Pattern);
-        m_painter.fillRect(m_selectionRect,brush);
-        m_painter.drawRect(m_selectionRect);
 
     }
-
-    m_painter.end();
 
     this->swapBuffers();
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
 
 }
+
+
 
 
 void NCV::leaveEvent(QEvent * e)

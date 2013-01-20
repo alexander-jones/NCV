@@ -57,9 +57,9 @@ NCVWidget::NCVWidget(QWidget *parent) :
     connect(m_managementSidebar->cameraSidebar(),SIGNAL(cameraSwitched(QString)),m_visualization,SLOT(switchCamera(QString)));
     connect(m_managementSidebar->cameraSidebar(),SIGNAL(cameraDeleted(QString)),m_visualization,SLOT(deleteCamera(QString)));
 
-    //connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightCreated(QGLXLight *,QString)),m_visualization,SLOT(addLight(QGLXLight *,QString)));
-    //connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightDeleted(QString)),m_visualization,SLOT(deleteLight(QString)));
-    //connect(m_managementSidebar->lightingSidebar(),SIGNAL(newMaterial(QGLXMaterial*)),m_visualization,SLOT(setMaterial(QGLXMaterial*)));
+    connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightCreated(QGLXLight *,QString)),m_visualization,SLOT(addLight(QGLXLight *,QString)));
+    connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightDeleted(QString)),m_visualization,SLOT(deleteLight(QString)));
+    connect(m_managementSidebar->lightingSidebar(),SIGNAL(newMaterial(QGLXMaterial*)),m_visualization,SLOT(setMaterial(QGLXMaterial*)));
 
 
     connect(m_visualization,SIGNAL(newNeuronBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addNeuronBitAttribute(QString,QColor,QColor)));

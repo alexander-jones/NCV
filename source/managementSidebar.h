@@ -29,6 +29,7 @@ public:
     ~ManagementSidebar();
     void addChildren(QTreeWidgetItem* item,QString filePath);
     CameraSidebar * cameraSidebar();
+    LightingSidebar * lightingSidebar();
     AttributeWidget * attributeWidget();
 
 signals:

@@ -22,5 +22,5 @@ void main( void )
     Vert_ID = Inst_ID;
     Vert_WorldPos = texelFetch(Inst_Translation,neuronIndex).xyz;
     Vert_Depth = min((distance(CameraPosition,Vert_WorldPos) - FogStart) / (FogEnd - FogStart),1.0f);
-    gl_Position= View * vec4(Vert_WorldPos,1.0f);
+    gl_Position= View * vec4(texelFetch(Inst_Translation,neuronIndex).xyz,1.0f);
 }

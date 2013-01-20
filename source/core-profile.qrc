@@ -33,5 +33,6 @@
         <file>shaders/connectionBit.vert</file>
         <file>shaders/connectionFloat.vert</file>
         <file>shaders/connectionBit.geom</file>
+        <file>shaders/depthOfField.frag</file>
     </qresource>
 </RCC>
