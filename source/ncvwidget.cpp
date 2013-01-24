@@ -106,6 +106,13 @@ NCVWidget::NCVWidget(QWidget *parent) :
 
     }
 
+
+    for (int i = 0; i <numNeurons / 8; i ++)
+    {
+        firings[i] = 0;
+    }
+
+
     int numConnections = numNeurons ;
     GLuint * neuronIN = new GLuint[numConnections];
     GLuint * neuronOUT = new GLuint[numConnections];
@@ -131,11 +138,20 @@ NCVWidget::NCVWidget(QWidget *parent) :
     m_visualization->setNeuronFlagAttribute("firing",firings);
     m_visualization->setNeuronRangeAttribute("voltage",voltages);
 
+    m_dataSource = new RandomDataSource(numNeurons, 0.01);
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), m_dataSource, SLOT(updateFirings()));
+    connect(m_dataSource, SIGNAL(neuronFiringsUpdated(QString,GLubyte*)),
+            m_visualization, SLOT(setNeuronFlagAttribute(QString,GLubyte*)));
+    timer->start(200);
+
     /* ###################################################################
     Neural Network Example
     ###################################################################*/
 
 }
+
+
 
 void NCVWidget::m_collapseButtonPressed()
 {
@@ -156,8 +172,8 @@ void NCVWidget::m_collapseButtonPressed()
         m_collapseButton->setText(m_collapseText);
         m_collapseButton->setToolTip("Click to collapse the management sidebar");
     }
-
 }
+
 
 
 NCVWidget::~NCVWidget()

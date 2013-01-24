@@ -7,6 +7,7 @@
 #include "orientationbutton.h"
 #include "managementSidebar.h"
 #include "ncv.h"
+#include "randomdatasource.h"
 
 #ifdef WIN32
     #include <Windows.h>
@@ -34,6 +35,7 @@ private:
     ManagementSidebar * m_managementSidebar;
     OrientationButton * m_collapseButton;
     QString m_expandText, m_collapseText;
+    RandomDataSource *m_dataSource;
 
     //RightToolBar *m_statusSidebar;
     NCV * m_visualization;

@@ -1,5 +1,7 @@
 #include "managementSidebar.h"
 
+
+
 ManagementSidebar::ManagementSidebar(QWidget *parent) :
     QWidget(parent)
 {
@@ -16,66 +18,57 @@ ManagementSidebar::ManagementSidebar(QWidget *parent) :
     //Set QTreeWidget Column Header
     QTreeWidgetItem* headerItem = new QTreeWidgetItem();
     headerItem->setText(0,QString("Group"));
-    headerItem->setText(1,QString("Neruons"));
+    headerItem->setText(1,QString("Neurons"));
     headerItem->setText(2,QString("Connections"));
     headerItem->setText(3,QString("Subgroups"));
     tree->setHeaderItem(headerItem);
 
-
     QDir* rootDir = new QDir("/");
     QFileInfoList filesList = rootDir->entryInfoList();
 
-
     foreach(QFileInfo fileInfo, filesList)
     {
-      QTreeWidgetItem* item = new QTreeWidgetItem();
-      item->setText(0,fileInfo.fileName());
+        QTreeWidgetItem* item = new QTreeWidgetItem();
+        item->setText(0,fileInfo.fileName());
 
-      item->setText(0,fileInfo.fileName());
-      item->setText(1,QString::number(50000));
+        item->setText(0,fileInfo.fileName());
+        item->setText(1,QString::number(50000));
 
         //child->setIcon(0,*(new QIcon("folder.jpg")));
-      item->setText(2,QString::number(500000));
+        item->setText(2,QString::number(500000));
 
 
-      if(fileInfo.isDir())
-      {
-        //item->setIcon(0,*(new QIcon("folder.jpg")));
-        addChildren(item,fileInfo.filePath());
-      }
-      tree->addTopLevelItem(item);
+        if(fileInfo.isDir())
+        {
+            //item->setIcon(0,*(new QIcon("folder.jpg")));
+            addChildren(item,fileInfo.filePath());
+        }
+        tree->addTopLevelItem(item);
     }
 
     m_taskPanel->addTask(tree,QIcon(":/assets/groupIcon.png"),"Grouping Settings");
-
-
 
     m_attributeWidget = new AttributeWidget("Attribute Configuration");
     m_taskPanel->addTask(m_attributeWidget->neuronWidget(), QIcon(":/assets/neuronIcon.png"),"Neuron Attribute Settings");
     m_taskPanel->addTask(m_attributeWidget->connectionWidget(), QIcon(":/assets/connectionIcon.png"),"Connection Attribute Settings");
 
-
-
     m_cameraSubBar = new CameraSidebar();
     m_cameraSubBar->setFixedWidth(300);
     m_taskPanel->addTask(m_cameraSubBar,QIcon(":/assets/cameraIcon.png"),"Camera Settings");
-
 
     m_lightingSubBar = new LightingSidebar();
     m_taskPanel->addTask(m_lightingSubBar, QIcon(":/assets/neuronIcon.png"),"Lighting Settings");
     m_layout->addWidget(m_taskPanel);
 
-
-
     m_framesPerSecond = new QLabel();
     m_framesPerSecond->setAlignment(Qt::AlignCenter);
     //m_layout->addWidget(m_framesPerSecond);
 
-
     this->setLayout(m_layout);
     setFixedWidth(400);
-
 }
+
+
 
 ManagementSidebar::~ManagementSidebar()
 {
@@ -83,10 +76,13 @@ ManagementSidebar::~ManagementSidebar()
 }
 
 
+
 LightingSidebar * ManagementSidebar::lightingSidebar()
 {
     return m_lightingSubBar;
 }
+
+
 
 void ManagementSidebar::addChildren(QTreeWidgetItem* item,QString filePath)
 {
@@ -117,10 +113,13 @@ void ManagementSidebar::updateFPS(float fps)
 }
 
 
+
 CameraSidebar * ManagementSidebar::cameraSidebar()
 {
     return m_cameraSubBar;
 }
+
+
 
 AttributeWidget * ManagementSidebar::attributeWidget()
 {

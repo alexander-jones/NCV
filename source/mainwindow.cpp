@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QMenuBar>
 
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -50,7 +52,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     addToolBar(m_toolbar);
 
-
     m_tabWidget = new QwwConfigWidget();
     m_tabWidget->setIconSize(QSize(64,64));
 
@@ -65,7 +66,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_visualizationWidget = new NCVWidget();
     m_tabWidget->addGroup(m_visualizationWidget,QIcon(":/assets/visualizationIcon.png"),"Analyze");
     this->setCentralWidget(m_tabWidget);
+
+    m_tabWidget->setCurrentGroup(m_visualizationWidget);
 }
+
+
 
 void MainWindow::m_updateTimeScale(int value)
 {
@@ -73,8 +78,9 @@ void MainWindow::m_updateTimeScale(int value)
     QString str = "Time Scale:";
     str.append(QString(" %1 X").arg(multiplier));
     m_timeScale->setText(str);
-
 }
+
+
 
 MainWindow::~MainWindow()
 {

@@ -47,7 +47,8 @@ SOURCES += \
     combowidget.cpp \
     qcustomplot.cpp \
     orientationbutton.cpp \
-    distributewidget.cpp
+    distributewidget.cpp \
+    randomdatasource.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -60,10 +61,7 @@ HEADERS  += \
     ncv.h \
     ncvwidget.h \
     qglxtexture.h \
-    managementcombowidget.h \
-    cameracombowidget.h \
     spinbox3d.h \
-    lightingcombowidget.h \
     qglxtexture1d.h \
     qglxtexture3d.h \
     qglxtexture2d.h \
@@ -78,7 +76,8 @@ HEADERS  += \
     camerasidebar.h \
     qcustomplot.h \
     orientationbutton.h \
-    distributewidget.h
+    distributewidget.h \
+    randomdatasource.h
 
 FORMS    += \
     mainwindow.ui
