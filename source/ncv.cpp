@@ -531,22 +531,22 @@ void NCV::m_bindAttribute(NetworkAttribute  * attribute)
         }
         else if (attribute->type == NetworkAttribute::Flag)
         {
-            GLuint componentSize = QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE);
-            GLenum textureFormat = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_BYTE, 1, componentSize);
+            GLuint componentSize = QGLXTexture::getComponentSize(GL_UNSIGNED_INT);
+            GLenum textureFormat = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_INT, 1, componentSize);
 
             if (attribute->owner == NetworkAttribute::Neuron)
             {
-                if (numNeurons %8 == 0)
-                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * numNeurons/8, textureFormat);
+                if (numNeurons % 32 == 0)
+                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * numNeurons/32, textureFormat);
                 else
-                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * (numNeurons/8 + 1), textureFormat);
+                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * (numNeurons/32 + 1), textureFormat);
             }
             else
             {
-                if (numConnections %8 == 0)
-                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * numConnections/8, textureFormat);
+                if (numConnections % 32 == 0)
+                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * numConnections/32, textureFormat);
                 else
-                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * (numConnections/8 + 1), textureFormat);
+                    attribute->buffer->allocate(attribute->unboundBufferData, componentSize * (numConnections/32 + 1), textureFormat);
             }
         }
         delete [] attribute->unboundBufferData;
@@ -1681,7 +1681,7 @@ void NCV::setNeuronRangeAttribute(QString name, GLfloat * data)
 
 
 
-void NCV::setNeuronFlagAttribute(QString name, GLubyte * data)
+void NCV::setNeuronFlagAttribute(QString name, GLuint *data)
 {
 
     if (!isValid())
@@ -1708,7 +1708,7 @@ void NCV::setConnectionRangeAttribute(QString name, GLfloat * data)
 
 
 
-void NCV::setConnectionFlagAttribute(QString name, GLubyte * data)
+void NCV::setConnectionFlagAttribute(QString name, GLuint *data)
 {
     if (!isValid())
         return;

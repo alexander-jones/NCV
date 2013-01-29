@@ -18,7 +18,7 @@ out float Depth;
 void main( void )
 {
     ID = Inst_ID ;
-    BitFlag = texelFetch(Inst_Attribute,(int(Inst_ID)-1)/8).r & uint(1 <<((int(Inst_ID)-1) % 8));
+    BitFlag = texelFetch(Inst_Attribute,(int(Inst_ID)-1)/32).r & uint(1 <<((int(Inst_ID)-1) & 31));
     vec3 translation = texelFetch(Inst_Translation,int(Inst_ID)-1).rgb ;
     vec4 translated = vec4(translation,0.0f) + Scale *  vec4( Vert_Position,1.0f);
     WorldPos = translated.xyz;

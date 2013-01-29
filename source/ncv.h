@@ -176,11 +176,11 @@ public slots:
 
     void setNeuronRangeAttribute(QString name, GLfloat * data);
 
-    void setNeuronFlagAttribute(QString name, GLubyte * data);
+    void setNeuronFlagAttribute(QString name, GLuint * data);
 
     void setConnectionRangeAttribute(QString name, GLfloat * data);
 
-    void setConnectionFlagAttribute(QString name, GLubyte * data);
+    void setConnectionFlagAttribute(QString name, GLuint * data);
 
     void changeCurrentNeuronRangeColoration(QString name,QRgb * data, int width);
 

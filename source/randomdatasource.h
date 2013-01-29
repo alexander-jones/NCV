@@ -18,7 +18,7 @@ public:
     virtual ~RandomDataSource();
     
 signals:
-    void neuronFiringsUpdated(QString attribName, GLubyte *data);
+    void neuronFiringsUpdated(QString attribName, GLuint *data);
 
 public slots:
     void updateFirings();
@@ -28,6 +28,7 @@ private:
     int m_dataSize;
     int m_fireThreshold;
     int m_neuronCount;
+    int m_index;
 };
 
 #endif // RANDOMDATASOURCE_H

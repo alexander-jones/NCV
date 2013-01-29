@@ -61,7 +61,6 @@ NCVWidget::NCVWidget(QWidget *parent) :
     connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightDeleted(QString)),m_visualization,SLOT(deleteLight(QString)));
     connect(m_managementSidebar->lightingSidebar(),SIGNAL(newMaterial(QGLXMaterial*)),m_visualization,SLOT(setMaterial(QGLXMaterial*)));
 
-
     connect(m_visualization,SIGNAL(newNeuronBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addNeuronBitAttribute(QString,QColor,QColor)));
     connect(m_visualization,SIGNAL(newConnectionBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addConnectionBitAttribute(QString,QColor,QColor)));
     connect(m_visualization,SIGNAL(newConnectionRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addConnectionRangeAttribute(QString,float,float)));
@@ -75,18 +74,21 @@ NCVWidget::NCVWidget(QWidget *parent) :
 
     connect(m_visualization, SIGNAL(invalidGraphicsConfigurationDetected()),this,SLOT(m_reportFatalError()));
 
-
     QVector3D worldSize = QVector3D(50000 , 50000,50000);
 
     int numNeurons = 100000;
-
+    int neuronArraySize;
     QVector3D * neuronPositions = new QVector3D[numNeurons];
     GLfloat * voltages = new GLfloat[numNeurons];
-    GLubyte * firings;
-    if (numNeurons %8 == 0)
-        firings = new GLubyte[numNeurons/8];
+    GLuint * firings;
+
+    if (numNeurons %32 == 0)
+        neuronArraySize = numNeurons/32;
     else
-        firings = new GLubyte[(numNeurons/8) + 1];
+        neuronArraySize = numNeurons/32 + 1;
+
+    firings = new GLuint[neuronArraySize];
+
     int fireVal;
     float threshold = 80.0f;
     for (int i = 0; i <numNeurons; i ++)
@@ -100,18 +102,15 @@ NCVWidget::NCVWidget(QWidget *parent) :
             fireVal = 1;
         else
             fireVal = 0;
-        if(i %8 == 0)
-            firings[i/8] = 0;
-        firings[i/8] += fireVal<<(i % 8);
-
+        if(i % 32 == 0)
+            firings[i/32] = 0;
+        firings[i/32] += fireVal<<(i % 32);
     }
 
-
-    for (int i = 0; i <numNeurons / 8; i ++)
+    for (int i = 0; i < neuronArraySize; i ++)
     {
         firings[i] = 0;
     }
-
 
     int numConnections = numNeurons ;
     GLuint * neuronIN = new GLuint[numConnections];
@@ -123,6 +122,45 @@ NCVWidget::NCVWidget(QWidget *parent) :
         while (neuronOUT[i] == neuronIN[i])
             neuronOUT[i] = (rand() % numNeurons) +1;
     }
+
+    /*
+      This section can be substituted in for the network creation code above
+      to create a linear structure where you can clearly see neurons fire in
+      sequence if the data source is set up for that.
+      */
+    /*QVector3D worldSize = QVector3D(50000, 50000, 50000);
+    int numNeurons = 60, neuronArraySize;
+    QVector3D * neuronPositions = new QVector3D[numNeurons];
+    GLfloat * voltages = new GLfloat[numNeurons];
+    GLuint * firings;
+
+    if (numNeurons %32 == 0)
+        neuronArraySize = numNeurons/32;
+    else
+        neuronArraySize = numNeurons/32 + 1;
+
+    firings = new GLuint[neuronArraySize];
+
+    for (int i = 0; i <numNeurons; i++)
+    {
+        int x = i * worldSize.x() / numNeurons - worldSize.x() / 2;
+        neuronPositions[i] = QVector3D(x, 0, 0);
+        voltages[i] = (float)(rand() % 100);
+    }
+
+    for (int i = 0; i <neuronArraySize; i++)
+    {
+        firings[i] = 0;
+    }
+
+    int numConnections = numNeurons - 1;
+    GLuint * neuronIN = new GLuint[numConnections];
+    GLuint * neuronOUT = new GLuint[numConnections];
+    for (int i = 0; i < numConnections; i++)
+    {
+        neuronIN[i] = i;
+        neuronOUT[i] = i + 1;
+    }*/
 
     /* ###################################################################
     Neural Network Creation Example
@@ -138,17 +176,16 @@ NCVWidget::NCVWidget(QWidget *parent) :
     m_visualization->setNeuronFlagAttribute("firing",firings);
     m_visualization->setNeuronRangeAttribute("voltage",voltages);
 
-    m_dataSource = new RandomDataSource(numNeurons, 0.01);
+    m_dataSource = new RandomDataSource(numNeurons, 0.005);
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), m_dataSource, SLOT(updateFirings()));
-    connect(m_dataSource, SIGNAL(neuronFiringsUpdated(QString,GLubyte*)),
-            m_visualization, SLOT(setNeuronFlagAttribute(QString,GLubyte*)));
-    timer->start(200);
+    connect(m_dataSource, SIGNAL(neuronFiringsUpdated(QString,GLuint*)),
+            m_visualization, SLOT(setNeuronFlagAttribute(QString,GLuint*)));
+    timer->start(50);
 
     /* ###################################################################
     Neural Network Example
     ###################################################################*/
-
 }
 
 
@@ -162,7 +199,6 @@ void NCVWidget::m_collapseButtonPressed()
         m_managementSidebar->hide();
         m_collapseButton->setText(m_expandText);
         m_collapseButton->setToolTip("Click to expand the management sidebar");
-
     }
     else
     {
@@ -183,15 +219,12 @@ NCVWidget::~NCVWidget()
 
    //delete m_statusSidebar;
    //delete m_visualization;
-
-
 }
 
 
 
 void NCVWidget::m_reportFatalError()
 {
-
     QMessageBox msgBox;
     msgBox.setText("Graphics Configuration Incapable");
     msgBox.setInformativeText("Cannot create a valid OpenGL 4.0 context.");
