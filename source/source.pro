@@ -4,19 +4,22 @@
 #
 #-------------------------------------------------
 
+QMAKE_CXXFLAGS += "-std=gnu++0x"
+
 QT  += core gui opengl
 TARGET = source
 TEMPLATE = app
 CONFIG+= wwwidgets
 
+
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lGLEW  -lassimp -lGLU
+    LIBS +=  -lGLEW -lGLU #/home/alex/Dropbox/brain-viz/source/lib/libslugSim.so /home/alex/Dropbox/brain-viz/source/lib/libslugSpec.so /home/alex/Dropbox/brain-viz/source/lib/libslugUtil.so
 }
 
 #windows specific settings
 win32{
-    LIBS += -lglew32 -lassimp -lwwwidgets4d
+    LIBS += -lglew32 -lwwwidgets4d
 }
 
 #mac specific settings
@@ -35,7 +38,6 @@ SOURCES += \
     managementSidebar.cpp \
     camerasidebar.cpp \
     spinbox3d.cpp \
-    lightingsidebar.cpp \
     qglxtexture1d.cpp \
     qglxtexture3d.cpp \
     qglxtexture2d.cpp \
@@ -48,7 +50,7 @@ SOURCES += \
     qcustomplot.cpp \
     orientationbutton.cpp \
     distributewidget.cpp \
-    randomdatasource.cpp
+    colorstatewidget.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -61,6 +63,8 @@ HEADERS  += \
     ncv.h \
     ncvwidget.h \
     qglxtexture.h \
+    managementcombowidget.h \
+    cameracombowidget.h \
     spinbox3d.h \
     qglxtexture1d.h \
     qglxtexture3d.h \
@@ -69,15 +73,14 @@ HEADERS  += \
     colorrangewidget.h \
     attributewidget.h \
     colorbitwidget.h \
-    groupingtree.h \
     combowidget.h \
     managementSidebar.h \
-    lightingsidebar.h \
     camerasidebar.h \
     qcustomplot.h \
     orientationbutton.h \
     distributewidget.h \
-    randomdatasource.h
+    ncvattribute.h \
+    colorstatewidget.h
 
 FORMS    += \
     mainwindow.ui
@@ -89,27 +92,25 @@ OTHER_FILES += \
     shaders/synapse.vert \
     shaders/neuron.vert \
     shaders/neuron.frag \
-    shaders/selectionRect.frag \
-    shaders/selection.frag \
-    shaders/postProcess.vert \
     shaders/synapse.geom \
-    shaders/lighting.frag \
     shaders/neuronFloat.vert \
     shaders/neuronBit.vert \
     shaders/bit.frag \
     shaders/float.frag \
     shaders/connectionBit.geom \
     shaders/connectionFloat.geom \
-    shaders/simpleBlend.frag \
     assets/sphere.nff \
     assets/startTriangle.png \
     assets/endTriangle.png \
     shaders/neuronSelection.vert \
     shaders/neuronSelection.geom \
-    shaders/depthOfField.frag \
     shaders/connectionBit.vert \
-    shaders/connectionFloat.vert
+    shaders/connectionFloat.vert \
+    shaders/silhouette.frag \
+    shaders/connectionSilhouette.vert \
+    shaders/connectionSilhouette.geom \
+    shaders/neuronSilhouette.vert \
+    shaders/neuronSilhouette.geom
 
 RESOURCES += \
     core-profile.qrc
-

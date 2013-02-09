@@ -1,145 +1,122 @@
 #version 400
 
-uniform mat4 Projection;
+uniform mat4 WVP;
 uniform float ConnectionWidth;
+uniform vec3 CameraPosition;
+uniform float FogStart, FogEnd;
 
 flat in uint Vert_ID[2];
-flat in uint Vert_BitFlag[2];
-in vec3 Vert_WorldPos[2];
-in float Vert_Depth[2];
+flat in uint Vert_Value[2];
 
 flat out uint ID;
-flat out uint BitFlag;
-out vec3 WorldPos, Normal;
+flat out uint Value;
+out vec3 Normal;
 out float Depth;
 
 layout (lines) in;
-layout (triangle_strip,max_vertices =16) out;
+layout (triangle_strip,max_vertices =10) out;
 
 void main( void )
 {
-
     // establish view space offets for right, up, left (- right), down (- up) faces.
-    vec3 inPositionView = gl_in[0].gl_Position.xyz;
-    vec3 outPositionView = gl_in[1].gl_Position.xyz;
-    vec3 normLineDir = normalize(outPositionView-inPositionView);
-    vec3 rightFaceOffset=cross(normLineDir,vec3(0.0,1.0,0.0));
-    if(abs(normLineDir.y)>0.999)
-        rightFaceOffset=cross(normLineDir,vec3(1.0,0.0,0.0));
-    rightFaceOffset=normalize(rightFaceOffset) * ConnectionWidth;
-    vec3 upFaceOffset=cross(normLineDir,rightFaceOffset) * ConnectionWidth;
+    vec3 inPosition = gl_in[0].gl_Position.xyz;
+    vec3 outPosition = gl_in[1].gl_Position.xyz;
 
-    // establish world space normals for right, up, left (- right), down (- up) faces.
-    vec3 worldPosLineDir = normalize(Vert_WorldPos[1] -Vert_WorldPos[0]);
-    vec3 rightFaceNormal = cross(worldPosLineDir,vec3(0,1,0));
-    if(abs(rightFaceNormal.y)>0.999)
-        rightFaceNormal = cross(worldPosLineDir,vec3(1,0,0));
-    vec3 upFaceNormal = cross(worldPosLineDir,rightFaceNormal);
+    // establish line direction
+    vec3 lineDir = normalize(outPosition -inPosition);
 
-    // establish line vertices in projection space
-    vec4 inDownLeftPos = Projection * vec4( inPositionView -rightFaceOffset-upFaceOffset , 1.0);
-    vec4 inUpLeftPos = Projection * vec4( inPositionView -rightFaceOffset+upFaceOffset , 1.0);
-    vec4 inUpRightPos = Projection * vec4( inPositionView +rightFaceOffset+upFaceOffset , 1.0);
-    vec4 inDownRightPos = Projection * vec4( inPositionView +rightFaceOffset-upFaceOffset , 1.0);
+    // establish right perpindicular by crossing line direction with y axis.
+    vec3 lineRight = normalize(cross(lineDir,vec3(0,1,0)));
 
-    vec4 outDownLeftPos = Projection * vec4( outPositionView -rightFaceOffset-upFaceOffset , 1.0);
-    vec4 outUpLeftPos = Projection * vec4( outPositionView -rightFaceOffset+upFaceOffset , 1.0);
-    vec4 outUpRightPos = Projection * vec4( outPositionView +rightFaceOffset+upFaceOffset , 1.0);
-    vec4 outDownRightPos = Projection * vec4( outPositionView +rightFaceOffset-upFaceOffset , 1.0);
+    // if line direction is pointing straight up, instead perform cross product with x axis
+    // to establish right perpindicular.
+    if(abs(lineDir.y) > 0.999)
+        lineRight = normalize(cross(lineDir,vec3(1,0,0)));
+
+    // establish left perpindicular by crossing line direction right perpindicular.
+    vec3 lineUp = normalize(cross(lineDir,lineRight));
+
+    // establish offsets for the right and up faces of the volumetric line
+    // left face == - right face and down face == - up face
+    vec3 lineRightOffset = lineRight * (ConnectionWidth / 2);
+    vec3 lineUpOffset = lineUp * (ConnectionWidth / 2);
+
+    // establish line vertices
+    vec3 inDownLeftPos =  inPosition -lineRightOffset-lineUpOffset;
+    vec3 inUpPos = inPosition +lineUpOffset;
+    vec3 inDownRightPos = inPosition +lineRightOffset-lineUpOffset ;
+
+    vec3 outDownLeftPos =  outPosition -lineRightOffset-lineUpOffset ;
+    vec3 outUpPos =  outPosition +lineUpOffset;
+    vec3 outDownRightPos =  outPosition +lineRightOffset-lineUpOffset ;
 
     ID = Vert_ID[0];
 
-    //////////////////////////// Left Face ////////////////////////////
+    //////////////////////////// Left-Up Face ////////////////////////////
 
     // setup out values for neuron-in located points
-    BitFlag = Vert_BitFlag[0];
-    WorldPos = Vert_WorldPos[0];
-    Depth = Vert_Depth[0];
+    Value = Vert_Value[0];
 
-    Normal = - rightFaceNormal;
-    gl_Position = inUpLeftPos;
+    Normal = (lineUp- lineRight)/2;
+
+    gl_Position = WVP *vec4(inUpPos,1.0f);
+    Depth = min((distance(CameraPosition,inUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
-    gl_Position = inDownLeftPos;
+    gl_Position = WVP *vec4(inDownLeftPos,1.0f);
+    Depth = min((distance(CameraPosition,inDownLeftPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
-
 
     // setup out values for neuron-out located points
-    BitFlag = Vert_BitFlag[1];
-    WorldPos = Vert_WorldPos[1];
-    Depth = Vert_Depth[1];
+    Value = Vert_Value[1];
 
-    gl_Position = outUpLeftPos;
+    gl_Position = WVP *vec4(outUpPos,1.0f);
+
+    Depth = min((distance(CameraPosition,outUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
-    gl_Position = outDownLeftPos;
+    gl_Position = WVP *vec4(outDownLeftPos,1.0f);
+
+    Depth = min((distance(CameraPosition,outDownLeftPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
-    //////////////////////////// Right Face ////////////////////////////
-
-    Normal = rightFaceNormal;
-    gl_Position = outUpRightPos;
-    EmitVertex();
-
-    gl_Position = outDownRightPos;
-    EmitVertex();
-
-    // setup out values for neuron-in located points
-    BitFlag = Vert_BitFlag[0];
-    WorldPos = Vert_WorldPos[0];
-    Depth = Vert_Depth[0];
-
-    gl_Position = inUpRightPos;
-    EmitVertex();
-
-    gl_Position = inDownRightPos;
-    EmitVertex();
-
-    //////////////////////////// Up Face ////////////////////////////
-
-    // setup out values for neuron-out located points
-    BitFlag = Vert_BitFlag[1];
-    WorldPos = Vert_WorldPos[1];
-    Depth = Vert_Depth[1];
-
-    Normal =  upFaceNormal;
-    gl_Position = outUpLeftPos;
-    EmitVertex();
-
-    gl_Position = outUpRightPos;
-    EmitVertex();
-
-
-    // setup out values for neuron-in located points
-    BitFlag = Vert_BitFlag[0];
-    WorldPos = Vert_WorldPos[0];
-    Depth = Vert_Depth[0];
-
-
-    gl_Position = inUpLeftPos;
-    EmitVertex();
-
-    gl_Position = inUpRightPos;
-    EmitVertex();
 
     //////////////////////////// Down Face ////////////////////////////
 
-    Normal = - upFaceNormal;
-    gl_Position = inDownLeftPos;
-    EmitVertex();
+    Normal = - lineUp;
 
-    gl_Position = inDownRightPos;
+    gl_Position = WVP *vec4(outDownRightPos,1.0f);
+    Depth = min((distance(CameraPosition,outDownRightPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     // setup out values for neuron-out located points
-    BitFlag = Vert_BitFlag[1];
-    WorldPos = Vert_WorldPos[1];
-    Depth = Vert_Depth[1];
+    Value = Vert_Value[0];
 
-    gl_Position = outDownLeftPos;
+    gl_Position = WVP *vec4(inDownLeftPos,1.0f);
+    Depth = min((distance(CameraPosition,inDownLeftPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
-    gl_Position = outDownRightPos;
+    gl_Position = WVP *vec4(inDownRightPos,1.0f);
+    Depth = min((distance(CameraPosition,inDownRightPos) - FogStart) / (FogEnd - FogStart),1.0f);
+    EmitVertex();
+
+    //////////////////////////// Right-Up Face ////////////////////////////
+
+    Normal = (lineUp + lineRight)/2;
+
+    gl_Position = WVP *vec4(inUpPos,1.0f);
+    Depth = min((distance(CameraPosition,inUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
+    EmitVertex();
+
+    // setup out values for neuron-in located points
+    Value = Vert_Value[1];
+
+    gl_Position = WVP *vec4(outDownRightPos,1.0f);
+    Depth = min((distance(CameraPosition,outDownRightPos) - FogStart) / (FogEnd - FogStart),1.0f);
+    EmitVertex();
+
+    gl_Position = WVP *vec4(outUpPos,1.0f);
+    Depth = min((distance(CameraPosition,outUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     EndPrimitive();

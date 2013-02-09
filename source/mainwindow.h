@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include "ncvwidget.h"
 #include "distributewidget.h"
+//#include "clusterEditor.h"
 #include <QwwConfigWidget>
 
 namespace Ui {
@@ -26,8 +27,9 @@ private:
     Ui::MainWindow *ui;
     QVBoxLayout * m_layout;
     QwwConfigWidget * m_tabWidget;
-    NCVWidget * m_visualizationWidget;
     QWidget * m_buildWidget;
+    NCVWidget * m_visualizationWidget;
+    //QWidget * m_buildWidget;
     DistributeWidget  * m_distributeWidget;
     QToolBar * m_toolbar;
     QSlider * m_timeScaleSlider;

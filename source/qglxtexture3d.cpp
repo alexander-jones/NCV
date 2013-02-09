@@ -68,7 +68,7 @@ void QGLXTexture3D::allocate(GLuint width, GLuint height, GLuint depth,GLenum in
     m_pixelType = internalFormatToPixelType(m_internalFormat);
     m_pixelFormat = internalFormatToPixelFormat(m_internalFormat);
 
-    glTexImage3D(GL_TEXTURE_3D, 0, m_internalFormat, m_width,m_height,m_depth, 0, m_pixelFormat, m_pixelType, 0);
+    glTexImage3D(GL_TEXTURE_3D, 0, m_internalFormat, m_width,m_height,m_depth, 0, m_pixelFormat, m_pixelType, data);
 
 
 

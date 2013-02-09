@@ -93,7 +93,8 @@ void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat,i
     if (m_multisampled)
         glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,m_samples,m_internalFormat,m_width,m_height,GL_FALSE);
     else
-        glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height,0, m_pixelFormat, m_pixelType, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height,0, m_pixelFormat, m_pixelType, data);
+
 
 }
 void QGLXTexture2D::destroy()
@@ -140,6 +141,11 @@ void QGLXTexture2D::setSize(GLuint width,GLuint height )
         glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height, 0, m_pixelFormat, m_pixelType, 0);
     glBindTexture(GL_TEXTURE_2D,0);
 
+}
+
+QSize QGLXTexture2D::size()
+{
+    return QSize(m_width,m_height);
 }
 
 GLuint QGLXTexture2D::width()

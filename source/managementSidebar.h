@@ -15,7 +15,6 @@
 #include "camerasidebar.h"
 #include "qlabel.h"
 #include "qgridlayout.h"
-#include "lightingsidebar.h"
 #include "colorrangewidget.h"
 #include "attributewidget.h"
 #include <QwwTaskPanel>
@@ -29,13 +28,12 @@ public:
     ~ManagementSidebar();
     void addChildren(QTreeWidgetItem* item,QString filePath);
     CameraSidebar * cameraSidebar();
-    LightingSidebar * lightingSidebar();
     AttributeWidget * attributeWidget();
 
 signals:
     
 public slots:
-    void updateFPS(float framesPerSecond);
+    void setFPS(float framesPerSecond);
     
 private:
     void m_buildGroupingTab();
@@ -43,7 +41,6 @@ private:
 
     QwwTaskPanel *m_taskPanel;
     CameraSidebar* m_cameraSubBar;
-    LightingSidebar * m_lightingSubBar;
     QWidget * m_widget;
     QVBoxLayout * m_layout;
     QMap<QString,QCheckBox *> m_checkBoxes;

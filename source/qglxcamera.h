@@ -14,7 +14,7 @@
     \author Alex Jones
     \brief An QGL extension class for manipulating view and projection in 3D.
 */
-class QGLXCamera: public QGLXObject3D
+class QGLXCamera
 {
 public:
     /*!

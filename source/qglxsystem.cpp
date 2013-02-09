@@ -6,7 +6,7 @@
 QGLXSystem::QGLXSystem()
 {
     m_primType = Triangle;
-    m_LayoutType == Array;
+    m_LayoutType = Array;
     m_numObjects = 0;
     m_vertsPerObject = 0;
     m_elementsPerObject = 0;
@@ -22,9 +22,6 @@ QGLXSystem::~QGLXSystem()
     }
 }
 
-void QGLXSystem::setGrouping(QString group, int startIndex,int number)
-{
-}
 
 void QGLXSystem::create(int numObjects, int vertsPerObject, int elementsPerObject,int instancesPerObject)
 {

@@ -15,6 +15,9 @@ struct AttributeArray
     {
         this->componentType = 0;
         this->buffer = NULL;
+        this ->componentSize =0;
+        this->stride = 0;
+        this->divisor = 1;
     }
 
     AttributeArray( QGLXBuffer * buffer, GLenum componentType,int stride, int componentSize, int divisor = 0)
@@ -144,7 +147,6 @@ public:
     */
     void setPrimitiveType(PrimitiveType type);
 
-    void setGrouping(QString group, int startIndex,int number);
     /*!
         \param name The name to associate this attribute array with.
         \param data The data of this attribute array.

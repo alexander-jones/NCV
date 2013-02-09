@@ -7,7 +7,6 @@
 #include "orientationbutton.h"
 #include "managementSidebar.h"
 #include "ncv.h"
-#include "randomdatasource.h"
 
 #ifdef WIN32
     #include <Windows.h>
@@ -28,6 +27,7 @@ signals:
 private slots:
     void m_collapseButtonPressed();
     void m_reportFatalError();
+    void m_newFrameReceived();
 
 private:
     bool m_collapsed;
@@ -35,8 +35,8 @@ private:
     ManagementSidebar * m_managementSidebar;
     OrientationButton * m_collapseButton;
     QString m_expandText, m_collapseText;
-    RandomDataSource *m_dataSource;
-
+    QTime m_timer;
+    int m_frameCount;
     //RightToolBar *m_statusSidebar;
     NCV * m_visualization;
 };

@@ -15,7 +15,7 @@ class AttributeWidget: public QObject
 {
     Q_OBJECT
 public:
-    explicit AttributeWidget(QString text,QWidget *parent = 0);
+    explicit AttributeWidget(QWidget *parent = 0);
     QWidget * neuronWidget();
     QWidget * connectionWidget();
 

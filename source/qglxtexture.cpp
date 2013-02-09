@@ -42,6 +42,8 @@ GLuint QGLXTexture::getComponentSize(GLenum componentType)
     return 0;
 
 }
+
+
 GLenum QGLXTexture::internalFormatToPixelFormat(GLenum internalFormat)
 {
     GLenum pixelFormat = -1;

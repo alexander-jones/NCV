@@ -1,14 +1,12 @@
 #include "attributewidget.h"
 #include <QDebug>
 
-AttributeWidget::AttributeWidget(QString text,QWidget *parent) :
+AttributeWidget::AttributeWidget(QWidget *parent) :
     QObject(parent)
 {
     m_widget = new QWidget();
     m_neuronMapper = new QSignalMapper(this);
     m_connectionMapper = new QSignalMapper(this);
-
-
 
     m_neuronLinkButton = new QToolButton();
     m_neuronLinkButton->setToolTip("Set whether neuron and connection colorations should be linked for this attribute.");
@@ -66,6 +64,7 @@ bool AttributeWidget::m_rangeAttributeConsistent(QString attributeName)
         }
     return same;
 }
+
 
 bool AttributeWidget::m_flagAttributeConsistent(QString attributeName)
 {
@@ -204,8 +203,11 @@ void AttributeWidget::addNeuronRangeAttribute(QString name, float minVal, float 
 
     m_neuronRangeWidgets[name]->setLowThreshold(minVal);
     m_neuronRangeWidgets[name]->setHighThreshold(maxVal);
-    m_neuronRangeWidgets[name]->setImageSize(300,25);
-    m_neuronRangeWidgets[name]->setRangeToGradient(minVal,maxVal,QColor(0,255,0),QColor(255,0,255));
+    m_neuronRangeWidgets[name]->setWidth(300);
+    float step = (maxVal -  minVal) / 2;
+    m_neuronRangeWidgets[name]->addMarker(minVal ,QColor(0,255,0));
+    m_neuronRangeWidgets[name]->addMarker(minVal + step,QColor(0,0,255));
+    m_neuronRangeWidgets[name]->addMarker(minVal + step*2,QColor(255,0,0));
     m_neuronSidebar->addWidget(m_neuronRangeWidgets[name],name);
     neuronRangeColorationChanged(name,m_neuronRangeWidgets[name]->getData(),m_neuronRangeWidgets[name]->getImageSize().width());
 
@@ -246,8 +248,11 @@ void AttributeWidget::addConnectionRangeAttribute(QString name, float minVal, fl
 
     m_connectionRangeWidgets[name]->setLowThreshold(minVal);
     m_connectionRangeWidgets[name]->setHighThreshold(maxVal);
-    m_connectionRangeWidgets[name]->setImageSize(300,25);
-    m_connectionRangeWidgets[name]->setRangeToGradient(minVal,maxVal,QColor(0,255,0),QColor(255,0,255));
+    m_connectionRangeWidgets[name]->setWidth(300);
+    float step = (maxVal -  minVal) / 2;
+    m_neuronRangeWidgets[name]->addMarker(minVal ,QColor(0,255,0));
+    m_neuronRangeWidgets[name]->addMarker(minVal + step,QColor(0,0,255));
+    m_neuronRangeWidgets[name]->addMarker(minVal + step*2,QColor(255,0,0));
     m_connectionSidebar->addWidget(m_connectionRangeWidgets[name],name);
     connectionRangeColorationChanged(name,m_connectionRangeWidgets[name]->getData(),m_connectionRangeWidgets[name]->getImageSize().width());
 

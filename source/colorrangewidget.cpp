@@ -2,61 +2,80 @@
 #include <QApplication>
 #include <QtCore/qmath.h>
 
-ColorRangeWidget::ColorRangeWidget(QWidget *parent, int width, int height) :
+const int NO_MARKER = -1;
+ColorRangeWidget::ColorRangeWidget(QWidget *parent) :
     QWidget(parent)
 {
     this->setToolTip("Interact with this widget to change the range attribute's coloration.\n Left click any space without a marker to add one.\n Left click over a marker and drag to move marker.\n Double click a marker to change it's color.\n Double click a marker's text to change it's value.\n Right click a marker or marker's text' to remove it.");
 
+    m_voidColor = QColor(0,0,0);
     m_leftMouseDown = false;
     m_rightMouseDown = false;
 
+    m_selectedMarker = NO_MARKER;
+    m_hoveredMarker = NO_MARKER;
     m_lowThreshold = 0.0;
     m_highThreshold = 1.0;
 
-    m_cursorImage = new QImage(":/assets/triangle.png");
-    m_smallCursorImage =new QImage(":/assets/triangleSmall.png");
+
+
     m_layout = new QVBoxLayout();
     m_layout->setAlignment(Qt::AlignCenter);
     m_rangeLayerPadding = 100;
 
-    m_cursorRangeContainer = new ImageContainer();
-    connect(m_cursorRangeContainer,SIGNAL(doubleClicked(Qt::MouseButton,QPoint)),this,SLOT(m_cursorRangeDoubleClicked(Qt::MouseButton,QPoint)));
-    m_cursorRangeContainer->installEventFilter( this );
-    m_layout->addWidget(m_cursorRangeContainer);
+    m_markerRangeContainer = new ImageContainer();
+    m_markerRangeContainer->setAttribute(Qt::WA_TranslucentBackground);
+    connect(m_markerRangeContainer,SIGNAL(doubleClicked(Qt::MouseButton,QPoint)),this,SLOT(m_markerRangeDoubleClicked(Qt::MouseButton,QPoint)));
+    connect(m_markerRangeContainer,SIGNAL(exited()),this,SLOT(m_handleExitRange()));
+    m_markerRangeContainer->installEventFilter( this );
+    m_markerRangeContainer->setMouseTracking(true);
+    m_layout->addWidget(m_markerRangeContainer);
 
     m_valueLayerContainer = new ImageContainer();
     connect(m_valueLayerContainer,SIGNAL(doubleClicked(Qt::MouseButton,QPoint)),this,SLOT(m_valueLayerDoubleClicked(Qt::MouseButton,QPoint)));
     m_valueLayerContainer->installEventFilter( this );
     m_layout->addWidget(m_valueLayerContainer);
     m_rangeLayer = NULL;
-    m_cursorLayer = NULL;
+    m_markerLayer = NULL;
     m_valueLayer = NULL;
-    setImageSize(width,height);
 
+    m_markerHeight = QImage(":/assets/markerWholeTemplate.png").height();
+
+    m_markerSelector = new QComboBox();
+    m_markerSelector->addItem(QIcon(":/assets/markerWholeTemplate.png"),"Solid");
+    m_markerSelector->addItem(QIcon(":/assets/markerDividedTemplate.png"),"Divided");
+    connect(m_markerSelector,SIGNAL(currentIndexChanged(QString)),this,SLOT(m_markerTypeSelected(QString)));
+    m_currentMarkerType = Marker::Solid;
+
+    m_layout->addWidget(m_markerSelector);
 
     this->setLayout(m_layout);
+
+
+}
+void ColorRangeWidget::m_markerTypeSelected(QString name)
+{
+    if (name == "Solid")
+        m_currentMarkerType = Marker::Solid;
+    else
+        m_currentMarkerType = Marker::Divided;
 }
 
-QList<Cursor> & ColorRangeWidget::getMarkers()
+QList<Marker> & ColorRangeWidget::getMarkers()
 {
-    return m_cursors;
+    return m_markers;
 }
 
-void ColorRangeWidget:: setMarkers(const QList<Cursor> & markers)
+void ColorRangeWidget:: setMarkers( QList<Marker> & markers)
 {
+
     bool markersSame = true;
-    QList<Cursor> oldCursors(m_cursors);
-    qSort(oldCursors.begin(),oldCursors.end());
-
-    QList<Cursor> newCursors(markers);
-    qSort(newCursors.begin(),newCursors.end());
 
     for (int i = 0 ; i< markers.size();i++)
     {
-
-        if (i < oldCursors.size())
+        if (i < m_markers.size())
         {
-            if (newCursors[i].color != oldCursors[i].color || newCursors[i].value != oldCursors[i].value || newCursors[i].position != oldCursors[i].position)
+            if (markers[i] != m_markers[i])
             {
                 markersSame = false;
                 break;
@@ -69,22 +88,20 @@ void ColorRangeWidget:: setMarkers(const QList<Cursor> & markers)
            break;
         }
     }
-    oldCursors.clear();
-    newCursors.clear();
 
     if (!markersSame)
     {
-        m_cursors.clear();
+        m_markers.clear();
         for (int i = 0 ; i< markers.size();i++)
         {
-            Cursor cursor;
-            cursor.color = markers[i].color;
-            if (markers[i].cursorImage != NULL)
-                cursor.cursorImage = new QImage(*markers[i].cursorImage);
-            cursor.value = markers[i].value;
-            cursor.position = markers[i].position;
-            m_cursors.insert(0,cursor);
+            Marker marker(markers[i].type());
+            marker.setLeftColor(markers[i].leftColor());
+            marker.setRightColor(markers[i].rightColor());
+            marker.setValue( markers[i].value());
+            marker.setPosition( markers[i].position());
+            m_markers.insert(0,marker);
         }
+        qSort(m_markers.begin(),m_markers.end());
         m_updateRange();
         m_updateValueLayerContainer();
 
@@ -95,6 +112,7 @@ void ColorRangeWidget::setLowThreshold(float threshold)
 {
     m_lowThreshold = threshold;
 
+
 }
 
 void ColorRangeWidget::setHighThreshold(float threshold)
@@ -104,18 +122,18 @@ void ColorRangeWidget::setHighThreshold(float threshold)
 }
 
 
-void ColorRangeWidget::setImageSize(int width, int height)
+void ColorRangeWidget::setWidth(int width)
 {
     QImage * oldImage = m_rangeLayer;
 
-    int imageWidth = width - 100;
-    int imageHeight = height;
+    int imagePosition = width - 100;
+    int imageHeight = m_markerHeight;
 
-    m_rangeLayer = new QImage(imageWidth,imageHeight,QImage::Format_RGB32);
+    m_rangeLayer = new QImage(imagePosition,imageHeight,QImage::Format_RGB32);
     if (oldImage != NULL)
     {
         for (int y = 0; y < imageHeight; y++)
-            for (int x = 0; x < imageWidth; x++)
+            for (int x = 0; x < imagePosition; x++)
             {
                 if (x < oldImage->width() && y < oldImage->height())
                     m_rangeLayer->setPixel(x,y,oldImage->pixel(x,y));
@@ -126,18 +144,21 @@ void ColorRangeWidget::setImageSize(int width, int height)
 
     }
 
-    if (m_cursorLayer != NULL)
-        delete m_cursorLayer;
-    m_cursorLayer = new QImage(width,imageHeight,QImage::Format_ARGB32);
-    m_cursorLayer->fill(QColor(0,0,0,0));
-    m_updateCursorRangeContainer();
+    if (m_markerLayer != NULL)
+        delete m_markerLayer;
+    m_markerLayer = new QImage(width,imageHeight,QImage::Format_ARGB32);
+    m_markerLayer->fill(QColor(0,0,0,0));
+
+    for (int i = 0; i < m_markers.size();i++)
+        m_markers[i].setPosition( width * ((m_markers[i].value() - m_lowThreshold) /(m_highThreshold - m_lowThreshold)));
+
+    m_updateRange();
 
     if (m_valueLayer != NULL)
         delete m_valueLayer;
-    m_valueLayer = new QImage(width ,m_cursorImage->height(),QImage::Format_ARGB32);
+    m_valueLayer = new QImage(width ,m_markerHeight,QImage::Format_ARGB32);
     m_valueLayer->fill(QColor(0,0,0,0));
     m_updateValueLayerContainer();
-
 
 }
 QSize ColorRangeWidget::getImageSize()
@@ -145,58 +166,54 @@ QSize ColorRangeWidget::getImageSize()
     return m_rangeLayer->size();
 }
 
-void ColorRangeWidget::setRangeToColor(float start,float end, QRgb color)
+
+void ColorRangeWidget::addMarker(float value, QColor color)
 {
-    int startPixel =  ((start - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width() ;
-    int endPixel =  ((end - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width() ;
 
-    if (startPixel <= m_rangeLayer->width() && endPixel <= m_rangeLayer->width())
-    {
-        for (int y = 0; y < m_rangeLayer->height(); y++)
-            for (int x = startPixel; x < endPixel; x++)
-                m_rangeLayer->setPixel(x,y,color);
+    int position =  ((value - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
+    int toRemove =-1;
+    for (int i = 0; i < m_markers.size();i++)
+        if (qAbs(m_markers[i].value() - value) < 0.01 )
+            toRemove = i;
 
+    if (toRemove != -1)
+        m_markers.removeAt(toRemove);
 
-        if (m_cursors.size() ==0)
-        {
-            Cursor startCursor;
-            startCursor.color = color;
-            startCursor.value = start;
-            startCursor.position = startPixel;
-            startCursor.cursorImage = new QImage(*m_smallCursorImage);
-            for (int y = 0; y < startCursor.cursorImage->height(); y++)
-                for (int x = 0; x < startCursor.cursorImage->width(); x++)
-                {
-                    QColor pixel = startCursor.cursorImage->pixel(x,y);
-                    if (pixel.redF()  >0.05f && pixel.blueF() >0.05f  && pixel.greenF() >0.05f)
-                        startCursor.cursorImage->setPixel(x,y,color);
-                }
-            m_cursors.insert(0,startCursor);
-
-            Cursor endCursor;
-            endCursor.color = color;
-            endCursor.value = end;
-            endCursor.position = endPixel;
-            endCursor.cursorImage = new QImage(*m_smallCursorImage);
-            for (int y = 0; y < endCursor.cursorImage->height(); y++)
-                for (int x = 0; x < endCursor.cursorImage->width(); x++)
-                {
-                    QColor pixel = endCursor.cursorImage->pixel(x,y);
-                    if (pixel.redF()  >0.05f && pixel.blueF() >0.05f  && pixel.greenF() >0.05f)
-                        endCursor.cursorImage->setPixel(x,y,color);
-                }
-            m_cursors.insert(0,endCursor);
-
-        }
-        colorRangeChanged();
-        m_updateCursorRangeContainer();
-
-    }
+    Marker marker;
+    marker.setColor(color);
+    marker.setValue( value);
+    marker.setPosition( position);
+    m_markers.insert(0,marker);
+    qSort(m_markers.begin(),m_markers.end());
+    m_updateRange();
 
 }
 
-void ColorRangeWidget::setRangeToGradient(float start,float end, QColor startColor, QColor endColor)
+void ColorRangeWidget::addMarker(float value, QColor leftColor, QColor rightColor)
 {
+
+    int position =  ((value - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
+    int toRemove =-1;
+    for (int i = 0; i < m_markers.size();i++)
+        if (qAbs(m_markers[i].value() - value) < 0.01 )
+            toRemove = i;
+
+    if (toRemove != -1)
+        m_markers.removeAt(toRemove);
+    Marker marker;
+    marker.setLeftColor(leftColor);
+    marker.setRightColor(rightColor);
+    marker.setValue( value);
+    marker.setPosition( position);
+    m_markers.insert(0,marker);
+    qSort(m_markers.begin(),m_markers.end());
+    m_updateRange();
+}
+
+
+bool ColorRangeWidget::m_fillRangeLayer(float start,float end, QColor startColor, QColor endColor)
+{
+
     int startPixel =  ((start - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
     int endPixel =  ((end - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width() ;
 
@@ -211,37 +228,13 @@ void ColorRangeWidget::setRangeToGradient(float start,float end, QColor startCol
         painter.setRenderHint(QPainter::Antialiasing);
         painter.fillRect(rect, QBrush(gradient));
         painter.end();
-
-        if (m_cursors.size() ==0)
-        {
-            Cursor startCursor;
-            startCursor.color = startColor;
-            startCursor.value = start;
-            startCursor.position = startPixel;
-            startCursor.cursorImage = new QImage(*m_smallCursorImage);
-
-            m_colorCursor(startCursor.cursorImage,startCursor.color);
-            m_cursors.insert(0,startCursor);
-
-            Cursor endCursor;
-            endCursor.color = endColor;
-            endCursor.value = end;
-            endCursor.position = endPixel;
-            endCursor.cursorImage = new QImage(*m_smallCursorImage);
-
-            m_colorCursor(endCursor.cursorImage,endCursor.color);
-            m_cursors.insert(0,endCursor);
-            m_updateValueLayerContainer();
-
-        }
-
         colorRangeChanged();
-        m_updateCursorRangeContainer();
-
-
+        return true;
     }
-
+    return false;
 }
+
+
 QRgb * ColorRangeWidget::getData()
 {
     QRgb * pixels =  (QRgb *)m_rangeLayer->scanLine(0);
@@ -252,30 +245,49 @@ QRgb * ColorRangeWidget::getData()
 void  ColorRangeWidget::m_updateRange()
 {
 
-    if (m_cursors.size() >=2)
+    if (m_markers.size() > 0)
     {
-        QList<Cursor> valueSortedCursors (m_cursors);
-        qSort(valueSortedCursors.begin(),valueSortedCursors.end());
-        for (int i = 1; i < valueSortedCursors.size(); i ++)
-        {
-            if (valueSortedCursors[i].color == valueSortedCursors[i-1].color)
-                setRangeToColor(valueSortedCursors[i-1].value,valueSortedCursors[i].value,valueSortedCursors[i].color.rgb());
-            else
-                setRangeToGradient(valueSortedCursors[i-1].value,valueSortedCursors[i].value,valueSortedCursors[i-1].color.rgb(),valueSortedCursors[i].color.rgb());
-        }
+        Marker selected;
+        if (m_selectedMarker != NO_MARKER)
+            selected = m_markers[m_selectedMarker];
+
+        int i = 0;
+        if (m_markers[i].value() > m_lowThreshold)
+            m_fillRangeLayer(m_lowThreshold,m_markers[i].value(),m_markers[0].leftColor(),m_markers[0].leftColor());
+
+
+        for (i = 1; i < m_markers.size(); i ++)
+            m_fillRangeLayer(m_markers[i-1].value(),m_markers[i].value(),m_markers[i-1].rightColor(),m_markers[i].leftColor());
+
+
+        if (m_markers[i-1].value() < m_highThreshold)
+            m_fillRangeLayer(m_markers[i-1].value(),m_highThreshold,m_markers[i-1].rightColor(),m_markers[i-1].rightColor());
+
+        if (m_selectedMarker != NO_MARKER)
+            m_selectedMarker = m_markers.indexOf(selected);
     }
     else
-        m_updateCursorRangeContainer();
-}
-void ColorRangeWidget::m_updateCursorRangeContainer()
-{
-    m_cursorLayer->fill(QColor(0,0,0,0));
-    QPainter painter(m_cursorLayer);
+        m_fillRangeLayer(m_lowThreshold,m_highThreshold,QColor(0,0,0),QColor(0,0,0));
+
+
+    m_markerLayer->fill(QColor(0,0,0,0));
+    QPainter painter(m_markerLayer);
 
     painter.drawImage(QPoint(m_rangeLayerPadding/2,0),*m_rangeLayer);
-    for (int i =0; i < m_cursors.size(); i ++)
-        painter.drawImage(QPoint(m_rangeLayerPadding/2 + m_cursors[i].position-(m_cursors[i].cursorImage->width()/2),m_cursorLayer->height() - m_cursors[i].cursorImage->height()),*m_cursors[i].cursorImage);
-    m_cursorRangeContainer->setPixmap(QPixmap::fromImage(*m_cursorLayer));
+
+    Marker selected;
+    if (m_selectedMarker != NO_MARKER)
+        selected = m_markers[m_selectedMarker];
+
+    for (int i =0; i < m_markers.size(); i ++)
+    {
+        if (m_selectedMarker != NO_MARKER && m_markers[i] == selected)
+            continue;
+        painter.drawImage(QPoint(m_rangeLayerPadding/2 + m_markers[i].position()-(m_markers[i].image().width()/2),m_markerLayer->height() - m_markers[i].image().height()),m_markers[i].image());
+    }
+    if (m_selectedMarker != NO_MARKER)
+        painter.drawImage(QPoint(m_rangeLayerPadding/2 + selected.position()-(selected.image().width()/2),m_markerLayer->height() - selected.image().height()),selected.image());
+    m_markerRangeContainer->setPixmap(QPixmap::fromImage(*m_markerLayer));
 }
 
 void ColorRangeWidget::m_updateValueLayerContainer()
@@ -283,22 +295,25 @@ void ColorRangeWidget::m_updateValueLayerContainer()
     m_valueLayer->fill(QColor(0,0,0,0));
     QPainter painter(m_valueLayer);
 
-    for (int i =0; i < m_cursors.size(); i ++)
+    QPen pen= painter.pen();
+    for (int i =0; i < m_markers.size(); i ++)
     {
+        if (m_selectedMarker !=NO_MARKER)
+        {
+            if (i ==m_selectedMarker)
+                pen.setColor(QColor(0,0,0,255));
+            else
+                pen.setColor(QColor(0,0,0,50));
+            painter.setPen(pen);
+        }
         QFont font = painter.font();
         font.setPointSize(8);
         painter.setFont(font);
-        QString text = QString::number(m_cursors[i].value);
+        QString text = QString::number(m_markers[i].value());
         QSize size = QFontMetrics(text).size(Qt::TextSingleLine,text);
-        int width = m_cursors[i].position + m_rangeLayerPadding/2;
+        int width = m_markers[i].position() + m_rangeLayerPadding/2;
         QRect rect = QRect(width-size.width()/2,0,size.width(),size.height() );
         painter.drawText(rect,Qt::AlignCenter,text);
-        if (i ==0 && m_leftMouseDown)
-        {
-            QPen pen= painter.pen();
-            pen.setColor(QColor(0,0,0,0));
-            painter.setPen(pen);
-        }
 
 
     }
@@ -306,44 +321,56 @@ void ColorRangeWidget::m_updateValueLayerContainer()
     m_valueLayerContainer->setPixmap(QPixmap::fromImage(*m_valueLayer));
 }
 
-void ColorRangeWidget::m_colorCursor(QImage * cursorImage, QColor color)
+void ColorRangeWidget::m_handleExitRange()
 {
 
-    for (int y = 0; y < cursorImage->height(); y++)
+    if ( m_hoveredMarker !=NO_MARKER)
     {
-        QRgb *pixelData = (QRgb *)cursorImage->scanLine(y);
-        for (int col = 0 ; col < cursorImage->width(); col ++)
-        {
-            QColor pixel = QColor::fromRgb(pixelData[col]);
-            int alpha = qAlpha(pixelData[col]);
-
-            if (pixel.redF()  >0.5f && pixel.blueF() >0.5f  && pixel.greenF() >0.5f)
-                pixelData[col] = color.rgb();
-
-            else if (alpha > 50)
-                pixelData[col] = QColor(255 - color.red(),255- color.green(),255- color.blue()).rgb();
-        }
-
+        m_markers[m_hoveredMarker].setSize(Marker::Small);
+        m_hoveredMarker = NO_MARKER;
+        m_updateRange();
     }
 }
-void ColorRangeWidget::m_cursorRangeDoubleClicked(Qt::MouseButton button,QPoint pos)
+
+QPoint ColorRangeWidget::m_clampPosToImage(QPoint pos)
+{
+    int imagePosition = qMin(qMax(pos.x(),m_rangeLayerPadding/2),m_rangeLayer->width()+m_rangeLayerPadding/2)-m_rangeLayerPadding/2;
+    return QPoint(imagePosition,pos.y());
+
+}
+
+void ColorRangeWidget::m_markerRangeDoubleClicked(Qt::MouseButton button,QPoint pos)
 {
     if (button == Qt::LeftButton)
     {
-        bool overCursor = m_markerSelected(pos);
-        if (overCursor)
+        int selectedMarker = m_overMarker(m_clampPosToImage( pos));
+
+        if (selectedMarker != NO_MARKER)
         {
             QColorDialog colorPicker;
-            colorPicker.setWindowTitle("Select Marker Color");
+            if (m_markers[selectedMarker].solid())
+                colorPicker.setWindowTitle("Select Marker Color");
+            else
+                colorPicker.setWindowTitle("Select Marker Left Color");
             colorPicker.exec();
-            QColor color = colorPicker.selectedColor();
-            if (color.isValid())
-            {
-                m_cursors[0].color = color;
-                delete m_cursors[0].cursorImage;
-                m_cursors[0].cursorImage = new QImage(*m_smallCursorImage);
-                m_colorCursor(m_cursors[0].cursorImage,color);
+            QColor firstColor = colorPicker.selectedColor();
 
+            if (firstColor.isValid())
+            {
+                if (m_markers[selectedMarker].solid())
+                    m_markers[selectedMarker].setColor(firstColor);
+
+                else
+                {
+                    m_markers[selectedMarker].setLeftColor(firstColor);
+                    colorPicker.setWindowTitle("Select Marker Right Color");
+                    colorPicker.exec();
+                    QColor secondColor = colorPicker.selectedColor();
+                    if (secondColor.isValid())
+                    {
+                        m_markers[selectedMarker].setRightColor(secondColor);
+                    }
+                }
                 m_updateRange();
             }
 
@@ -356,14 +383,50 @@ void ColorRangeWidget::m_valueLayerDoubleClicked(Qt::MouseButton button,QPoint p
 {
     if (button == Qt::LeftButton)
     {
-        bool textSelected = m_valueSelected(pos);
-        if (textSelected)
+        int selectedMarker = m_overValue(pos);
+        bool update = true;
+        int toRemove = -1;
+
+        if (selectedMarker != NO_MARKER)
         {
-            double newVal = QInputDialog::getDouble(this,"Enter Marker Value"," Enter new marker value.",m_cursors[0].value,m_lowThreshold,m_highThreshold,3);
-            m_cursors[0].value = newVal;
-            m_cursors[0].position =  ((newVal - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width() ;
-            m_updateRange();
-            m_updateValueLayerContainer();
+            float newVal = (float)QInputDialog::getDouble(this,"Enter Marker Value"," Enter new marker value.",m_markers[selectedMarker].value(),m_lowThreshold,m_highThreshold,3);
+
+            if (qAbs(m_markers[selectedMarker].value() - newVal) > 0.01 )
+            {
+                for (int i = 0; i < m_markers.size();i++)
+                    if (qAbs(m_markers[i].value() - newVal) < 0.01 )
+                    {
+
+                        QMessageBox msgBox;
+                        msgBox.setText("There is already a marker at that value.");
+
+                        QPushButton *replaceButton = msgBox.addButton(tr("Replace Old Marker"), QMessageBox::ActionRole);
+
+                        QPushButton *keepButton = msgBox.addButton(tr("Keep Old Marker"), QMessageBox::ActionRole);
+                        msgBox.exec();
+
+                        if (msgBox.clickedButton() == keepButton)
+                            update = false;
+                        else if (msgBox.clickedButton() == replaceButton)
+                            toRemove = i;
+                        break;
+
+                    }
+
+                if (update)
+                {
+
+                    m_markers[selectedMarker].setValue( newVal);
+                    m_markers[selectedMarker].setPosition(  ((newVal - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width() );
+
+                    if (toRemove >=0)
+                        m_markers.removeAt(toRemove);
+                    qSort(m_markers.begin(),m_markers.end());
+
+                    m_updateRange();
+                    m_updateValueLayerContainer();
+                }
+            }
         }
     }
 }
@@ -372,10 +435,14 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
 {
 
     QMouseEvent* me;
-    if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease ||event->type() ==QEvent::MouseMove)
+    if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease ||event->type() ==QEvent::MouseMove||event->type() ==QEvent::HoverMove ||event->type() ==QEvent::HoverLeave)
         me= (QMouseEvent*) event ;
     else
         return false;
+    if (event->type() == QEvent::HoverLeave)
+    {
+        qDebug() << "hover leave";
+    }
     if (event->type() == QEvent::MouseButtonPress)
     {
         if (me->button() == Qt::LeftButton)
@@ -391,155 +458,188 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
         else if (me->button() == Qt::RightButton)
             m_rightMouseDown = false;
     }
-
-    int imageWidth = qMin(qMax(me->pos().x(),m_rangeLayerPadding/2),m_rangeLayer->width()+m_rangeLayerPadding/2)-m_rangeLayerPadding/2;
-    float val = (((float)(imageWidth)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
+    int labelPosition = me->pos().x();
+    int imagePosition = qMin(qMax(labelPosition,m_rangeLayerPadding/2),m_rangeLayer->width()+m_rangeLayerPadding/2)-m_rangeLayerPadding/2;
+    int relPosition = labelPosition - m_rangeLayerPadding/2;
+    float val = (((float)(imagePosition)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
     val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
-    val = float(qCeil(val * 10)) / 10;
 
 
-    if ( watched == m_cursorRangeContainer  )
+    if ( watched == m_markerRangeContainer  )
     {
-        bool overCursor = m_markerSelected(me->pos());
+        if (m_selectedMarker == NO_MARKER)
+            m_selectedMarker = m_overMarker(m_clampPosToImage(me->pos()));
 
         if (m_leftMouseDown)
         {
-            if (!overCursor && event->type() == QEvent::MouseButtonPress)
+            if (m_selectedMarker == NO_MARKER && event->type() == QEvent::MouseButtonPress)
             {
-                Cursor cursor;
-                cursor.cursorImage = new QImage(*m_smallCursorImage);
-                cursor.color = QColor(255,255,255);
-                m_cursors.insert(0,cursor);
+                Marker marker(m_currentMarkerType);
+                marker.setColor(QColor(255,255,255));
+                marker.setPosition(imagePosition);
+                marker.setValue(val);
+                m_markers.insert(0,marker);
+                qSort(m_markers.begin(),m_markers.end());
+                m_selectedMarker = m_markers.indexOf(marker);
 
             }
-            m_cursors[0].position =imageWidth;
-            m_cursors[0].value =val;
+            if (m_selectedMarker != NO_MARKER )
+            {
+                if (m_selectedMarker > 0 && m_markers[m_selectedMarker-1].position() ==imagePosition)
+                {
+                    imagePosition +=1;
+                    val = (((float)(imagePosition)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
+                    val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
+                }
+
+                if(m_selectedMarker < m_markers.size() -1 && m_markers[m_selectedMarker+1].position() ==imagePosition)
+                {
+                    imagePosition -=1;
+                    val = (((float)(imagePosition)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
+                    val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
+                }
+
+                m_markers[m_selectedMarker].setPosition(imagePosition);
+                m_markers[m_selectedMarker].setValue(val);
+                Marker selected = m_markers[m_selectedMarker];
+                qSort(m_markers.begin(),m_markers.end());
+                m_selectedMarker = m_markers.indexOf(selected);
+            }
+
             m_updateRange();
             m_updateValueLayerContainer();
 
         }
         else if (m_rightMouseDown)
         {
-            if ( overCursor)
+            if ( m_selectedMarker != NO_MARKER)
             {
-            if (m_cursors.size() > 0)
-                m_cursors.removeAt(0);
-            m_updateRange();
-            m_updateValueLayerContainer();
-            }
-
-
-        }
-        else
-            m_updateValueLayerContainer();
-
-
-    }
-    else if (watched == m_valueLayerContainer)
-    {
-
-
-        bool textSelected = m_valueSelected(me->pos());
-
-        if (m_leftMouseDown)
-        {
-
-            m_cursors[0].position =imageWidth;
-            m_cursors[0].value =val;
-            m_updateRange();
-
-            m_updateValueLayerContainer();
-
-        }
-        else if (m_rightMouseDown)
-        {
-            if ( textSelected)
-            {
-                if (m_cursors.size() > 0)
-                    m_cursors.removeAt(0);
+                if ( m_selectedMarker != NO_MARKER)
+                    m_markers.removeAt(m_selectedMarker);
+                m_selectedMarker = NO_MARKER;
+                m_hoveredMarker = NO_MARKER;
                 m_updateRange();
-
                 m_updateValueLayerContainer();
             }
 
 
         }
         else
+        {
+            m_selectedMarker = NO_MARKER;
+            int markerOver = m_overMarker(QPoint( relPosition,me->pos().y()));
+            if (markerOver != NO_MARKER && m_hoveredMarker != markerOver)
+            {
+                m_hoveredMarker = markerOver;
+                m_markers[m_hoveredMarker].setSize(Marker::Large);
+                m_updateRange();
+            }
+            else if (markerOver == NO_MARKER &&  m_hoveredMarker !=NO_MARKER)
+            {
+                m_markers[m_hoveredMarker].setSize(Marker::Small);
+                m_hoveredMarker = NO_MARKER;
+                m_updateRange();
+            }
             m_updateValueLayerContainer();
+        }
+
+
+    }
+    else if (watched == m_valueLayerContainer)
+    {
+
+        if (m_selectedMarker == NO_MARKER)
+            m_selectedMarker = m_overValue(me->pos());
+
+        if (m_leftMouseDown)
+        {
+
+            if (m_selectedMarker != NO_MARKER )
+            {
+                if (m_selectedMarker > 0 && m_markers[m_selectedMarker-1].position() ==imagePosition)
+                {
+                    imagePosition +=1;
+                    val = (((float)(imagePosition)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
+                    val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
+                }
+
+                if(m_selectedMarker < m_markers.size() -1 && m_markers[m_selectedMarker+1].position() ==imagePosition)
+                {
+                    imagePosition -=1;
+                    val = (((float)(imagePosition)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
+                    val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
+                }
+
+                m_markers[m_selectedMarker].setPosition(imagePosition);
+                m_markers[m_selectedMarker].setValue(val);
+                Marker selected = m_markers[m_selectedMarker];
+                qSort(m_markers.begin(),m_markers.end());
+                m_selectedMarker = m_markers.indexOf(selected);
+            }
+            m_updateRange();
+
+            m_updateValueLayerContainer();
+
+        }
+        else if (m_rightMouseDown)
+        {
+            if ( m_selectedMarker != NO_MARKER )
+            {
+                if ( m_selectedMarker != 0 && m_selectedMarker != m_markers.size()-1)
+                    m_markers.removeAt(m_selectedMarker);
+                m_selectedMarker = NO_MARKER;
+                m_updateRange();
+                m_updateValueLayerContainer();
+            }
+
+
+        }
+        else
+        {
+            m_selectedMarker = NO_MARKER;
+            m_updateValueLayerContainer();
+        }
 
 
     }
 
     return false;
 }
-bool ColorRangeWidget::m_valueSelected(QPoint pos)
+int ColorRangeWidget::m_overValue(QPoint pos)
 {
     int position = pos.x();
-    bool textSelected = false;
-    for (int i = 0; i < m_cursors.size(); i ++)
+    for (int i = 0; i < m_markers.size(); i ++)
     {
-        QString text = QString::number(m_cursors[i].value);
+        QString text = QString::number(m_markers[i].value());
         QSize size = QFontMetrics(text).size(Qt::TextSingleLine,text);
-        int width = m_cursors[i].position + m_rangeLayerPadding/2;
+        int width = m_markers[i].position() + m_rangeLayerPadding/2;
         int relativeWidth  =  (position - width) + size.width()/2;
         if (relativeWidth >= 0 && relativeWidth < size.width())
         {
-            if (i != 0)
-            {
-                Cursor cursor = m_cursors[i];
-                m_cursors.removeAt(i);
-                m_cursors.insert(0,cursor);
-            }
-            textSelected = true;
-            break;
+            return i;
         }
 
     }
-    return textSelected;
+    return NO_MARKER;
 }
 
-bool ColorRangeWidget::m_markerSelected(QPoint pos)
+int ColorRangeWidget::m_overMarker(QPoint pos)
 {
-
-
-    int imageWidth = qMin(qMax(pos.x(),m_rangeLayerPadding/2),m_rangeLayer->width()+m_rangeLayerPadding/2)-m_rangeLayerPadding/2;
-    float val = (((float)(imageWidth)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
-    val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
-    int height = pos.y();
-    m_cursorOver = -1;
-        for (int i = 0; i < m_cursors.size(); i ++)
+    for (int i = 0; i < m_markers.size(); i ++)
+    {
+        int imagePos = (m_markerLayer->height() - m_markers[i].image().height());
+        int relativeHeight = pos.y() - imagePos;
+        int relativeWidth  =  (pos.x() -m_markers[i].position()) + m_markers[i].image().width()/2;
+        if (m_markers[i].image().rect().contains(relativeWidth,relativeHeight))
         {
-            int cursorImagePos = (m_cursorLayer->height() - m_cursors[i].cursorImage->height());
-            int relativeHeight = height - cursorImagePos;
-            int relativeWidth  =  (imageWidth -m_cursors[i].position) + m_cursors[i].cursorImage->width()/2;
-            if (m_cursors[i].cursorImage->rect().contains(relativeWidth,relativeHeight))
-            {
-                QColor atCursor = QColor::fromRgba(m_cursors[i].cursorImage->pixel(relativeWidth,relativeHeight));
-                if (atCursor.alpha() > 0)
-                {
-                    if (i != 0)
-                    {
-                        Cursor cursor = m_cursors[i];
-                        m_cursors.removeAt(i);
-                        m_cursors.insert(0,cursor);
-                    }
-                    m_cursorOver = i;
-                    return true;
-                }
-            }
+            QColor atMarker = QColor::fromRgba(m_markers[i].image().pixel(relativeWidth,relativeHeight));
+            if (atMarker.isValid() && atMarker.alpha() > 0)
+                return i;
 
         }
-   // }
-    return false;
+
+    }
+    return NO_MARKER;
 }
 
 
-void ColorRangeWidget::setColorRange(QRgb * newRange)
-{
-    for (int y = 0; y < m_rangeLayer->height(); y++)
-        for (int x = 0; x < m_rangeLayer->width(); x++)
-            m_rangeLayer->setPixel(x,y,newRange[x]);
-    colorRangeChanged();
-
-    m_updateCursorRangeContainer();
-}

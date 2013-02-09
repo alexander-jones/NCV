@@ -24,13 +24,9 @@ public:
 
     /*!
         \param num The number of targets to bind
-        \param names A pointer to an rray of target names;
+        \param names A pointer to an array of target names;
 
-        \brief This function binds up to 16 color targets in addition to one depth
-        All targets being bound must have been created previously with Add
-        In addition, no two targets being bound may occupy the same attachment slot.
-        It is assumed that a shader program is already bound.
-        \note Once created, the depth target does not have to be bound.
+        \brief This function binds up to 16 color targets in addition to one depth target.
     */
     bool bind();
 
@@ -54,9 +50,8 @@ public:
         \param destMode The screen buffer to draw to. i.e. GL_FRONT, GL_BACK, GL_LEFT, etc...
 
         \brief This function blits a target onto another target.
-        This function cannot be called between BindTargets and ReleaseTargets.
     */    
-    void blitTarget( QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,QRect from,QRect to, GLenum destMode = GL_BACK );
+    void blitTexture( QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,QRect from,QRect to, GLenum destMode = GL_BACK );
 
     /*!
         \param source The name of the target to blit from.
@@ -65,13 +60,22 @@ public:
         \param to The area on the destination the target will blit onto.
 
         \brief This function blits a target onto the screen
-        This function cannot be called between BindTargets and ReleaseTargets.
     */
-    void blitTarget( QGLXTexture2D& source,QRect from,  QGLXTexture2D& dest,QRect to );
+    void blitTexture( QGLXTexture2D& source,QRect from,  QGLXTexture2D& dest,QRect to );
 
+    /*!
+        \param num The number of color targets being rendered to.
+        \brief This function enables rendering to multiple targets.
+    */
     void enableColorAttachments(int num);
 
-    void getTargetPixels(QGLXTexture2D tex,QRect area, void * data);
+    /*!
+        \param tex The texture to grab data from.
+        \param area The area of the texture that will be sampled.
+        \param data A pointer to the data source.
+        \brief This function enables rendering to multiple targets.
+    */
+    void getTextureData(QGLXTexture2D tex,QRect area, void * data);
 
 private:
 

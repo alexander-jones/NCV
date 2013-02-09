@@ -34,7 +34,7 @@ void QGLXFrameBufferObject::release()
 }
 
 
-void QGLXFrameBufferObject::blitTarget(QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,QRect from,QRect to, GLenum destMode )
+void QGLXFrameBufferObject::blitTexture(QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,QRect from,QRect to, GLenum destMode )
 {
     GLuint preCallError = glGetError();
 
@@ -76,7 +76,7 @@ void QGLXFrameBufferObject::blitTarget(QGLXTexture2D& source,QGLXTexture2D::Fram
 
 }
 
-void QGLXFrameBufferObject::blitTarget(QGLXTexture2D & source,QRect from,  QGLXTexture2D& dest,QRect to )
+void QGLXFrameBufferObject::blitTexture(QGLXTexture2D & source,QRect from,  QGLXTexture2D& dest,QRect to )
 {
     GLuint preCallError = glGetError();
 
@@ -94,6 +94,8 @@ void QGLXFrameBufferObject::blitTarget(QGLXTexture2D & source,QRect from,  QGLXT
     glBlitFramebuffer(from.left(),from.top(), from.width(), from.height(),
                       to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
+    source.release();
+    dest.release();
     // release this framebuffer from reading, exit to default
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     // set draw buffer as default buffer
@@ -103,7 +105,7 @@ void QGLXFrameBufferObject::blitTarget(QGLXTexture2D & source,QRect from,  QGLXT
         qDebug() << postCallError << " GL error in QGLXFrameBufferObject::blitTarget." ;
 }
 
-void QGLXFrameBufferObject::getTargetPixels(QGLXTexture2D tex,QRect area, void * data)
+void QGLXFrameBufferObject::getTextureData(QGLXTexture2D tex,QRect area, void * data)
 {
 
     // bind requested texture and read specified pixel
@@ -114,6 +116,7 @@ void QGLXFrameBufferObject::getTargetPixels(QGLXTexture2D tex,QRect area, void *
     glReadBuffer(QGLXTexture2D::Color0);
     glReadPixels(area.left(),tex.height() - area.bottom(),area.width(),area.height(),tex.pixelFormat(),tex.pixelType() ,data);
     glReadBuffer(GL_BACK);
+    tex.release();
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 

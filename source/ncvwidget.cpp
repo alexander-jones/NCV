@@ -4,17 +4,13 @@
 NCVWidget::NCVWidget(QWidget *parent) :
     QWidget(parent)
 {
+
     m_layout = new QBoxLayout(QBoxLayout::LeftToRight);
     m_layout->setSpacing(0);
 
     m_managementSidebar= new ManagementSidebar();
     m_managementSidebar->show();
     m_layout->addWidget(m_managementSidebar);
-
-    //m_statusSidebar= new RightToolBar();
-    //m_statusSidebar->show();
-
-    // Create a GLWidget requesting our format
 
     m_collapsed = false;
 
@@ -24,13 +20,11 @@ NCVWidget::NCVWidget(QWidget *parent) :
     QFont font = m_collapseButton->font();
     font.setPointSize(5);
     m_collapseButton->setFont(font);
-    //m_collapseButton->setOrientation(Qt::Vertical);
-   // m_collapseButton->setMirrored(true);
+
     m_collapseButton->setToolTip("Click to collapse the management sidebar");
     m_collapseButton->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Expanding);
     m_collapseButton->setMaximumWidth(10);
     m_collapseButton->setText(m_collapseText);
-    //m_collapseButton->setAlignment(Qt::AlignCenter);
 
     connect(m_collapseButton,SIGNAL(clicked()),this,SLOT(m_collapseButtonPressed()));
     m_layout->addWidget(m_collapseButton);
@@ -48,71 +42,59 @@ NCVWidget::NCVWidget(QWidget *parent) :
     setLayout(m_layout);
     setFocus();
 
-    connect(m_visualization,SIGNAL(newFPSReading(float)),m_managementSidebar,SLOT(updateFPS(float)));
-    connect(m_visualization,SIGNAL(newCurrentCamera(QString)),m_managementSidebar->cameraSidebar(),SLOT(switchCamera(QString)));
-    connect(m_visualization,SIGNAL(newCamera(QGLXCamera*,QString)),m_managementSidebar->cameraSidebar(),SLOT(addCamera(QGLXCamera*,QString)));
-    connect(m_visualization,SIGNAL(cameraUpdated(QString)),m_managementSidebar->cameraSidebar(),SLOT(updateCamera(QString)));
-
-    connect(m_managementSidebar->cameraSidebar(),SIGNAL(cameraCreated(QGLXCamera*,QString)),m_visualization,SLOT(addCamera(QGLXCamera*,QString)));
-    connect(m_managementSidebar->cameraSidebar(),SIGNAL(cameraSwitched(QString)),m_visualization,SLOT(switchCamera(QString)));
-    connect(m_managementSidebar->cameraSidebar(),SIGNAL(cameraDeleted(QString)),m_visualization,SLOT(deleteCamera(QString)));
-
-    connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightCreated(QGLXLight *,QString)),m_visualization,SLOT(addLight(QGLXLight *,QString)));
-    connect(m_managementSidebar->lightingSidebar(),SIGNAL(lightDeleted(QString)),m_visualization,SLOT(deleteLight(QString)));
-    connect(m_managementSidebar->lightingSidebar(),SIGNAL(newMaterial(QGLXMaterial*)),m_visualization,SLOT(setMaterial(QGLXMaterial*)));
-
+    connect(m_visualization,SIGNAL(frameRendered()),this,SLOT(m_newFrameReceived()));
     connect(m_visualization,SIGNAL(newNeuronBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addNeuronBitAttribute(QString,QColor,QColor)));
     connect(m_visualization,SIGNAL(newConnectionBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addConnectionBitAttribute(QString,QColor,QColor)));
     connect(m_visualization,SIGNAL(newConnectionRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addConnectionRangeAttribute(QString,float,float)));
     connect(m_visualization,SIGNAL(newNeuronRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addNeuronRangeAttribute(QString,float,float)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(changeCurrentConnectionRangeColoration(QString,QRgb*,int)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(changeCurrentNeuronRangeColoration(QString,QRgb*,int)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(changeCurrentNeuronFlagColoration(QString,QColor,QColor)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(changeCurrentConnectionFlagColoration(QString,QColor,QColor)));
+
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(setConnectionRangeColoration(QString,QRgb*,int)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(setNeuronRangeColoration(QString,QRgb*,int)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(setNeuronFlagColoration(QString,QColor,QColor)));
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(setConnectionFlagColoration(QString,QColor,QColor)));
     connect(m_managementSidebar->attributeWidget(),SIGNAL(currentConnectionAttributeSet(QString)),m_visualization,SLOT(setConnectionAttributeToRender(QString)));
     connect(m_managementSidebar->attributeWidget(),SIGNAL(currentNeuronAttributeSet(QString)),m_visualization,SLOT(setNeuronAttributeToRender(QString)));
 
     connect(m_visualization, SIGNAL(invalidGraphicsConfigurationDetected()),this,SLOT(m_reportFatalError()));
 
+
     QVector3D worldSize = QVector3D(50000 , 50000,50000);
 
-    int numNeurons = 100000;
-    int neuronArraySize;
+    int numNeurons = 10000;
+
+
     QVector3D * neuronPositions = new QVector3D[numNeurons];
-    GLfloat * voltages = new GLfloat[numNeurons];
-    GLuint * firings;
 
+    GLfloat * neuronVoltages = new GLfloat[numNeurons];
+    GLuint * neuronFirings;
     if (numNeurons %32 == 0)
-        neuronArraySize = numNeurons/32;
+        neuronFirings = new GLuint[numNeurons/32];
     else
-        neuronArraySize = numNeurons/32 + 1;
+        neuronFirings = new GLuint[(numNeurons/32) + 1];
 
-    firings = new GLuint[neuronArraySize];
+
 
     int fireVal;
     float threshold = 80.0f;
+
     for (int i = 0; i <numNeurons; i ++)
     {
         int x = (abs(rand() * rand() * rand() )% (int)worldSize.x()) - (worldSize.x()/2);
         int y = (abs(rand() * rand() * rand() ) % (int)worldSize.y()) - (worldSize.y()/2);
         int z = (abs(rand() * rand() * rand() ) % (int)worldSize.z()) - (worldSize.z()/2);
         neuronPositions[i] = QVector3D(x,y,z);
-        voltages[i] = (float)(abs(rand()) % 100);
-        if (voltages[i] >= threshold)
+        neuronVoltages[i] = (float)(abs(rand()) % 100);
+        if (neuronVoltages[i] >= threshold)
             fireVal = 1;
         else
             fireVal = 0;
-        if(i % 32 == 0)
-            firings[i/32] = 0;
-        firings[i/32] += fireVal<<(i % 32);
+
+        if(i %32 == 0)
+            neuronFirings[i/32] = 0;
+        neuronFirings[i/32] += fireVal<<(i % 32);
     }
 
-    for (int i = 0; i < neuronArraySize; i ++)
-    {
-        firings[i] = 0;
-    }
-
-    int numConnections = numNeurons ;
+    int numConnections = numNeurons *1 ;
     GLuint * neuronIN = new GLuint[numConnections];
     GLuint * neuronOUT = new GLuint[numConnections];
     for (int i = 0; i < numConnections; i++)
@@ -123,72 +105,57 @@ NCVWidget::NCVWidget(QWidget *parent) :
             neuronOUT[i] = (rand() % numNeurons) +1;
     }
 
-    /*
-      This section can be substituted in for the network creation code above
-      to create a linear structure where you can clearly see neurons fire in
-      sequence if the data source is set up for that.
-      */
-    /*QVector3D worldSize = QVector3D(50000, 50000, 50000);
-    int numNeurons = 60, neuronArraySize;
-    QVector3D * neuronPositions = new QVector3D[numNeurons];
-    GLfloat * voltages = new GLfloat[numNeurons];
-    GLuint * firings;
-
-    if (numNeurons %32 == 0)
-        neuronArraySize = numNeurons/32;
+    GLfloat * connectionVoltages = new GLfloat[numConnections];
+    GLuint * connectionFirings;
+    if (numConnections %32 == 0)
+        connectionFirings = new GLuint[numConnections/32];
     else
-        neuronArraySize = numNeurons/32 + 1;
+        connectionFirings = new GLuint[(numConnections/32) + 1];
 
-    firings = new GLuint[neuronArraySize];
-
-    for (int i = 0; i <numNeurons; i++)
+    for (int i = 0; i <numConnections; i ++)
     {
-        int x = i * worldSize.x() / numNeurons - worldSize.x() / 2;
-        neuronPositions[i] = QVector3D(x, 0, 0);
-        voltages[i] = (float)(rand() % 100);
+        GLfloat inVoltage = neuronVoltages[neuronIN[i]];
+        GLfloat outVoltage = neuronVoltages[neuronOUT[i]];
+
+        connectionVoltages[i] = outVoltage - inVoltage;
+        if (connectionVoltages[i] >= threshold)
+            fireVal = 1;
+        else
+            fireVal = 0;
+
+        if(i %32 == 0)
+            connectionFirings[i/32] = 0;
+        connectionFirings[i/32] += fireVal<<(i % 32);
+
+
     }
 
-    for (int i = 0; i <neuronArraySize; i++)
-    {
-        firings[i] = 0;
-    }
 
-    int numConnections = numNeurons - 1;
-    GLuint * neuronIN = new GLuint[numConnections];
-    GLuint * neuronOUT = new GLuint[numConnections];
-    for (int i = 0; i < numConnections; i++)
-    {
-        neuronIN[i] = i;
-        neuronOUT[i] = i + 1;
-    }*/
 
     /* ###################################################################
     Neural Network Creation Example
     ###################################################################*/
-    m_visualization->createNeurons(numNeurons,neuronPositions);
-    m_visualization->createConnections(numConnections,neuronIN,neuronOUT);
+    m_visualization->createNeurons(numNeurons,neuronPositions,nullptr);
+    m_visualization->createConnections(numConnections,neuronIN,neuronOUT,nullptr);
 
-    // attach voltage data to Inst_Voltage parameter
-    // voltage data is composed of 3 component float vector, so specify that
-    // share data with both neuron / connection shaders
     m_visualization->createNeuronFlagAttribute("firing",QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
     m_visualization->createNeuronRangeAttribute("voltage",0,100.2f);
-    m_visualization->setNeuronFlagAttribute("firing",firings);
-    m_visualization->setNeuronRangeAttribute("voltage",voltages);
 
-    m_dataSource = new RandomDataSource(numNeurons, 0.005);
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), m_dataSource, SLOT(updateFirings()));
-    connect(m_dataSource, SIGNAL(neuronFiringsUpdated(QString,GLuint*)),
-            m_visualization, SLOT(setNeuronFlagAttribute(QString,GLuint*)));
-    timer->start(50);
+    m_visualization->createConnectionFlagAttribute("firing",QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
+    m_visualization->createConnectionRangeAttribute("voltage",0,100.2f);
+
+    m_visualization->setNeuronFlagAttribute("firing",neuronFirings);
+    m_visualization->setNeuronRangeAttribute("voltage",neuronVoltages);
+    m_visualization->setConnectionFlagAttribute("firing",connectionFirings);
+    m_visualization->setConnectionRangeAttribute("voltage",connectionVoltages);
 
     /* ###################################################################
     Neural Network Example
     ###################################################################*/
+
+    m_frameCount = 0;
+    m_timer.start();
 }
-
-
 
 void NCVWidget::m_collapseButtonPressed()
 {
@@ -199,6 +166,7 @@ void NCVWidget::m_collapseButtonPressed()
         m_managementSidebar->hide();
         m_collapseButton->setText(m_expandText);
         m_collapseButton->setToolTip("Click to expand the management sidebar");
+
     }
     else
     {
@@ -208,8 +176,20 @@ void NCVWidget::m_collapseButtonPressed()
         m_collapseButton->setText(m_collapseText);
         m_collapseButton->setToolTip("Click to collapse the management sidebar");
     }
+
 }
 
+void NCVWidget::m_newFrameReceived()
+{
+    // FPS counter
+    m_frameCount ++;
+    if (m_timer.elapsed() >= 1000)
+    {
+        m_managementSidebar->setFPS((float)m_frameCount/((float)m_timer.elapsed() /1000.0f));
+        m_timer.start();
+        m_frameCount = 0;
+    }
+}
 
 
 NCVWidget::~NCVWidget()
@@ -219,12 +199,15 @@ NCVWidget::~NCVWidget()
 
    //delete m_statusSidebar;
    //delete m_visualization;
+
+
 }
 
 
 
 void NCVWidget::m_reportFatalError()
 {
+
     QMessageBox msgBox;
     msgBox.setText("Graphics Configuration Incapable");
     msgBox.setInformativeText("Cannot create a valid OpenGL 4.0 context.");

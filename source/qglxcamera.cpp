@@ -1,7 +1,6 @@
 #include "qglxcamera.h"
 
 QGLXCamera::QGLXCamera(void)
-    :QGLXObject3D()
 {
     m_viewMatrix = QMatrix4x4();
     m_projectionMatrix = QMatrix4x4();

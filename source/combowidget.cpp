@@ -86,12 +86,19 @@ void ComboWidget::setVoidWidget(QWidget * panel)
 {
 
     if (m_panels.count() == 0)
+    {
         m_layout->removeWidget(m_currentWidget);
+        m_currentWidget->hide();
+    }
 
     m_voidWidget = panel;
 
     if (m_panels.count() == 0)
+    {
+        m_currentWidget = m_voidWidget;
         m_layout->addWidget(m_voidWidget);
+        m_voidWidget->show();
+    }
 
 }
 void ComboWidget::setWidget( QString name)

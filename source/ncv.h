@@ -6,17 +6,13 @@
 #include "qglxsystem.h"
 #include "qglxoctree.h"
 #include "qglxcamera.h"
-
-#include <assimp/scene.h>
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-
 #include <QCoreApplication>
 #include <QVector2D>
 #include <QKeyEvent>
 #include <QTime>
 #include <QMap>
 #include <QList>
+#include <QLabel>
 #include <QTimer>
 #include <QDir>
 #include <QRect>
@@ -27,23 +23,6 @@ struct Range
 {
     int start;
     int end;
-};
-
-
-enum RangeInferenceFunction
-{
-    Max,
-    Min,
-    Subtract,
-    Add,
-    Interpolate
-};
-
-enum FlagInferenceFunction
-{
-    Or,
-    And,
-    Xor
 };
 
 struct NetworkAttribute
@@ -104,14 +83,7 @@ public slots:
         \brief This function creates connections as soon as the OpenGL is ready.
         \note This function is asynchronous and thus non-blocking.
     */
-    void createConnections(int number,GLuint * inNeurons,GLuint * outNeurons);
-
-    /*!
-        \param filename The filename of a .connection file that describes the connections.
-        \brief This function creates connections from a file as soon as the OpenGL is ready.
-        \note This function is asynchronous and thus non-blocking.
-    */
-    void createConnections(const QString & filename);
+    void createConnections(int number,GLuint * inNeurons,GLuint * outNeurons,GLuint * ids);
 
     /*!
         \param number The number of neurons being created
@@ -119,52 +91,7 @@ public slots:
         \brief This function creates neurons from a file as soon as the OpenGL is ready.
         \note This function is asynchronous and thus non-blocking.
     */
-    void createNeurons(int number,QVector3D * positions );
-
-    /*!
-        \param filename The filename of a .neuron file that describes the neurons.
-        \brief This function creates neurons from a file as soon as the OpenGL is ready.
-        \note This function is asynchronous and thus non-blocking.
-    */
-    void createNeurons(const QString & filename );
-
-
-    /*!
-        \param camera The camera to add to the camera set.
-        \param name The name to identify this camera by
-        \brief This function adds a camera to the camera set.
-    */
-    void addCamera(QGLXCamera *camera, QString name);
-
-
-    /*!
-        \param name The name of the camera being set.
-        \brief This function sets a camera as the currentCamera.
-    */
-    void switchCamera(QString name);
-
-
-
-    /*!
-        \param name The name of the camera being removed.
-        \brief This function removes a camera from the camera set.
-    */
-    void deleteCamera(QString name);
-
-    /*!
-        \param camera The camera to add to the camera set.
-        \param name The name to identify this camera by
-        \brief This function adds a camera to the camera set.
-    */
-    void addLight(QGLXLight *light, QString name);
-
-    /*!
-        \param name The name of the camera being removed.
-        \brief This function removes a camera from the camera set.
-    */
-    void deleteLight(QString name);
-
-    void setMaterial(QGLXMaterial *);
+    void createNeurons(int number,QVector3D * positions,GLuint * ids );
 
     void createNeuronRangeAttribute(QString name,GLfloat minValue, GLfloat maxValue);
 
@@ -182,30 +109,30 @@ public slots:
 
     void setConnectionFlagAttribute(QString name, GLuint * data);
 
-    void changeCurrentNeuronRangeColoration(QString name,QRgb * data, int width);
+    void setNeuronRangeColoration(QString name,QRgb * data, int width);
 
-    void changeCurrentNeuronFlagColoration(QString name, QColor offColor,QColor onColor);
+    void setNeuronFlagColoration(QString name, QColor offColor,QColor onColor);
 
-    void changeCurrentConnectionRangeColoration(QString name,QRgb * data, int width);
+    void setConnectionRangeColoration(QString name,QRgb * data, int width);
 
-    void changeCurrentConnectionFlagColoration(QString name,QColor offColor,QColor onColor);
+    void setConnectionFlagColoration(QString name,QColor offColor,QColor onColor);
 
     void setNeuronAttributeToRender(QString name);
 
     void setConnectionAttributeToRender(QString name);
 
-    //void setGroupAssociation(QString group, int startNeuron, int endNeuron, bool includeOutgoingConnections = false, QString parent = "");
+    int connectionCount();
 
+    int neuronCount();
+
+    bool isInitialized();
 
 
 signals:
-    void newFPSReading(float framesPerSecond);
-    void newCurrentCamera(QString name);
-    void newCamera(QGLXCamera *camera, QString name);
-    void cameraDeleted(QString name);
-    void cameraUpdated(QString name);
-    void newLight(QGLXLight* light, QString name);
-    void lightDeleted(QGLXLight* light, QString name);
+
+    void initialized();
+    void frameRendered();
+    void cameraUpdated(QGLXCamera * camera);
     void invalidGraphicsConfigurationDetected();
 
     void newNeuronRangeAttribute(QString name, float minVal, float maxVal);
@@ -229,62 +156,49 @@ protected:
 
 
 private:
-    bool m_performLighting(QGLXTexture2D * diffuse,QGLXTexture2D * output = NULL);
-    void m_performDepthOfField(QGLXTexture2D * diffuse,QGLXTexture2D * output = NULL);
     bool m_compileShaderProgram(QGLShaderProgram * program, QString vertexShaderPath,  QString fragmentShaderPath );
     bool m_compileShaderProgram(QGLShaderProgram * program, QString vertexShaderPath, QString geometryShaderPath, QString fragmentShaderPath );
 
     void m_bindAttribute(NetworkAttribute * attribute);
     void m_setVisualizationParameters();
-    void m_createNetwork();
+    void m_createNeurons();
+    void m_createConnections();
     void m_establishWorldBounds(int numNeurons,QVector3D * neuronPositions);
     void m_performRegularRender();
     void m_performSelectionRender();
     QGLShaderProgram *m_neuronProgram();
     QGLShaderProgram *m_connectionProgram();
-    void m_bindNeurons();
-    void m_bindConnections();
-    void m_releaseNeurons();
-    void m_releaseConnections();
+    void m_bindNeurons(QGLShaderProgram * program);
+    void m_bindConnections(QGLShaderProgram * program);
+    void m_releaseNeurons(QGLShaderProgram * program);
+    void m_releaseConnections(QGLShaderProgram * program);
 
+    GLuint * m_neuronIDs,* m_connectionIDs, * m_connectionNeuronIDs;
     QPainter m_painter;
-    QVector3D * m_neuronRangeData, * m_connectionRangeData;
-    int m_frameCount;
-    float m_fps;
     bool m_renderOnlySelection;
-    GLuint *m_inNeurons, *m_outNeurons;
     NetworkAttribute *m_neuronAttribToRender, *m_connectionAttribToRender;
-    QString m_currentCamera;
     QTime m_timer;
     QMap<QString,NetworkAttribute> m_neuronAttributes;
     QMap<QString,NetworkAttribute> m_connectionAttributes;
     NetworkAttribute m_translationBuffer;
     QMap<QString,QGLXTexture2D> m_maps;
     QGLXTexture1D * m_neuronRangeMap, * m_connectionRangeMap;
-    QMap<QString,QGLXLight *> m_lights;
     QGLXSystem m_neurons , m_connections;
     QGLXFrameBufferObject  m_frameBufferObject;
-    QGLShaderProgram *m_blendProgram,*m_depthOfFieldProgram,*m_lightingProgram,*m_selectionProgram, *m_bitNeuronProgram,
-    *m_floatNeuronProgram,*m_bitConnectionProgram,*m_floatConnectionProgram, *m_neuronFrustumPickingProgram;
+    QGLShaderProgram *m_flagNeuronProgram,*m_rangeNeuronProgram,*m_flagConnectionProgram,
+    *m_rangeConnectionProgram,*m_silhouetteNeuronProgram,*m_silhouetteConnectionProgram;
     QMatrix4x4 m_neuronScale;
     QVector3D m_worldSize,m_worldCenter;
-    QGLXOctree<QVector3D> m_octree;
     int m_width, m_height;
-    QMap<QString,QGLXCamera *> m_cameras;
+    QGLXCamera * m_camera;
     QVector2D m_mousePosition;
     QRect m_selectionRect;
     int m_neuronsToCreate,m_connectionsToCreate;
     float m_moveSpeed, m_turnSpeed;
-    bool m_leftMouseDown,m_rightMouseDown,m_shiftDown,m_renderNeurons,m_renderConnections,m_newVisualizationParameters,m_versionCapable,m_initialized;
-
-    QGLXBuffer m_selectionRectVertices,m_screenVertices,m_screenCoords;
-    QSet<GLuint> m_selectedObjects,m_selectedConnections,m_selectedNeurons;
+    bool m_leftMouseDown,m_rightMouseDown,m_shiftDown,m_renderNeurons,m_renderConnections,m_versionCapable,m_initialized;
+    QGLXBuffer m_screenVertices,m_screenCoords;
+    QSet<GLuint> m_selectedObjects;
     QVector<Range> m_ranges;
-    int m_dividerIndex;
-    bool m_lightingEnabled;
-
-
-
 };
 
 #endif // NCV_H

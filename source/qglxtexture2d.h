@@ -142,6 +142,7 @@ public:
     */
     void setWrapFunction(WrapFunction onWidth, WrapFunction onHeight);
 
+    QSize size();
 
     /*!
         \brief This function returns the width of this texture.

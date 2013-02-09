@@ -12,11 +12,14 @@ QGLXBuffer::QGLXBuffer() :
 
 }
 
+
+
 QGLXBuffer::QGLXBuffer(QGLXBuffer::Type type) :
     QGLBuffer((QGLBuffer::Type)type)
 {
     m_type = type;
-    if (m_type == QGLXBuffer::TextureBuffer || m_type == QGLXBuffer::AtomicCounterBuffer || m_type == QGLXBuffer::TransformFeedbackBuffer)
+    if (m_type == QGLXBuffer::TextureBuffer || m_type == QGLXBuffer::AtomicCounterBuffer || m_type == QGLXBuffer::TransformFeedbackBuffer
+        || m_type == QGLXBuffer::UniformBuffer  || m_type == QGLXBuffer::ShaderStorageBuffer  || m_type == QGLXBuffer::DispatchIndirectBuffer)
        m_isQGLX= true;
     else
        m_isQGLX= false;
