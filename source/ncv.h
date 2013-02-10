@@ -16,6 +16,7 @@
 #include <QTimer>
 #include <QDir>
 #include <QRect>
+#include <qglxpainter.h>
 #include "time.h"
 
 
@@ -143,7 +144,7 @@ signals:
 protected:
     void initializeGL();
     void resizeGL( int w, int h );
-    void paintGL();
+    void paintEvent(QPaintEvent *);
     void wheelEvent(QWheelEvent *e);
     void keyPressEvent( QKeyEvent* e );
     void keyReleaseEvent(QKeyEvent *e);
@@ -172,9 +173,10 @@ private:
     void m_bindConnections(QGLShaderProgram * program);
     void m_releaseNeurons(QGLShaderProgram * program);
     void m_releaseConnections(QGLShaderProgram * program);
+    void m_drawLegend();
 
     GLuint * m_neuronIDs,* m_connectionIDs, * m_connectionNeuronIDs;
-    QPainter m_painter;
+    QGLXPainter m_painter;
     bool m_renderOnlySelection;
     NetworkAttribute *m_neuronAttribToRender, *m_connectionAttribToRender;
     QTime m_timer;

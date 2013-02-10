@@ -112,10 +112,14 @@ void QGLXSystem::bind(QGLShaderProgram * program)
         AttributeArray attrib = it.value();
         attrib.buffer->bind();
         int location = program->attributeLocation(name);
+        if (location != -1)
+        {
         program->setAttributeBuffer( location, attrib.componentType,  0 ,attrib.stride  / attrib.componentSize, attrib.stride);
         program->enableAttributeArray( location);
         glVertexAttribDivisor( location, attrib.divisor);
+        }
     }
+
 
 }
 
@@ -151,8 +155,11 @@ void QGLXSystem::release(QGLShaderProgram * program)
         QString name = it.key();
         AttributeArray attrib = it.value();
         int location = program->attributeLocation(name);
+        if (location != -1)
+        {
         program->disableAttributeArray( location );
         attrib.buffer->release();
+        }
     }
     if (m_LayoutType ==  Element || m_LayoutType == InstancedElement)
         m_indexBuffer.release();

@@ -57,14 +57,12 @@ void QGLXFrameBufferObject::blitTexture(QGLXTexture2D& source,QGLXTexture2D::Fra
     else if (sourceAttachment == QGLXTexture2D::DepthStencil)
     {
         glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
-                          to.left(),to.top(), to.width(), to.height(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-        glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
-                          to.left(),to.top(), to.width(), to.height(), GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+                          to.left(),to.top(), to.width(), to.height(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
     }
     else
     {
         glBlitFramebuffer(from.left(), from.top(), from.width(), from.height(),
-                          to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                          to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
 
     // release this framebuffer from reading, exit to default
@@ -91,8 +89,10 @@ void QGLXFrameBufferObject::blitTexture(QGLXTexture2D & source,QRect from,  QGLX
     // tell OpenGL to read this target and blit it onto the rectangle specified
     source.bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
     glReadBuffer(QGLXTexture2D::Color1);
+
+
     glBlitFramebuffer(from.left(),from.top(), from.width(), from.height(),
-                      to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_LINEAR);
+                      to.left(),to.top(), to.width(), to.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
     source.release();
     dest.release();
@@ -107,15 +107,11 @@ void QGLXFrameBufferObject::blitTexture(QGLXTexture2D & source,QRect from,  QGLX
 
 void QGLXFrameBufferObject::getTextureData(QGLXTexture2D tex,QRect area, void * data)
 {
-
     // bind requested texture and read specified pixel
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
-
     tex.bind(QGLXTexture2D::Read,QGLXTexture2D::Color0);
     glReadBuffer(QGLXTexture2D::Color0);
     glReadPixels(area.left(),tex.height() - area.bottom(),area.width(),area.height(),tex.pixelFormat(),tex.pixelType() ,data);
-    glReadBuffer(GL_BACK);
     tex.release();
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 

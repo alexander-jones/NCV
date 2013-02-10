@@ -31,5 +31,7 @@
         <file>shaders/connectionSilhouette.vert</file>
         <file>shaders/neuronSilhouette.vert</file>
         <file>shaders/silhouette.frag</file>
+        <file>shaders/blend.frag</file>
+        <file>shaders/blend.vert</file>
     </qresource>
 </RCC>

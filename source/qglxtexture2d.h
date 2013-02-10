@@ -103,6 +103,7 @@ public:
     */
     GLenum pixelType();
 
+    QRect rect();
     /*!
         \brief This function releases this texture from the current context.
     */

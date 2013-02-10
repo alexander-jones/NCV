@@ -74,6 +74,10 @@ void QGLXTexture2D::setWrapFunction(WrapFunction onWidth, WrapFunction onHeight)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, onHeight);
 }
 
+QRect QGLXTexture2D::rect()
+{
+    return QRect(0,0,m_width,m_height);
+}
 
 void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat,int samplesPerPixel , GLvoid * data)
 {

@@ -2,8 +2,6 @@
 
 uniform mat4 WVP;
 uniform float ConnectionWidth;
-uniform vec3 CameraPosition;
-uniform float FogStart, FogEnd;
 
 flat in uint Vert_ID[2];
 flat in uint Vert_Value[2];
@@ -11,7 +9,6 @@ flat in uint Vert_Value[2];
 flat out uint ID;
 flat out uint Value;
 out vec3 Normal;
-out float Depth;
 
 layout (lines) in;
 layout (triangle_strip,max_vertices =10) out;
@@ -60,11 +57,9 @@ void main( void )
     Normal = (lineUp- lineRight)/2;
 
     gl_Position = WVP *vec4(inUpPos,1.0f);
-    Depth = min((distance(CameraPosition,inUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     gl_Position = WVP *vec4(inDownLeftPos,1.0f);
-    Depth = min((distance(CameraPosition,inDownLeftPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     // setup out values for neuron-out located points
@@ -72,12 +67,10 @@ void main( void )
 
     gl_Position = WVP *vec4(outUpPos,1.0f);
 
-    Depth = min((distance(CameraPosition,outUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     gl_Position = WVP *vec4(outDownLeftPos,1.0f);
 
-    Depth = min((distance(CameraPosition,outDownLeftPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
 
@@ -86,18 +79,15 @@ void main( void )
     Normal = - lineUp;
 
     gl_Position = WVP *vec4(outDownRightPos,1.0f);
-    Depth = min((distance(CameraPosition,outDownRightPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     // setup out values for neuron-out located points
     Value = Vert_Value[0];
 
     gl_Position = WVP *vec4(inDownLeftPos,1.0f);
-    Depth = min((distance(CameraPosition,inDownLeftPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     gl_Position = WVP *vec4(inDownRightPos,1.0f);
-    Depth = min((distance(CameraPosition,inDownRightPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     //////////////////////////// Right-Up Face ////////////////////////////
@@ -105,18 +95,15 @@ void main( void )
     Normal = (lineUp + lineRight)/2;
 
     gl_Position = WVP *vec4(inUpPos,1.0f);
-    Depth = min((distance(CameraPosition,inUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     // setup out values for neuron-in located points
     Value = Vert_Value[1];
 
     gl_Position = WVP *vec4(outDownRightPos,1.0f);
-    Depth = min((distance(CameraPosition,outDownRightPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     gl_Position = WVP *vec4(outUpPos,1.0f);
-    Depth = min((distance(CameraPosition,outUpPos) - FogStart) / (FogEnd - FogStart),1.0f);
     EmitVertex();
 
     EndPrimitive();

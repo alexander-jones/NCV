@@ -1,9 +1,10 @@
 #version 400
 
+uniform mat4 Projection;
 uniform vec3 SilhouetteColor;
 uniform float ZNear, ZFar, ZStop;
-
-in float ZDepth;
+uniform float MaxAlpha;
+uniform float DepthExponent;
 out vec4 Color;
 
 float linearize(float depth)
@@ -14,6 +15,7 @@ float linearize(float depth)
 
 void main(void)
 {
-
-    Color = vec4(SilhouetteColor,1.0f);//min(1.0f-(linearize(gl_FragCoord.z)/ZStop),1.0f));
+    float cutoff = clamp((ZStop - ZNear) /(ZFar - ZNear),0.0f,1.0f);
+    float depth = clamp(pow((1.0f - linearize(gl_FragCoord.z)),DepthExponent),0.0f,1.0f);
+    Color = vec4(SilhouetteColor,  clamp((depth - cutoff )/cutoff,0.0f,1.0f) * MaxAlpha);
 }

@@ -7,11 +7,9 @@ uniform sampler1D RangeMap;
 uniform vec4 DeselectionColor;
 uniform int Deselected;
 uniform float MinimumValue, MaximumValue;
-uniform vec3 WorldSize, WorldCenter;
 
 flat in uint ID;
 in float Value;
-in float Depth;
 in vec3 Normal;
 
 out vec4 FragData[2];
@@ -26,9 +24,6 @@ void main( void )
         FragData[DIFFUSE] = vec4(color/2,0.5f);
     else
         FragData[DIFFUSE] = vec4(color,1.0f);
-    vec4 FogColor = vec4(0,0,0,1.0f);
-    float intensity = pow(Depth*e,1.0f)/pow(e,1.0f);
-    //FragData[DIFFUSE].rgb = intensity * FogColor.rgb + (1.0f- intensity) * FragData[DIFFUSE].rgb;
 
     FragData[NORMAL] = vec4(Normal,1.0f);
 

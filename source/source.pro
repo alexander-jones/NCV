@@ -50,7 +50,8 @@ SOURCES += \
     qcustomplot.cpp \
     orientationbutton.cpp \
     distributewidget.cpp \
-    colorstatewidget.cpp
+    colorstatewidget.cpp \
+    qglxpainter.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -80,7 +81,8 @@ HEADERS  += \
     orientationbutton.h \
     distributewidget.h \
     ncvattribute.h \
-    colorstatewidget.h
+    colorstatewidget.h \
+    qglxpainter.h
 
 FORMS    += \
     mainwindow.ui
@@ -110,7 +112,9 @@ OTHER_FILES += \
     shaders/connectionSilhouette.vert \
     shaders/connectionSilhouette.geom \
     shaders/neuronSilhouette.vert \
-    shaders/neuronSilhouette.geom
+    shaders/neuronSilhouette.geom \
+    shaders/blend.vert \
+    shaders/blend.frag
 
 RESOURCES += \
     core-profile.qrc

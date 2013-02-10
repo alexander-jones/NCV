@@ -4,7 +4,7 @@
 #include <QRect>
 #include "time.h"
 #include <QMessageBox>
-
+#include <QTextDocument>
 #include "qcustomplot.h"
 
 
@@ -43,6 +43,28 @@ NCV::NCV(  const QGLFormat& format, QWidget* parent )
 
 }
 
+void NCV::m_drawLegend()
+{
+    const int Margin = 11;
+    const int Padding = 6;
+
+    QTextDocument textDocument;
+    textDocument.setDefaultStyleSheet("* { color: #FFEFEF }");
+    textDocument.setHtml("<h4 align=\"center\">Vowel Categories</h4>\n\
+                         <p align=\"center\"><table width=\"100%\">");
+    textDocument.setTextWidth(textDocument.size().width());
+
+    QRect rect(QPoint(0, 0), textDocument.size().toSize()
+                             + QSize(2 * Padding, 2 * Padding));
+    m_painter.translate(m_width - rect.width() - Margin,
+                       m_height - rect.height() - Margin);
+    m_painter.setPen(QColor(255, 239, 239));
+    m_painter.setBrush(QColor(255, 0, 0, 31));
+    m_painter.drawRect(rect);
+
+    m_painter.translate(Padding, Padding);
+    textDocument.drawContents(&m_painter);
+}
 
 NCV::~NCV()
 {
@@ -170,7 +192,9 @@ void NCV::initializeGL()
     glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glLineWidth(4);
+    glEnable(GL_DITHER);
+    glDisable(GL_MULTISAMPLE);
+    glLineWidth(1);
     glDepthFunc(GL_LEQUAL);
 
     m_camera = new QGLXCamera();
@@ -315,10 +339,10 @@ void NCV::timerEvent(QTimerEvent * e)
         return;
     e->accept();
     // perform refresh
-    paintGL();
+    update();
     GLuint err = glGetError();
     if (err != 0)
-        qDebug() <<err;
+        qDebug() <<QGLXCore::getErrorString(err);
 
 }
 
@@ -540,9 +564,6 @@ void NCV::m_bindConnections(QGLShaderProgram * program)
     {
         program->bind();
 
-
-        m_connections.bind(program);
-
         int textureSlot = 0;
 
         glActiveTexture(GL_TEXTURE0 + textureSlot);
@@ -554,7 +575,8 @@ void NCV::m_bindConnections(QGLShaderProgram * program)
 
         program->setUniformValue("WVP",m_camera->projection() * m_camera->view());
         program->setUniformValue("ConnectionWidth",(float)(m_worldSize.length()/m_neurons.numObjects()) * 5.0f );
-        program->setUniformValue("CameraPosition",m_camera->position());
+
+        m_connections.bind(program);
 
         if (program == m_flagConnectionProgram ||program == m_rangeConnectionProgram )
         {
@@ -564,15 +586,7 @@ void NCV::m_bindConnections(QGLShaderProgram * program)
 
             glActiveTexture(GL_TEXTURE0 + textureSlot);
             m_bindAttribute(m_connectionAttribToRender);
-
-
-            program->setUniformValue("ScreenSize",QVector2D(m_width,m_height));
-
             program->setUniformValue("ConnectionIDStart",m_neurons.numObjects());
-            program->setUniformValue("FogEnd",m_camera->farPlane());
-            program->setUniformValue("FogStart",m_camera->nearPlane());
-            program->setUniformValue("WorldCenter",m_worldCenter);
-            program->setUniformValue("WorldSize",m_worldSize);
             program->setUniformValue("DeselectionColor",QVector4D(1,1,1,0.05));
 
             int attribLoc = program->uniformLocation("Inst_Attribute");
@@ -596,12 +610,16 @@ void NCV::m_bindConnections(QGLShaderProgram * program)
         }
         else if (program == m_silhouetteConnectionProgram)
         {
-
             program->setUniformValue("SilhouetteColor",QVector3D(0,0,0));
+            program->setUniformValue("CameraPosition",m_camera->position());
             program->setUniformValue("ZFar",m_camera->farPlane());
             program->setUniformValue("ZNear",m_camera->nearPlane());
-            program->setUniformValue("ZStop",m_camera->farPlane()/10);
+            program->setUniformValue("ZStop",m_camera->farPlane()/5);
+            program->setUniformValue("DepthExponent",2.25f);
+            program->setUniformValue("MaxAlpha",0.5f);
+
         }
+
     }
 }
 
@@ -637,7 +655,6 @@ void NCV::m_bindNeurons(QGLShaderProgram * program)
 
         program->setUniformValue("WVP",m_camera->projection() * m_camera->view());
         program->setUniformValue("Scale",m_neuronScale);
-        program->setUniformValue("CameraPosition",m_camera->position());
 
 
         // bind geometric data associated with neurons
@@ -651,14 +668,7 @@ void NCV::m_bindNeurons(QGLShaderProgram * program)
             // bind current neuron attribute to next texture slot
             glActiveTexture(GL_TEXTURE0 + textureSlot);
             m_bindAttribute(m_neuronAttribToRender);
-
-            program->setUniformValue("ScreenSize",QVector2D(m_width,m_height));
-            program->setUniformValue("FogEnd",m_camera->farPlane());
-            program->setUniformValue("FogStart",m_camera->nearPlane());
             program->setUniformValue("DeselectionColor",QVector4D(1,1,1,0.05));
-            program->setUniformValue("WorldCenter",m_worldCenter);
-            program->setUniformValue("WorldSize",m_worldSize);
-
             // bind attribute to current shader program
             int attribLoc = program->uniformLocation("Inst_Attribute");
             program->setUniformValue(attribLoc, textureSlot);
@@ -682,10 +692,14 @@ void NCV::m_bindNeurons(QGLShaderProgram * program)
         else if (program == m_silhouetteNeuronProgram)
         {
 
+            program->setUniformValue("CameraPosition",m_camera->position());
             program->setUniformValue("SilhouetteColor",QVector3D(0,0,0));
             program->setUniformValue("ZFar",m_camera->farPlane());
             program->setUniformValue("ZNear",m_camera->nearPlane());
             program->setUniformValue("ZStop",m_camera->farPlane()/5);
+            program->setUniformValue("DepthExponent",2.25f);
+            program->setUniformValue("MaxAlpha",0.5f);
+
         }
 
     }
@@ -706,7 +720,6 @@ void NCV::m_performRegularRender()
 
     // bind fbo and related targets
     m_frameBufferObject.bind();
-    glEnable(GL_MULTISAMPLE);
     m_frameBufferObject.enableColorAttachments(3);
     m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
     m_maps["normal"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
@@ -778,13 +791,14 @@ void NCV::m_performRegularRender()
     m_maps["id"].release();
     m_maps["depth"].release();
     m_frameBufferObject.enableColorAttachments(0);
-    glDisable(GL_MULTISAMPLE);
     m_frameBufferObject.release();
+
+
 }
+
 
 void NCV::m_performSelectionRender()
 {
-    m_performRegularRender();
 
     // bind frame buffer and all first pass targets
     m_frameBufferObject.bind();
@@ -948,27 +962,29 @@ void NCV::m_performSelectionRender()
         m_maps["diffuse"].release();
 
 
-        m_maps["normal"].release();
-        m_maps["id"].release();
-        m_maps["depth"].release();
-        m_translationBuffer.buffer->release();
-        m_neuronAttribToRender->buffer->release();
-        m_connectionAttribToRender->buffer->release();
-
-        m_frameBufferObject.release();
     }
+
+    m_maps["normal"].release();
+    m_maps["id"].release();
+    m_maps["depth"].release();
+    m_translationBuffer.buffer->release();
+    m_neuronAttribToRender->buffer->release();
+    m_connectionAttribToRender->buffer->release();
+
+    m_frameBufferObject.enableColorAttachments(0);
+    m_frameBufferObject.release();
 
 
 
 
 }
 
-void NCV::paintGL()
+void NCV::paintEvent(QPaintEvent *e)
 {
 
     if (!isValid())
         return;
-
+    Q_UNUSED(e);
 
     // check to see if any changes were requested externally
 
@@ -1004,37 +1020,32 @@ void NCV::paintGL()
 
     m_frameBufferObject.blitTexture(m_maps["diffuse"],QGLXTexture::Color0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
 
-    glDisable(GL_MULTISAMPLE);
-    glDisable(GL_DITHER);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_POLYGON_SMOOTH);
-    glFlush();
-    glFinish();
-    m_painter.begin(this);
-    QPen pen = m_painter.pen();
-    pen.setColor(QColor(255,255,255));
-    pen.setStyle(Qt::DotLine);
-    m_painter.setPen(pen);
-    QBrush brush = m_painter.brush();
-    brush.setColor(QColor(125,125,125));
-    brush.setStyle(Qt::Dense4Pattern);
-    m_painter.setBrush(brush);
-    if (m_leftMouseDown)
-        m_painter.drawRect(m_selectionRect);
 
-    m_painter.end();
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_DITHER);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_POLYGON_SMOOTH);
-    glFlush();
-    glFinish();
+
+    if (m_leftMouseDown)
+    {
+        glDisable(GL_DEPTH_TEST);
+        m_painter.begin(this);
+        QPen pen = m_painter.pen();
+        pen.setColor(QColor(255,255,255));
+        pen.setStyle(Qt::DotLine);
+        m_painter.setPen(pen);
+        QBrush brush = m_painter.brush();
+        brush.setColor(QColor(125,125,125));
+        brush.setStyle(Qt::Dense4Pattern);
+        m_painter.setBrush(brush);
+
+        m_painter.drawRect(m_selectionRect);
+        //m_drawLegend();
+
+        m_painter.end();
+        glEnable(GL_DEPTH_TEST);
+
+    }
     this->swapBuffers();
     frameRendered();
 
 }
-
 
 
 
@@ -1185,6 +1196,7 @@ void  NCV::mouseReleaseEvent(QMouseEvent* e)
 
 
         m_leftMouseDown = false;
+
     }
     else if (e->button() == Qt::RightButton)
     {
