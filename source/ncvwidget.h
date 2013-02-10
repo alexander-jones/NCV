@@ -7,7 +7,6 @@
 #include "orientationbutton.h"
 #include "managementSidebar.h"
 #include "ncv.h"
-#include "randomdatasource.h"
 
 #ifdef WIN32
     #include <Windows.h>
@@ -23,7 +22,6 @@ public:
     ~NCVWidget();
     
 signals:
-
     
 private slots:
     void m_collapseButtonPressed();
