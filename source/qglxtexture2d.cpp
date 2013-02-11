@@ -81,11 +81,13 @@ QRect QGLXTexture2D::rect()
 
 void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat,int samplesPerPixel , GLvoid * data)
 {
+
     m_width = width;
     m_height = height;
     m_internalFormat = internalFormat;
     m_pixelType = internalFormatToPixelType(m_internalFormat);
     m_pixelFormat = internalFormatToPixelFormat(m_internalFormat);
+
 
     m_samples = samplesPerPixel;
     if (m_samples == 1)

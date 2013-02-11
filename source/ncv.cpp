@@ -50,8 +50,7 @@ void NCV::m_drawLegend()
 
     QTextDocument textDocument;
     textDocument.setDefaultStyleSheet("* { color: #FFEFEF }");
-    textDocument.setHtml("<h4 align=\"center\">Vowel Categories</h4>\n\
-                         <p align=\"center\"><table width=\"100%\">");
+    textDocument.setHtml("<h4 align=\"center\">Vowel Categories</h4>");
     textDocument.setTextWidth(textDocument.size().width());
 
     QRect rect(QPoint(0, 0), textDocument.size().toSize()
@@ -1021,17 +1020,16 @@ void NCV::paintEvent(QPaintEvent *e)
     m_frameBufferObject.blitTexture(m_maps["diffuse"],QGLXTexture::Color0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
 
 
-
     if (m_leftMouseDown)
     {
         glDisable(GL_DEPTH_TEST);
         m_painter.begin(this);
         QPen pen = m_painter.pen();
-        pen.setColor(QColor(255,255,255));
+        pen.setColor(QColor(0,255,0));
         pen.setStyle(Qt::DotLine);
         m_painter.setPen(pen);
         QBrush brush = m_painter.brush();
-        brush.setColor(QColor(125,125,125));
+        brush.setColor(QColor(125,0,125));
         brush.setStyle(Qt::Dense4Pattern);
         m_painter.setBrush(brush);
 

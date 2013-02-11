@@ -10,14 +10,17 @@ QGLXPainter::QGLXPainter(QPaintDevice *)
 
 void QGLXPainter::begin(QPaintDevice *device)
 {
-    //m_fbo.create();
     if (!m_texture.isCreated())
         m_texture.create();
 
-    m_image = QImage(device->width(),device->height(),QImage::Format_ARGB32);
+    if (device->width() != m_image.width() || device->height() != m_image.height())
+        m_image = QImage(device->width(),device->height(),QImage::Format_ARGB32);
+    else
+        m_image.fill(QColor(0,0,0,0));
+
     QPainter::begin(&m_image);
     QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
-    QVector2D screenCoords[4] = {QVector2D(0,0),QVector2D(1,0),QVector2D(1,1),QVector2D(0,1)};
+    QVector2D screenCoords[4] = {QVector2D(0,1),QVector2D(1,1),QVector2D(1,0),QVector2D(0,0)};
 
     if (!m_screenVertices.isCreated())
     {
@@ -44,31 +47,17 @@ void QGLXPainter::begin(QPaintDevice *device)
         m_program.link();
     }
 
-
 }
 void QGLXPainter::end()
 {
     QPainter::end();
-    QVector4D * pixels = new QVector4D[device()->height() * device()->width()];
-    for (int i = 0; i <device()->height(); i ++ )
-    {
 
-        QRgb * row =(QRgb *)m_image.scanLine(device()->height() - 1-i);
-        for (int j = 0; j <device()->width(); j ++ )
-        {
-            QColor col = QColor::fromRgb(row[j]);
-            float alpha = qAlpha(row[j]);
-            pixels[(i * device()->width()) +j] = QVector4D(col.redF(),col.greenF(),col.blueF(),alpha);
-        }
-    }
     m_texture.bind();
-    m_texture.allocate(device()->width(),device()->height(),GL_RGBA8,1,pixels);
+    m_texture.allocate(device()->width(),device()->height(),GL_R32UI,1,m_image.bits());
     m_texture.setMinFilter(QGLXTexture2D::Linear);
     m_texture.setMagFilter(QGLXTexture2D::Linear);
     m_texture.setWrapFunction(QGLXTexture2D::Clamp,QGLXTexture2D::Clamp);
     m_texture.release();
-
-    delete[] pixels;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -96,6 +85,4 @@ void QGLXPainter::end()
     m_program.release();
     glDisable(GL_BLEND);
 
-
-    //m_fbo.blitTexture(m_texture,QGLXTexture::Color0,m_texture.rect(),m_texture.rect());
 }

@@ -71,9 +71,6 @@ GLenum QGLXTexture::internalFormatToPixelFormat(GLenum internalFormat)
         case GL_RGBA8:
         case GL_RGBA12:
         case GL_RGBA16:
-        case GL_RGBA8UI:
-        case GL_RGBA16UI:
-        case GL_RGBA32UI:
         case GL_RGBA8I:
         case GL_RGBA16I:
         case GL_RGBA32I:
@@ -81,6 +78,12 @@ GLenum QGLXTexture::internalFormatToPixelFormat(GLenum internalFormat)
         case GL_RGBA32F:
             pixelFormat = GL_RGBA;
             break;
+
+        case GL_RGBA8UI:
+        case GL_RGBA16UI:
+        case GL_RGBA32UI:
+            pixelFormat = GL_RGBA_INTEGER;
+        break;
 
         case GL_DEPTH_COMPONENT16:
         case GL_DEPTH_COMPONENT24:
@@ -109,13 +112,17 @@ GLenum QGLXTexture::internalFormatToPixelType(GLenum internalFormat)
 
     switch(internalFormat)
     {
+
+    case GL_RGBA8UI:
+        pixelType = GL_UNSIGNED_INT_8_8_8_8;
+        break;
+
     case GL_RGB8UI:
     case GL_RGB16UI:
     case GL_RGB32UI:
     case GL_R8UI:
     case GL_R16UI:
     case GL_R32UI:
-    case GL_RGBA8UI:
     case GL_RGBA16UI:
     case GL_RGBA32UI:
         pixelType = GL_UNSIGNED_INT;

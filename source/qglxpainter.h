@@ -17,7 +17,6 @@ public:
 private:
     QGLXTexture2D m_texture;
     QImage m_image;
-    //QGLXFrameBufferObject m_fbo;
     QGLShaderProgram m_program;
     QGLXBuffer m_screenVertices,m_screenCoords;
 };
