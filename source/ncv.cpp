@@ -33,9 +33,9 @@ NCV::NCV(  const QGLFormat& format, QWidget* parent )
     m_renderNeurons= true;
     m_renderConnections= true;
     m_initialized = false;
-    m_neuronIDs = nullptr;
-    m_connectionIDs = nullptr;
-    m_connectionNeuronIDs = nullptr;
+    m_neuronIDs = NULL;
+    m_connectionIDs = NULL;
+    m_connectionNeuronIDs = NULL;
     m_connectionAttribToRender = NULL;
     m_neuronAttribToRender = NULL;
     srand(time(NULL));
@@ -437,7 +437,7 @@ void NCV::m_createNeurons()
     //m_neurons.setInstanceAttributeArray("Custom_ID",m_neuronIDs,sizeof(GLuint),GL_FLOAT,1);
 
     m_neuronsToCreate = 0;
-    m_neuronIDs = nullptr;
+    m_neuronIDs = NULL;
 
 
 }
@@ -465,8 +465,8 @@ void NCV::m_createConnections()
     m_connections.setVertexAttributeArray("Neuron_ID",m_connectionNeuronIDs,sizeof(GLuint),GL_FLOAT);
 
     m_connectionsToCreate = 0;
-    m_connectionIDs = nullptr;
-    m_connectionNeuronIDs = nullptr;
+    m_connectionIDs = NULL;
+    m_connectionNeuronIDs = NULL;
 }
 
 void NCV::m_bindAttribute(NetworkAttribute  * attribute)

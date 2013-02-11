@@ -135,8 +135,8 @@ NCVWidget::NCVWidget(QWidget *parent) :
     /* ###################################################################
     Neural Network Creation Example
     ###################################################################*/
-    m_visualization->createNeurons(numNeurons,neuronPositions,nullptr);
-    m_visualization->createConnections(numConnections,neuronIN,neuronOUT,nullptr);
+    m_visualization->createNeurons(numNeurons,neuronPositions,NULL);
+    m_visualization->createConnections(numConnections,neuronIN,neuronOUT,NULL);
 
     m_visualization->createNeuronFlagAttribute("firing",QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
     m_visualization->createNeuronRangeAttribute("voltage",0,100.2f);
