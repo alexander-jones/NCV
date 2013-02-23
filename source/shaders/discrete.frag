@@ -1,15 +1,14 @@
-#version 400
+#version 330
+
 const int DIFFUSE = 0;
 const int NORMAL = 1;
+uniform samplerBuffer ColorMap;
 
 const float e = 2.71828;
-uniform sampler1D RangeMap;
-uniform vec4 DeselectionColor;
 uniform int Deselected;
-uniform float MinimumValue, MaximumValue;
 
 flat in uint ID;
-in float Value;
+flat in uint Value;
 in vec3 Normal;
 
 out vec4 FragData[2];
@@ -17,9 +16,8 @@ flat out uint PickData;
 
 void main( void )
 {
-    float samplePoint = (Value - MinimumValue)/(MaximumValue - MinimumValue);
+    vec3 color = texelFetch(ColorMap,int(Value)).rgb;
 
-    vec3 color = texture(RangeMap,samplePoint).rgb;
     if (Deselected > 0 )
         FragData[DIFFUSE] = vec4(color/2,0.5f);
     else

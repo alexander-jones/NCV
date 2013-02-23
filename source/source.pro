@@ -14,7 +14,7 @@ CONFIG+= wwwidgets
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lGLEW -lGLU #/home/alex/Dropbox/brain-viz/source/lib/libslugSim.so /home/alex/Dropbox/brain-viz/source/lib/libslugSpec.so /home/alex/Dropbox/brain-viz/source/lib/libslugUtil.so
+    LIBS +=  -lGLEW -lGLU   #/home/alex/Dropbox/brain-viz/source/lib/libslugUtil.so /home/alex/Dropbox/brain-viz/source/lib/libslugSpec.so /home/alex/Dropbox/brain-viz/source/lib/libslugSim.so
 }
 
 #windows specific settings
@@ -31,58 +31,57 @@ SOURCES += \
     qglxboundingbox.cpp \
     mainwindow.cpp \
     main.cpp \
-    qglxsystem.cpp \
     qglxbuffer.cpp \
-    ncv.cpp \
     ncvwidget.cpp \
     managementSidebar.cpp \
-    camerasidebar.cpp \
     spinbox3d.cpp \
     qglxtexture1d.cpp \
     qglxtexture3d.cpp \
     qglxtexture2d.cpp \
     qglxtexture.cpp \
     qglxframebufferobject.cpp \
-    colorrangewidget.cpp \
-    colorbitwidget.cpp \
     attributewidget.cpp \
     combowidget.cpp \
     qcustomplot.cpp \
     orientationbutton.cpp \
     distributewidget.cpp \
-    colorstatewidget.cpp \
-    qglxpainter.cpp
+    qglxpainter.cpp \
+    discretecolorselector.cpp \
+    continuouscolorselector.cpp \
+    ncvneuronset.cpp \
+    ncvconnectionset.cpp \
+    ncvcontinuousattribute.cpp \
+    ncvdiscreteattribute.cpp \
+    ncvcanvas.cpp
 
 HEADERS  += \
     qglxcore.h \
-    qglxoctree.h \
     qglxcamera.h \
     qglxboundingbox.h \
     mainwindow.h \
-    qglxsystem.h \
     qglxbuffer.h \
-    ncv.h \
     ncvwidget.h \
     qglxtexture.h \
-    managementcombowidget.h \
-    cameracombowidget.h \
     spinbox3d.h \
     qglxtexture1d.h \
     qglxtexture3d.h \
     qglxtexture2d.h \
     qglxframebufferobject.h \
-    colorrangewidget.h \
     attributewidget.h \
-    colorbitwidget.h \
     combowidget.h \
     managementSidebar.h \
-    camerasidebar.h \
     qcustomplot.h \
     orientationbutton.h \
     distributewidget.h \
-    ncvattribute.h \
-    colorstatewidget.h \
-    qglxpainter.h
+    qglxpainter.h \
+    continuouscolorselector.h \
+    discretecolorselector.h \
+    ncvcore.h \
+    ncvneuronset.h \
+    ncvconnectionset.h \
+    ncvcontinuousattribute.h \
+    ncvdiscreteattribute.h \
+    ncvcanvas.h
 
 FORMS    += \
     mainwindow.ui
@@ -95,26 +94,29 @@ OTHER_FILES += \
     shaders/neuron.vert \
     shaders/neuron.frag \
     shaders/synapse.geom \
-    shaders/neuronFloat.vert \
-    shaders/neuronBit.vert \
-    shaders/bit.frag \
-    shaders/float.frag \
-    shaders/connectionBit.geom \
-    shaders/connectionFloat.geom \
     assets/sphere.nff \
     assets/startTriangle.png \
     assets/endTriangle.png \
     shaders/neuronSelection.vert \
     shaders/neuronSelection.geom \
-    shaders/connectionBit.vert \
-    shaders/connectionFloat.vert \
     shaders/silhouette.frag \
     shaders/connectionSilhouette.vert \
     shaders/connectionSilhouette.geom \
+    shaders/neuronSilhouetteTest.vert \
+    shaders/neuronSilhouetteTest.geom \
     shaders/neuronSilhouette.vert \
-    shaders/neuronSilhouette.geom \
-    shaders/blend.vert \
-    shaders/blend.frag
+    shaders/connectionDiscrete.geom \
+    shaders/connectionDiscrete.vert \
+    shaders/discrete.frag \
+    shaders/neuronDiscrete.vert \
+    shaders/neuronDiscreteTest.vert \
+    shaders/neuronDiscreteTest.geom \
+    shaders/connectionContinuous.geom \
+    shaders/connectionContinuous.vert \
+    shaders/continuous.frag \
+    shaders/neuronContinuous.vert \
+    shaders/neuronContinuousTest.geom \
+    shaders/neuronContinuousTest.vert
 
 RESOURCES += \
     core-profile.qrc

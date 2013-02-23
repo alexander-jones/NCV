@@ -1,4 +1,4 @@
-#version 400
+#version 330
 
 uniform mat4 WVP, Scale;
 uniform samplerBuffer Inst_Translation;

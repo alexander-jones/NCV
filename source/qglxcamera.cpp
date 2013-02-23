@@ -136,8 +136,25 @@ GLfloat QGLXCamera::rotationY()
 
 void QGLXCamera::rotate(GLfloat horizRot, GLfloat vertRot)
 {
-    m_horizontalAngle += horizRot;
+
+    if (m_verticalAngle >=  (PI / 2.0) && m_verticalAngle <=  PI +(PI / 2.0))
+        m_horizontalAngle -= horizRot;
+    else
+        m_horizontalAngle += horizRot;
     m_verticalAngle += vertRot;
+
+
+    if (m_horizontalAngle <= 0)
+        m_horizontalAngle = TWO_PI + m_horizontalAngle;
+
+    else if (m_horizontalAngle >= TWO_PI)
+        m_horizontalAngle = m_horizontalAngle - TWO_PI;
+
+    if (m_verticalAngle <= 0)
+        m_verticalAngle = TWO_PI + m_verticalAngle;
+
+    else if (m_verticalAngle >= TWO_PI)
+        m_verticalAngle = m_verticalAngle - TWO_PI;
 
     m_direction = QVector3D(
         cos(m_verticalAngle) * sin(m_horizontalAngle),

@@ -1,14 +1,13 @@
-#version 400
+#version 330
 
-uniform mat4 WVP;
-uniform float ConnectionWidth;
+uniform mat4 WVP,Scale;
 
 flat in uint Vert_ID[2];
-flat in uint Vert_Value[2];
+in float Vert_Value[2];
 
 flat out uint ID;
-flat out uint Value;
-out vec3 Normal;
+out float Value;
+out vec3  Normal;
 
 layout (lines) in;
 layout (triangle_strip,max_vertices =10) out;
@@ -35,8 +34,8 @@ void main( void )
 
     // establish offsets for the right and up faces of the volumetric line
     // left face == - right face and down face == - up face
-    vec3 lineRightOffset = lineRight * (ConnectionWidth / 2);
-    vec3 lineUpOffset = lineUp * (ConnectionWidth / 2);
+    vec3 lineRightOffset = (Scale * vec4(lineRight,1.0f)).xyz;
+    vec3 lineUpOffset = (Scale * vec4(lineUp,1.0f)).xyz;
 
     // establish line vertices
     vec3 inDownLeftPos =  inPosition -lineRightOffset-lineUpOffset;
@@ -63,14 +62,12 @@ void main( void )
     EmitVertex();
 
     // setup out values for neuron-out located points
-    Value = Vert_Value[1];
+    Value = Vert_Value[0];
 
     gl_Position = WVP *vec4(outUpPos,1.0f);
-
     EmitVertex();
 
     gl_Position = WVP *vec4(outDownLeftPos,1.0f);
-
     EmitVertex();
 
 
@@ -98,7 +95,7 @@ void main( void )
     EmitVertex();
 
     // setup out values for neuron-in located points
-    Value = Vert_Value[1];
+    Value = Vert_Value[0];
 
     gl_Position = WVP *vec4(outDownRightPos,1.0f);
     EmitVertex();
@@ -108,4 +105,5 @@ void main( void )
 
     EndPrimitive();
 }
+
 

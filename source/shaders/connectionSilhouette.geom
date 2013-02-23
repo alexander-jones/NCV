@@ -1,8 +1,7 @@
-#version 400
+#version 330
 
-uniform mat4 WVP;
-uniform float ConnectionWidth;
-uniform vec3 CameraPosition;
+uniform mat4 WVP,Scale;
+uniform vec3 CameraDirection;
 
 layout (lines) in;
 layout (line_strip,max_vertices =6) out;
@@ -38,8 +37,8 @@ void main( void )
 
     // establish offsets for the right and up faces of the volumetric line
     // left face == - right face and down face == - up face
-    vec3 lineRightOffset = lineRight * (ConnectionWidth / 2);
-    vec3 lineUpOffset = lineUp * (ConnectionWidth / 2);
+    vec3 lineRightOffset = (Scale * vec4(lineRight,1.0f)).xyz;
+    vec3 lineUpOffset = (Scale * vec4(lineUp,1.0f)).xyz;
 
     // establish line vertices
     vec3 inDownLeftPos =  inPosition -lineRightOffset-lineUpOffset;
@@ -54,13 +53,9 @@ void main( void )
     vec3 rightFaceNormal =  (lineUp+ lineRight)/2;
     vec3 downFaceNormal =  -lineUp;
 
-    vec3 leftFaceCentroid = (inDownLeftPos + inUpPos +outDownLeftPos + outUpPos)/4;
-    vec3 rightFaceCentroid = (outUpPos + inUpPos +inDownRightPos + outDownRightPos)/4;
-    vec3 downFaceCentroid = (inDownLeftPos + outDownLeftPos +inDownRightPos + outDownRightPos)/4;
-
-    bool leftFacingOut = dot(leftFaceNormal, CameraPosition - leftFaceCentroid) < 0;
-    bool rightFacingOut = dot(rightFaceNormal, CameraPosition - rightFaceCentroid) < 0;
-    bool downFacingOut = dot(downFaceNormal, CameraPosition - downFaceCentroid) < 0;
+    bool leftFacingOut = dot(leftFaceNormal, CameraDirection) < 0;
+    bool rightFacingOut = dot(rightFaceNormal, CameraDirection) < 0;
+    bool downFacingOut = dot(downFaceNormal, CameraDirection) < 0;
 
     if (leftFacingOut != rightFacingOut)
         emitLine(inUpPos,outUpPos);

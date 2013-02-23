@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    this->setWindowTitle("NCV");
     m_menuBar = new QMenuBar();
     m_fileMenu = new QMenu(tr("File"));
     m_fileMenu->addAction("Quit");

@@ -79,12 +79,10 @@ bool QGLXBuffer::bind()
 {
     if (m_isQGLX)
     {
-        glGetError();
         glBindBuffer(m_type, m_bufferID);
         if (m_type == TextureBuffer)
             glBindTexture(m_type, m_textureID);
-        GLenum after = glGetError();
-        return after == 0;
+        return true;
     }
     else
         return QGLBuffer::bind();

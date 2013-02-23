@@ -1,5 +1,5 @@
-#ifndef COLORBITWIDGET_H
-#define COLORBITWIDGET_H
+#ifndef DISCRETECOLORSELECTOR_H
+#define DISCRETECOLORSELECTOR_H
 
 #include <QWidget>
 #include <QGridLayout>
@@ -10,6 +10,7 @@
 #include "combowidget.h"
 #include "qcustomplot.h"
 #include "orientationbutton.h"
+#include <QScrollArea>
 
 class ColorButton : public OrientationButton
     {
@@ -42,32 +43,35 @@ private:
 
 };
 
-class ColorBitWidget : public QWidget
+class DiscreteColorSelector : public QScrollArea
 {
     Q_OBJECT
 public:
-    explicit ColorBitWidget(QWidget *parent = 0);
-    QColor getOnColor();
-    QColor getOffColor();
+    explicit DiscreteColorSelector(QWidget *parent = 0);
+    QColor color(QString state);
+    QMap<QString,QColor> states();
     
 signals:
     void changed();
-    void colorsChanged(QColor offColor, QColor onColor);
+    void stateChanged(QString name, QColor color);
 
 public slots:
-    void setColors(QColor offColor, QColor onColor);
-    void setOffColor(QColor color);
-    void setOnColor(QColor color);
+    void addState(QString name, QColor color);
+    void setState(QString name, QColor color);
+    void removeState(QString name);
 
 private slots:
-    void m_onColorClicked();
-    void m_offColorClicked();
+    void m_buttonClicked(QString );
+
 
 private:
+    QSignalMapper * m_mapper;
+    QWidget * m_widget;
     QHBoxLayout * m_layout;
-    ColorButton * m_onColorButton, * m_offColorButton;
+    QMap<QString,QColor> m_states;
+    QMap<QString, ColorButton *>m_colorButtons;
 
 
 };
 
-#endif // COLORBITWIDGET_H
+#endif // DISCRETECOLORSELECTOR_H

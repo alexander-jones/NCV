@@ -1,9 +1,9 @@
-#include "colorrangewidget.h"
+#include "continuouscolorselector.h"
 #include <QApplication>
 #include <QtCore/qmath.h>
 
 const int NO_MARKER = -1;
-ColorRangeWidget::ColorRangeWidget(QWidget *parent) :
+ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
     QWidget(parent)
 {
     this->setToolTip("Interact with this widget to change the range attribute's coloration.\n Left click any space without a marker to add one.\n Left click over a marker and drag to move marker.\n Double click a marker to change it's color.\n Double click a marker's text to change it's value.\n Right click a marker or marker's text' to remove it.");
@@ -53,7 +53,7 @@ ColorRangeWidget::ColorRangeWidget(QWidget *parent) :
 
 
 }
-void ColorRangeWidget::m_markerTypeSelected(QString name)
+void ContinuousColorSelector::m_markerTypeSelected(QString name)
 {
     if (name == "Solid")
         m_currentMarkerType = Marker::Solid;
@@ -61,12 +61,12 @@ void ColorRangeWidget::m_markerTypeSelected(QString name)
         m_currentMarkerType = Marker::Divided;
 }
 
-QList<Marker> & ColorRangeWidget::getMarkers()
+QList<Marker> & ContinuousColorSelector::getMarkers()
 {
     return m_markers;
 }
 
-void ColorRangeWidget:: setMarkers( QList<Marker> & markers)
+void ContinuousColorSelector:: setMarkers( QList<Marker> & markers)
 {
 
     bool markersSame = true;
@@ -108,21 +108,21 @@ void ColorRangeWidget:: setMarkers( QList<Marker> & markers)
     }
 }
 
-void ColorRangeWidget::setLowThreshold(float threshold)
+void ContinuousColorSelector::setLowThreshold(float threshold)
 {
     m_lowThreshold = threshold;
 
 
 }
 
-void ColorRangeWidget::setHighThreshold(float threshold)
+void ContinuousColorSelector::setHighThreshold(float threshold)
 {
     m_highThreshold = threshold;
 
 }
 
 
-void ColorRangeWidget::setWidth(int width)
+void ContinuousColorSelector::setWidth(int width)
 {
     QImage * oldImage = m_rangeLayer;
 
@@ -161,13 +161,13 @@ void ColorRangeWidget::setWidth(int width)
     m_updateValueLayerContainer();
 
 }
-QSize ColorRangeWidget::getImageSize()
+QSize ContinuousColorSelector::getImageSize()
 {
     return m_rangeLayer->size();
 }
 
 
-void ColorRangeWidget::addMarker(float value, QColor color)
+void ContinuousColorSelector::addMarker(float value, QColor color)
 {
 
     int position =  ((value - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
@@ -189,7 +189,7 @@ void ColorRangeWidget::addMarker(float value, QColor color)
 
 }
 
-void ColorRangeWidget::addMarker(float value, QColor leftColor, QColor rightColor)
+void ContinuousColorSelector::addMarker(float value, QColor leftColor, QColor rightColor)
 {
 
     int position =  ((value - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
@@ -211,7 +211,7 @@ void ColorRangeWidget::addMarker(float value, QColor leftColor, QColor rightColo
 }
 
 
-bool ColorRangeWidget::m_fillRangeLayer(float start,float end, QColor startColor, QColor endColor)
+bool ContinuousColorSelector::m_fillRangeLayer(float start,float end, QColor startColor, QColor endColor)
 {
 
     int startPixel =  ((start - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
@@ -235,14 +235,17 @@ bool ColorRangeWidget::m_fillRangeLayer(float start,float end, QColor startColor
 }
 
 
-QRgb * ColorRangeWidget::getData()
+QVector<QRgb> ContinuousColorSelector::getData()
 {
+    QVector<QRgb> data;
     QRgb * pixels =  (QRgb *)m_rangeLayer->scanLine(0);
-    return pixels;
+    for (int i= 0; i < width(); i ++)
+        data.append(pixels[i]);
+    return data;
 }
 
 
-void  ColorRangeWidget::m_updateRange()
+void  ContinuousColorSelector::m_updateRange()
 {
 
     if (m_markers.size() > 0)
@@ -290,7 +293,7 @@ void  ColorRangeWidget::m_updateRange()
     m_markerRangeContainer->setPixmap(QPixmap::fromImage(*m_markerLayer));
 }
 
-void ColorRangeWidget::m_updateValueLayerContainer()
+void ContinuousColorSelector::m_updateValueLayerContainer()
 {
     m_valueLayer->fill(QColor(0,0,0,0));
     QPainter painter(m_valueLayer);
@@ -321,7 +324,7 @@ void ColorRangeWidget::m_updateValueLayerContainer()
     m_valueLayerContainer->setPixmap(QPixmap::fromImage(*m_valueLayer));
 }
 
-void ColorRangeWidget::m_handleExitRange()
+void ContinuousColorSelector::m_handleExitRange()
 {
 
     if ( m_hoveredMarker !=NO_MARKER)
@@ -332,14 +335,14 @@ void ColorRangeWidget::m_handleExitRange()
     }
 }
 
-QPoint ColorRangeWidget::m_clampPosToImage(QPoint pos)
+QPoint ContinuousColorSelector::m_clampPosToImage(QPoint pos)
 {
     int imagePosition = qMin(qMax(pos.x(),m_rangeLayerPadding/2),m_rangeLayer->width()+m_rangeLayerPadding/2)-m_rangeLayerPadding/2;
     return QPoint(imagePosition,pos.y());
 
 }
 
-void ColorRangeWidget::m_markerRangeDoubleClicked(Qt::MouseButton button,QPoint pos)
+void ContinuousColorSelector::m_markerRangeDoubleClicked(Qt::MouseButton button,QPoint pos)
 {
     if (button == Qt::LeftButton)
     {
@@ -379,7 +382,7 @@ void ColorRangeWidget::m_markerRangeDoubleClicked(Qt::MouseButton button,QPoint 
     }
 
 }
-void ColorRangeWidget::m_valueLayerDoubleClicked(Qt::MouseButton button,QPoint pos)
+void ContinuousColorSelector::m_valueLayerDoubleClicked(Qt::MouseButton button,QPoint pos)
 {
     if (button == Qt::LeftButton)
     {
@@ -431,7 +434,7 @@ void ColorRangeWidget::m_valueLayerDoubleClicked(Qt::MouseButton button,QPoint p
     }
 }
 
-bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
+bool ContinuousColorSelector::eventFilter( QObject* watched, QEvent* event )
 {
 
     QMouseEvent* me;
@@ -605,7 +608,7 @@ bool ColorRangeWidget::eventFilter( QObject* watched, QEvent* event )
 
     return false;
 }
-int ColorRangeWidget::m_overValue(QPoint pos)
+int ContinuousColorSelector::m_overValue(QPoint pos)
 {
     int position = pos.x();
     for (int i = 0; i < m_markers.size(); i ++)
@@ -623,7 +626,7 @@ int ColorRangeWidget::m_overValue(QPoint pos)
     return NO_MARKER;
 }
 
-int ColorRangeWidget::m_overMarker(QPoint pos)
+int ContinuousColorSelector::m_overMarker(QPoint pos)
 {
     for (int i = 0; i < m_markers.size(); i ++)
     {

@@ -1,5 +1,5 @@
-#ifndef COLORRANGEWIDGET_H
-#define COLORRANGEWIDGET_H
+#ifndef CONTINUOUSCOLORSELECTOR_H
+#define CONTINUOUSCOLORSELECTOR_H
 
 #include <QWidget>
 #include <QLabel>
@@ -168,16 +168,16 @@ private:
     Size m_size;
 };
 
-class ColorRangeWidget : public QWidget
+class ContinuousColorSelector : public QWidget
 {
     Q_OBJECT
 public:
-    explicit ColorRangeWidget(QWidget *parent = NULL);
+    explicit ContinuousColorSelector(QWidget *parent = NULL);
     void setLowThreshold(float threshold);
     void setHighThreshold(float threshold);
     void setWidth(int width);
     QSize getImageSize();
-    QRgb * getData();
+    QVector<QRgb> getData();
     QList<Marker> & getMarkers();
 
 signals:
@@ -223,4 +223,4 @@ private:
     int m_rangeLayerPadding;
 };
 
-#endif // COLORRANGEWIDGET_H
+#endif // CONTINUOUSCOLORSELECTOR_H

@@ -4,8 +4,10 @@
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include "combowidget.h"
-#include "colorrangewidget.h"
-#include "colorbitwidget.h"
+#include "continuouscolorselector.h"
+#include "discretecolorselector.h"
+#include "ncvcontinuousattribute.h"
+#include "ncvdiscreteattribute.h"
 #include <QwwTaskPanel>
 #include <QToolButton>
 #include "qcustomplot.h"
@@ -23,16 +25,10 @@ public:
 signals:
     void currentNeuronAttributeSet(QString name);
     void currentConnectionAttributeSet(QString name);
-    void neuronRangeColorationChanged(QString,QRgb * range,int width);
-    void neuronBitColorationChanged(QString,QColor offColor, QColor onColor);
-    void connectionRangeColorationChanged(QString,QRgb * range,int width);
-    void connectionBitColorationChanged(QString,QColor offColor, QColor onColor);
 
 public slots:
-    void addNeuronRangeAttribute(QString name, float minVal, float maxVal);
-    void addNeuronBitAttribute(QString name, QColor offColor, QColor onColor);
-    void addConnectionRangeAttribute(QString name, float minVal, float maxVal);
-    void addConnectionBitAttribute(QString name, QColor offColor, QColor onColor);
+    void addContinuousAttribute(QString name, NCVContinuousAttribute *attrib );
+    void addDiscreteAttribute(QString name,  NCVDiscreteAttribute * attrib);
 
 private slots:
     void m_neuronColorationChanged(const QString & name);
@@ -48,21 +44,24 @@ private:
     void m_updateNeuronLinkIcon();
     void m_updateConnectionLinkIcon();
     void m_checkAndFixInconsistantColorations(QString attributeName);
-    bool m_flagAttributeConsistent(QString attributeName);
-    bool m_rangeAttributeConsistent(QString attributeName);
+    bool m_discreteAttributeConsistent(QString attributeName);
+    bool m_continuousAttributeConsistent(QString attributeName);
     bool m_isSharedAttribute(QString name);
 
     QSignalMapper *m_connectionMapper, *m_neuronMapper;
     ComboWidget * m_neuronSidebar, * m_connectionSidebar;
-    QWidget * m_widget;
-    QVBoxLayout * m_layout;
     QToolButton * m_neuronLinkButton, *m_connectionLinkButton;
     QIcon  m_linkedIcon,m_unlinkedIcon;
     QMap<QString,bool > m_attributeLinked,m_attributeShared;
-    QMap<QString,ColorBitWidget* > m_neuronFlagWidgets;
-    QMap<QString,ColorRangeWidget* > m_neuronRangeWidgets;
-    QMap<QString,ColorBitWidget* > m_connectionFlagWidgets;
-    QMap<QString,ColorRangeWidget* > m_connectionRangeWidgets;
+    QMap<QString,NCVDiscreteAttribute* > m_neuronDiscreteAttributes;
+    QMap<QString,NCVContinuousAttribute* > m_neuronContinuousAttributes;
+    QMap<QString,NCVDiscreteAttribute* > m_connectionDiscreteAttributes;
+    QMap<QString,NCVContinuousAttribute* > m_connectionContinuousAttributes;
+
+    QMap<QString,DiscreteColorSelector* > m_neuronDiscreteWidgets;
+    QMap<QString,ContinuousColorSelector* > m_neuronContinuousWidgets;
+    QMap<QString,DiscreteColorSelector* > m_connectionDiscreteWidgets;
+    QMap<QString,ContinuousColorSelector* > m_connectionContinuousWidgets;
 };
 
 /* Code for constructing real-time plot.
@@ -98,9 +97,9 @@ private:
   customPlot->xAxis->setTickStep(2);
   customPlot->setupFullAxesBox();
 
-  // make left and bottom axes transfer their ranges to right and top axes:
-  connect(customPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->xAxis2, SLOT(setRange(QCPRange)));
-  connect(customPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->yAxis2, SLOT(setRange(QCPRange)));
+  // make left and bottom axes transfer their Continuouss to right and top axes:
+  connect(customPlot->xAxis, SIGNAL(ContinuousChanged(QCPContinuous)), customPlot->xAxis2, SLOT(setContinuous(QCPContinuous)));
+  connect(customPlot->yAxis, SIGNAL(ContinuousChanged(QCPContinuous)), customPlot->yAxis2, SLOT(setContinuous(QCPContinuous)));
 
   // setup a timer that repeatedly calls MainWindow::realtimeDataSlot:
   connect(&dataTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));

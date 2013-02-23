@@ -12,22 +12,19 @@
 #include <QComboBox>
 #include <QGridLayout>
 #include "combowidget.h"
-#include "camerasidebar.h"
 #include "qlabel.h"
 #include "qgridlayout.h"
-#include "colorrangewidget.h"
 #include "attributewidget.h"
 #include <QwwTaskPanel>
 
 
-class ManagementSidebar : public QWidget
+class ManagementSidebar : public QTabWidget
 {
     Q_OBJECT
 public:
     explicit ManagementSidebar(QWidget *tool = 0);
     ~ManagementSidebar();
     void addChildren(QTreeWidgetItem* item,QString filePath);
-    CameraSidebar * cameraSidebar();
     AttributeWidget * attributeWidget();
 
 signals:
@@ -36,18 +33,13 @@ public slots:
     void setFPS(float framesPerSecond);
     
 private:
-    void m_buildGroupingTab();
-    void m_buildDisplayTab();
+    void m_buildPresentationTab();
+    void m_buildOrganizationTab();
 
-    QwwTaskPanel *m_taskPanel;
-    CameraSidebar* m_cameraSubBar;
-    QWidget * m_widget;
-    QVBoxLayout * m_layout;
-    QMap<QString,QCheckBox *> m_checkBoxes;
-    QMap<QWidget * ,LabeledWidget* > m_labeledWidgets;
-    QLabel * m_titleLabel, * m_cameraLabel, *m_framesPerSecond, * m_groupingHeader, * m_projectionOptions;
-    ColorRangeWidget * m_neuronRangeMap;
+    QLabel *m_framesPerSecond;
     AttributeWidget * m_attributeWidget;
+    QWidget * m_groupDisplayWidget;
+    QwwTaskPanel * m_presentationTaskPanel, * m_organizationTaskPanel;
 };
 
 #endif // GroupingSidebar_H

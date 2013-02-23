@@ -6,13 +6,7 @@
 #include <QBoxLayout>
 #include "orientationbutton.h"
 #include "managementSidebar.h"
-#include "ncv.h"
-
-#ifdef WIN32
-    #include <Windows.h>
-#else
-    #include <unistd.h>
-#endif
+#include "ncvcanvas.h"
 
 class NCVWidget : public QWidget
 {
@@ -27,6 +21,8 @@ private slots:
     void m_collapseButtonPressed();
     void m_reportFatalError();
     void m_newFrameReceived();
+    void m_createNetwork(int numNeurons,int numConnections, QVector3D worldSize);
+
 
 private:
     bool m_collapsed;
@@ -35,9 +31,13 @@ private:
     OrientationButton * m_collapseButton;
     QString m_expandText, m_collapseText;
     QTime m_timer;
+    NCVNeuronSet * m_neurons;
+    NCVConnectionSet * m_connections;
+    QMap<QString, NCVDiscreteAttribute *> m_neuronDiscreteAttributes,m_connectionDiscreteAttributes;
+    QMap<QString, NCVContinuousAttribute *> m_neuronContinuousAttributes,m_connectionContinuousAttributes;
     int m_frameCount;
-    //RightToolBar *m_statusSidebar;
-    NCV * m_visualization;
+    NCVCanvas * m_canvas;
+
 };
 
 #endif // NCVWIDGET_H

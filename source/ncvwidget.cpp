@@ -30,131 +30,161 @@ NCVWidget::NCVWidget(QWidget *parent) :
     m_layout->addWidget(m_collapseButton);
 
     QGLFormat glFormat;
-    glFormat.setVersion( 4,0 );
+    glFormat.setVersion(3,3 );
     glFormat.setDoubleBuffer(true);
     glFormat.setProfile( QGLFormat::CompatibilityProfile ); // Requires >=Qt-4.8.0
     glFormat.setSampleBuffers( true );
-    m_visualization = new NCV( glFormat );
-    m_visualization->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    m_layout->addWidget(m_visualization);
-   // m_layout->addWidget(m_statusSidebar);
+    m_canvas = new NCVCanvas( glFormat );
+    m_canvas->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    m_layout->addWidget(m_canvas);
 
     setLayout(m_layout);
     setFocus();
 
-    connect(m_visualization,SIGNAL(frameRendered()),this,SLOT(m_newFrameReceived()));
-    connect(m_visualization,SIGNAL(newNeuronBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addNeuronBitAttribute(QString,QColor,QColor)));
-    connect(m_visualization,SIGNAL(newConnectionBitAttribute(QString,QColor,QColor)),m_managementSidebar->attributeWidget(),SLOT(addConnectionBitAttribute(QString,QColor,QColor)));
-    connect(m_visualization,SIGNAL(newConnectionRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addConnectionRangeAttribute(QString,float,float)));
-    connect(m_visualization,SIGNAL(newNeuronRangeAttribute(QString,float,float)),m_managementSidebar->attributeWidget(),SLOT(addNeuronRangeAttribute(QString,float,float)));
+    m_createNetwork(50000,50000,QVector3D(50000 , 50000,50000));
 
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(setConnectionRangeColoration(QString,QRgb*,int)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronRangeColorationChanged(QString,QRgb*,int)),m_visualization,SLOT(setNeuronRangeColoration(QString,QRgb*,int)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(neuronBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(setNeuronFlagColoration(QString,QColor,QColor)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(connectionBitColorationChanged(QString,QColor,QColor)),m_visualization,SLOT(setConnectionFlagColoration(QString,QColor,QColor)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(currentConnectionAttributeSet(QString)),m_visualization,SLOT(setConnectionAttributeToRender(QString)));
-    connect(m_managementSidebar->attributeWidget(),SIGNAL(currentNeuronAttributeSet(QString)),m_visualization,SLOT(setNeuronAttributeToRender(QString)));
+    m_frameCount = 0;
+    m_timer.start();
+    connect(m_canvas,SIGNAL(frameRendered()),this,SLOT(m_newFrameReceived()));
+    connect(m_canvas, SIGNAL(invalidGraphicsConfigurationDetected()),this,SLOT(m_reportFatalError()));
 
-    connect(m_visualization, SIGNAL(invalidGraphicsConfigurationDetected()),this,SLOT(m_reportFatalError()));
+}
+void NCVWidget::m_createNetwork(int numNeurons,int numConnections, QVector3D worldSize)
+{
+    // establish discrete attribute states;
+    QVector<QString> firingStates;
+    firingStates.append("Off");
+    firingStates.append("On");
 
+    QVector<QString> typeStates;
+    typeStates.append("Ovoid");
+    typeStates.append("Izekivich");
+    typeStates.append("Pyramidal");
+    typeStates.append("Granule");
+    typeStates.append("Double Pyramidal");
 
-    QVector3D worldSize = QVector3D(50000 , 50000,50000);
+    // establish attribute  colorations
+    QVector<QColor> stubVoltageColoration; // coloration replaced by attribute widget (will be changed in later push)
+    stubVoltageColoration.append(QColor(0,0,0));
 
-    int numNeurons = 10000;
+    QMap<QString,QColor >firingColors;
+    firingColors["Off"] =QColor(0,255,0);
+    firingColors["On"] = QColor(255,0,0);
 
+    QMap<QString,QColor >typeColors;
+    typeColors["Ovoid"] = QColor(125,125,0);
+    typeColors["Izekivich"] = QColor(255,0,125);
+    typeColors["Pyramidal"] = QColor(0,125,125);
+    typeColors["Granule"] = QColor(75,255,125);
+    typeColors["Double Pyramidal"] = QColor(255,255,0);
 
-    QVector3D * neuronPositions = new QVector3D[numNeurons];
-
-    GLfloat * neuronVoltages = new GLfloat[numNeurons];
-    GLuint * neuronFirings;
-    if (numNeurons %32 == 0)
-        neuronFirings = new GLuint[numNeurons/32];
-    else
-        neuronFirings = new GLuint[(numNeurons/32) + 1];
-
-
+    // create stub neuron data source
+    QVector<QVector3D> neuronPositions;
+    QVector<GLfloat> neuronVoltages;
+    QVector<GLubyte> neuronFirings;
+    QVector<GLubyte> neuronTypes;
 
     int fireVal;
-    float threshold = 80.0f;
+    float threshold = 25.0f;
 
     for (int i = 0; i <numNeurons; i ++)
     {
         int x = (abs(rand() * rand() * rand() )% (int)worldSize.x()) - (worldSize.x()/2);
         int y = (abs(rand() * rand() * rand() ) % (int)worldSize.y()) - (worldSize.y()/2);
         int z = (abs(rand() * rand() * rand() ) % (int)worldSize.z()) - (worldSize.z()/2);
-        neuronPositions[i] = QVector3D(x,y,z);
-        neuronVoltages[i] = (float)(abs(rand()) % 100);
+        neuronPositions.append(QVector3D(x,y,z));
+        neuronVoltages.append((float)(abs(rand() % 120)) -80.0);
+
         if (neuronVoltages[i] >= threshold)
             fireVal = 1;
         else
             fireVal = 0;
 
-        if(i %32 == 0)
-            neuronFirings[i/32] = 0;
-        neuronFirings[i/32] += fireVal<<(i % 32);
+        if(i %8 == 0)
+            neuronFirings.append(0);
+
+        neuronFirings[i/8] += fireVal<<(i % 8);
+
+        neuronTypes.append(rand() % 5);
     }
 
-    int numConnections = numNeurons *1 ;
-    GLuint * neuronIN = new GLuint[numConnections];
-    GLuint * neuronOUT = new GLuint[numConnections];
+
+    // create neurons and related attributes
+    m_neurons= new NCVNeuronSet(neuronPositions);
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(currentNeuronAttributeSet(QString)),m_neurons,SLOT(setCurrentAttribute(QString)));
+
+    m_neuronContinuousAttributes["voltage"] = new NCVContinuousAttribute(Neuron,-80,40);
+    m_neuronContinuousAttributes["voltage"]->attachData(neuronVoltages);
+    m_neuronContinuousAttributes["voltage"]->attachColoration(stubVoltageColoration);
+    m_neurons->addAttribute("voltage",m_neuronContinuousAttributes["voltage"]);
+
+    m_neuronDiscreteAttributes["firing"] = new NCVDiscreteAttribute(Neuron,firingStates);
+    m_neuronDiscreteAttributes["firing"]->attachData(neuronFirings,1);
+    m_neuronDiscreteAttributes["firing"]->attachColoration(firingColors);
+    m_neurons->addAttribute("firing",m_neuronDiscreteAttributes["firing"]);
+
+
+    m_neuronDiscreteAttributes["type"] = new NCVDiscreteAttribute(Neuron,typeStates);
+    m_neuronDiscreteAttributes["type"]->attachData(neuronTypes);
+    m_neuronDiscreteAttributes["type"]->attachColoration(typeColors);
+    m_neurons->addAttribute("type",m_neuronDiscreteAttributes["type"]);
+
+    m_canvas->setNeurons(m_neurons); // attach neurons to canvas
+
+    // add neuron widgets to attribute widget
+    m_managementSidebar->attributeWidget()->addDiscreteAttribute("firing",m_neuronDiscreteAttributes["firing"]);
+    m_managementSidebar->attributeWidget()->addDiscreteAttribute("type",m_neuronDiscreteAttributes["type"]);
+    m_managementSidebar->attributeWidget()->addContinuousAttribute("voltage",m_neuronContinuousAttributes["voltage"]);
+
+    // create stub connection data
+    QVector<NeuronConnection> connections;
     for (int i = 0; i < numConnections; i++)
     {
-        neuronIN[i] = (i % numNeurons) ;
-        neuronOUT[i] = neuronIN[i];
-        while (neuronOUT[i] == neuronIN[i])
-            neuronOUT[i] = (rand() % numNeurons) +1;
+        connections.append(NeuronConnection(i % numNeurons,i % numNeurons));
+        while (connections[i].outNeuron == connections[i].inNeuron)
+            connections[i].outNeuron = (rand() % numNeurons) +1;
     }
 
-    GLfloat * connectionVoltages = new GLfloat[numConnections];
-    GLuint * connectionFirings;
-    if (numConnections %32 == 0)
-        connectionFirings = new GLuint[numConnections/32];
-    else
-        connectionFirings = new GLuint[(numConnections/32) + 1];
+    QVector<GLfloat> connectionVoltages;
+    QVector<GLubyte> connectionFirings;
 
     for (int i = 0; i <numConnections; i ++)
     {
-        GLfloat inVoltage = neuronVoltages[neuronIN[i]];
-        GLfloat outVoltage = neuronVoltages[neuronOUT[i]];
+        GLfloat inVoltage = neuronVoltages[connections[i].inNeuron];
+        GLfloat outVoltage = neuronVoltages[connections[i].outNeuron];
 
-        connectionVoltages[i] = outVoltage - inVoltage;
+        connectionVoltages.append((outVoltage + inVoltage)/2);
         if (connectionVoltages[i] >= threshold)
             fireVal = 1;
         else
             fireVal = 0;
 
-        if(i %32 == 0)
-            connectionFirings[i/32] = 0;
-        connectionFirings[i/32] += fireVal<<(i % 32);
+        if(i %8 == 0)
+            connectionFirings.append(0);
+        connectionFirings[i/8] += fireVal<<(i % 8);
 
 
     }
 
+    //create connections and related attributes
+    m_connections= new NCVConnectionSet(m_neurons,connections);
+    connect(m_managementSidebar->attributeWidget(),SIGNAL(currentConnectionAttributeSet(QString)),m_connections,SLOT(setCurrentAttribute(QString)));
 
+    m_connectionContinuousAttributes["voltage"] = new NCVContinuousAttribute(Connection,-80,40);
+    m_connectionContinuousAttributes["voltage"]->attachData(connectionVoltages);
+    m_connectionContinuousAttributes["voltage"]->attachColoration(stubVoltageColoration);
+    m_connections->addAttribute("voltage",m_connectionContinuousAttributes["voltage"]);
 
-    /* ###################################################################
-    Neural Network Creation Example
-    ###################################################################*/
-    m_visualization->createNeurons(numNeurons,neuronPositions,NULL);
-    m_visualization->createConnections(numConnections,neuronIN,neuronOUT,NULL);
+    m_connectionDiscreteAttributes["firing"] = new NCVDiscreteAttribute(Connection,firingStates);
+    m_connectionDiscreteAttributes["firing"]->attachData(connectionFirings,1);
+    m_connectionDiscreteAttributes["firing"]->attachColoration(firingColors);
+    m_connections->addAttribute("firing",m_connectionDiscreteAttributes["firing"]);
 
-    m_visualization->createNeuronFlagAttribute("firing",QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
-    m_visualization->createNeuronRangeAttribute("voltage",0,100.2f);
+    m_managementSidebar->attributeWidget()->addDiscreteAttribute("firing",m_connectionDiscreteAttributes["firing"]);
+    m_managementSidebar->attributeWidget()->addContinuousAttribute("voltage",m_connectionContinuousAttributes["voltage"]);
 
-    m_visualization->createConnectionFlagAttribute("firing",QVector3D(1.0,0.0,0.0),QVector3D(0.0,1.0,0.0));
-    m_visualization->createConnectionRangeAttribute("voltage",0,100.2f);
+    m_canvas->setConnections(m_connections); // connect to canvas
 
-    m_visualization->setNeuronFlagAttribute("firing",neuronFirings);
-    m_visualization->setNeuronRangeAttribute("voltage",neuronVoltages);
-    m_visualization->setConnectionFlagAttribute("firing",connectionFirings);
-    m_visualization->setConnectionRangeAttribute("voltage",connectionVoltages);
-
-    /* ###################################################################
-    Neural Network Example
-    ###################################################################*/
-
-    m_frameCount = 0;
-    m_timer.start();
 }
 
 void NCVWidget::m_collapseButtonPressed()
@@ -198,19 +228,17 @@ NCVWidget::~NCVWidget()
    delete m_managementSidebar;
 
    //delete m_statusSidebar;
-   //delete m_visualization;
+   //delete m_canvas;
 
 
 }
-
-
 
 void NCVWidget::m_reportFatalError()
 {
 
     QMessageBox msgBox;
     msgBox.setText("Graphics Configuration Incapable");
-    msgBox.setInformativeText("Cannot create a valid OpenGL 4.0 context.");
+    msgBox.setInformativeText("Cannot create a valid OpenGL 3.3 context.");
     msgBox.setStandardButtons(QMessageBox::Ok);
 
     msgBox.exec();

@@ -1,12 +1,21 @@
 #include "managementSidebar.h"
 
 ManagementSidebar::ManagementSidebar(QWidget *parent) :
-    QWidget(parent)
+    QTabWidget(parent)
 {
-    m_layout = new QVBoxLayout();
-    m_taskPanel = new QwwTaskPanel();
+    m_buildPresentationTab();
+    m_buildOrganizationTab();
+    setFixedWidth(400);
+}
 
+ManagementSidebar::~ManagementSidebar()
+{
 
+}
+
+void ManagementSidebar::m_buildOrganizationTab()
+{
+    m_organizationTaskPanel = new QwwTaskPanel();
     QTreeWidget  *tree = new QTreeWidget ();
     tree->setSelectionMode( QAbstractItemView::MultiSelection);
     tree->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
@@ -45,35 +54,36 @@ ManagementSidebar::ManagementSidebar(QWidget *parent) :
       tree->addTopLevelItem(item);
     }
 
-    m_taskPanel->addTask(tree,QIcon(":/assets/groupIcon.png"),"Groups");
+    m_organizationTaskPanel->addTask(tree,QIcon(":/assets/groupIcon.png"),"Groups");
+    this->addTab(m_organizationTaskPanel, QIcon(":/assets/organizationIcon.png"),"Organization");
+
+}
+
+void ManagementSidebar::m_buildPresentationTab()
+{
+
+
+    m_presentationTaskPanel = new QwwTaskPanel();
+
+    m_groupDisplayWidget = new QWidget();
+    m_presentationTaskPanel->addTask(m_groupDisplayWidget,QIcon(":/assets/layerIcon.png"),"Layers");
+    m_presentationTaskPanel->addTask(m_groupDisplayWidget,QIcon(":/assets/columnIcon.png"),"Columns");
+    m_groupDisplayWidget->show();
 
     m_attributeWidget = new AttributeWidget();
-    m_taskPanel->addTask(m_attributeWidget->neuronWidget(), QIcon(":/assets/neuronIcon.png"),"Neurons");
-    m_taskPanel->addTask(m_attributeWidget->connectionWidget(), QIcon(":/assets/connectionIcon.png"),"Connections");
+    m_presentationTaskPanel->addTask(m_attributeWidget->neuronWidget(), QIcon(":/assets/neuronIcon.png"),"Neurons");
+    m_attributeWidget->neuronWidget()->show();
+    m_presentationTaskPanel->addTask(m_attributeWidget->connectionWidget(), QIcon(":/assets/connectionIcon.png"),"Connections");
+    m_attributeWidget->connectionWidget()->show();
 
-    /*m_cameraSubBar = new CameraSidebar();
-    m_cameraSubBar->setFixedWidth(300);
-    m_taskPanel->addTask(m_cameraSubBar,QIcon(":/assets/cameraIcon.png"),"Camera Settings");
-
-    m_lightingSubBar = new LightingSidebar();
-    m_taskPanel->addTask(m_lightingSubBar, QIcon(":/assets/neuronIcon.png"),"Lighting Settings");*/
-    m_layout->addWidget(m_taskPanel);
 
     m_framesPerSecond = new QLabel();
     m_framesPerSecond->setAlignment(Qt::AlignCenter);
-    m_layout->addWidget(m_framesPerSecond);
-
-
-    this->setLayout(m_layout);
-    setFixedWidth(400);
+    m_presentationTaskPanel->addTask(m_framesPerSecond,QIcon(":/assets/groupIcon.png"),"FPS");
+	    m_groupDisplayWidget->show();
+    this->addTab(m_presentationTaskPanel, QIcon(":/assets/presentationIcon.png") ,"Presentation");
 
 }
-
-ManagementSidebar::~ManagementSidebar()
-{
-
-}
-
 
 void ManagementSidebar::addChildren(QTreeWidgetItem* item,QString filePath)
 {
@@ -103,11 +113,6 @@ void ManagementSidebar::setFPS(float fps)
 
 }
 
-
-CameraSidebar * ManagementSidebar::cameraSidebar()
-{
-    return m_cameraSubBar;
-}
 
 AttributeWidget * ManagementSidebar::attributeWidget()
 {

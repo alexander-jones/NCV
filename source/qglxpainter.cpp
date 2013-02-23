@@ -1,5 +1,37 @@
 #include "qglxpainter.h"
 
+const char * vertex = "#version 330\n\
+        in vec3 Vert_Position;\n\
+        in vec2 Vert_Coord;\n\
+        out vec2 TextureCoordinate;\n\
+        void main( void )\n\
+        {\n\
+            TextureCoordinate = Vert_Coord;\n\
+            gl_Position = vec4(Vert_Position,1.0f);\n\
+        }\n";
+
+
+const char * fragment = "#version 330\n\
+        uniform usampler2D BlendMap;\n\
+        in vec2 TextureCoordinate;\n\
+        out vec4 Color;\n\
+        vec4 hexToColor(uint hex)\n\
+        {\n\
+            float alpha = float(hex >> 24U )/255.0;\n\
+            float red = float((hex >> 16U) & 255U) /255.0;\n\
+            float green = float((hex >> 8U)& 255U)/255.0;\n\
+            float blue = float(hex & 255U)/255.0;\n\
+            return vec4(red,green,blue,alpha);\n\
+        }\n\
+        void main(void)\n\
+        {\n\
+            Color = hexToColor(texture(BlendMap, TextureCoordinate).r);\n\
+        }\n";
+
+
+const QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
+const QVector2D screenCoords[4] = {QVector2D(0,1),QVector2D(1,1),QVector2D(1,0),QVector2D(0,0)};
+
 QGLXPainter::QGLXPainter()
     :QPainter()
 {
@@ -19,8 +51,6 @@ void QGLXPainter::begin(QPaintDevice *device)
         m_image.fill(QColor(0,0,0,0));
 
     QPainter::begin(&m_image);
-    QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
-    QVector2D screenCoords[4] = {QVector2D(0,1),QVector2D(1,1),QVector2D(1,0),QVector2D(0,0)};
 
     if (!m_screenVertices.isCreated())
     {
@@ -42,8 +72,8 @@ void QGLXPainter::begin(QPaintDevice *device)
 
     if (!m_program.isLinked())
     {
-        m_program.addShaderFromSourceFile( QGLShader::Vertex, ":/shaders/blend.vert" );
-        m_program.addShaderFromSourceFile( QGLShader::Fragment, ":/shaders/blend.frag" );
+        m_program.addShaderFromSourceCode( QGLShader::Vertex, vertex);
+        m_program.addShaderFromSourceCode( QGLShader::Fragment, fragment);
         m_program.link();
     }
 

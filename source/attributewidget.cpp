@@ -4,13 +4,17 @@
 AttributeWidget::AttributeWidget(QWidget *parent) :
     QObject(parent)
 {
-    m_widget = new QWidget();
     m_neuronMapper = new QSignalMapper(this);
     m_connectionMapper = new QSignalMapper(this);
+    connect(m_neuronMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_neuronColorationChanged(const QString&)));
+    connect(m_connectionMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_connectionColorationChanged(const QString&  )));
+
 
     m_neuronLinkButton = new QToolButton();
+    m_neuronLinkButton->setText("Link");
     m_neuronLinkButton->setToolTip("Set whether neuron and connection colorations should be linked for this attribute.");
     m_connectionLinkButton = new QToolButton();
+    m_connectionLinkButton->setText("Link");
     m_connectionLinkButton->setToolTip("Set whether neuron and connection colorations should be linked for this attribute.");
     connect(m_neuronLinkButton,SIGNAL(pressed()),this,SLOT(m_neuronLinkButtonPressed()));
     connect(m_connectionLinkButton,SIGNAL(pressed()),this,SLOT(m_connectionLinkButtonPressed()));
@@ -39,11 +43,11 @@ QWidget * AttributeWidget::connectionWidget()
 bool AttributeWidget::m_isSharedAttribute(QString name)
 {
     bool sharedAttribute;
-    if (m_neuronRangeWidgets.contains(name)&& m_connectionRangeWidgets.contains(name))
+    if (m_neuronContinuousWidgets.contains(name)&& m_connectionContinuousWidgets.contains(name))
         sharedAttribute = true;
     else
         sharedAttribute = false;
-    if (m_neuronFlagWidgets.contains(name)&& m_connectionFlagWidgets.contains(name) )
+    if (m_neuronDiscreteWidgets.contains(name)&& m_connectionDiscreteWidgets.contains(name) )
 
         sharedAttribute = sharedAttribute || true;
     else
@@ -51,12 +55,12 @@ bool AttributeWidget::m_isSharedAttribute(QString name)
     return sharedAttribute;
 }
 
-bool AttributeWidget::m_rangeAttributeConsistent(QString attributeName)
+bool AttributeWidget::m_continuousAttributeConsistent(QString attributeName)
 {
-    QRgb * connData = m_connectionRangeWidgets[attributeName]->getData();
-    QRgb * neuronData = m_neuronRangeWidgets[attributeName]->getData();
+    QVector<QRgb> connData= m_connectionContinuousWidgets[attributeName]->getData();
+    QVector<QRgb> neuronData = m_neuronContinuousWidgets[attributeName]->getData();
     bool same = true;
-    for (int i = 0; i < 250; i ++)
+    for (int i = 0; i < connData.count(); i ++)
         if (connData[i] != neuronData[i])
         {
             same = false;
@@ -66,10 +70,19 @@ bool AttributeWidget::m_rangeAttributeConsistent(QString attributeName)
 }
 
 
-bool AttributeWidget::m_flagAttributeConsistent(QString attributeName)
+bool AttributeWidget::m_discreteAttributeConsistent(QString attributeName)
 {
-    return m_connectionFlagWidgets[attributeName]->getOnColor() ==m_neuronFlagWidgets[attributeName]->getOnColor()
-                    && m_connectionFlagWidgets[attributeName]->getOffColor() ==m_neuronFlagWidgets[attributeName]->getOffColor();
+    QMap<QString,QColor> neuronStates =  m_neuronDiscreteWidgets[attributeName]->states();
+    QMap<QString,QColor> connectionStates =  m_connectionDiscreteWidgets[attributeName]->states();
+    if (neuronStates.count() != connectionStates.count())
+        return false;
+
+    for (QMap<QString,QColor>::iterator it = neuronStates.begin(); it != neuronStates.end(); it++)
+        if (m_neuronDiscreteWidgets[attributeName]->color(it.key()) != m_connectionDiscreteWidgets[attributeName]->color(it.key()))
+           return false;
+
+
+    return true;
 }
 void AttributeWidget::m_checkAndFixInconsistantColorations(QString attributeName)
 {
@@ -77,8 +90,8 @@ void AttributeWidget::m_checkAndFixInconsistantColorations(QString attributeName
     if (m_attributeLinked[attributeName])
     {
 
-        bool isRangeAttrib = m_connectionRangeWidgets.contains(attributeName) ;
-        if ((isRangeAttrib && !m_rangeAttributeConsistent(attributeName)) ||(!isRangeAttrib && !m_flagAttributeConsistent(attributeName)))
+        bool isRangeAttrib = m_connectionContinuousWidgets.contains(attributeName) ;
+        if ((isRangeAttrib && !m_continuousAttributeConsistent(attributeName)) ||(!isRangeAttrib && !m_discreteAttributeConsistent(attributeName)))
         {
             QMessageBox msgBox;
             msgBox.setText("Attributes being linked have inconsistent coloration.");
@@ -91,20 +104,26 @@ void AttributeWidget::m_checkAndFixInconsistantColorations(QString attributeName
 
             if (msgBox.clickedButton() == neuronButton)
             {
-                if (m_connectionRangeWidgets.contains(attributeName))
-                    m_connectionRangeWidgets[attributeName]->setMarkers(m_neuronRangeWidgets[attributeName]->getMarkers());
+                if (m_connectionContinuousWidgets.contains(attributeName))
+                    m_connectionContinuousWidgets[attributeName]->setMarkers(m_neuronContinuousWidgets[attributeName]->getMarkers());
 
                 else
-                    m_connectionFlagWidgets[attributeName]->setColors(m_neuronFlagWidgets[attributeName]->getOffColor(),m_neuronFlagWidgets[attributeName]->getOnColor());
+                {
+                    m_connectionDiscreteWidgets[attributeName]->setState("Off",m_neuronDiscreteWidgets[attributeName]->color("Off"));
+                    m_connectionDiscreteWidgets[attributeName]->setState("On",m_neuronDiscreteWidgets[attributeName]->color("On"));
+                }
 
             }
             else if (msgBox.clickedButton() == connectionButton)
             {
-                if (m_neuronRangeWidgets.contains(attributeName))
-                    m_neuronRangeWidgets[attributeName]->setMarkers(m_connectionRangeWidgets[attributeName]->getMarkers());
+                if (m_neuronContinuousWidgets.contains(attributeName))
+                    m_neuronContinuousWidgets[attributeName]->setMarkers(m_connectionContinuousWidgets[attributeName]->getMarkers());
 
                 else
-                    m_neuronFlagWidgets[attributeName]->setColors(m_connectionFlagWidgets[attributeName]->getOffColor(),m_connectionFlagWidgets[attributeName]->getOnColor());
+                {
+                    m_neuronDiscreteWidgets[attributeName]->setState("Off",m_connectionDiscreteWidgets[attributeName]->color("Off"));
+                    m_neuronDiscreteWidgets[attributeName]->setState("On",m_connectionDiscreteWidgets[attributeName]->color("On"));
+                }
 
             }
             else if (msgBox.clickedButton() == cancelLinking)
@@ -157,15 +176,25 @@ void AttributeWidget::m_currentNeuronAttributeSet(QString name)
 
 
         if (!m_neuronSidebar->containsTool(m_neuronLinkButton))
+        {
             m_neuronSidebar->addTool(m_neuronLinkButton);
+            m_neuronLinkButton->show();
+        }
         if ( m_connectionSidebar->currentWidgetName() == name && !m_connectionSidebar->containsTool(m_connectionLinkButton))
+        {
             m_connectionSidebar->addTool(m_connectionLinkButton);
+            m_connectionLinkButton->show();
+        }
 
         m_updateNeuronLinkIcon();
         m_updateConnectionLinkIcon();
     }
-    else if ( m_connectionSidebar->containsTool(m_neuronLinkButton))
-            m_neuronSidebar->removeTool(m_neuronLinkButton);
+    else if ( m_neuronSidebar->containsTool(m_neuronLinkButton))
+    {
+        m_neuronSidebar->removeTool(m_neuronLinkButton);
+        m_neuronLinkButton->hide();
+    }
+
 
 }
 
@@ -177,138 +206,185 @@ void AttributeWidget::m_currentConnectionAttributeSet(QString name)
     {
 
         if ( !m_connectionSidebar->containsTool(m_connectionLinkButton))
+        {
             m_connectionSidebar->addTool(m_connectionLinkButton);
+            m_connectionLinkButton->show();
+        }
 
         if ( m_neuronSidebar->currentWidgetName() == name && !m_neuronSidebar->containsTool(m_neuronLinkButton))
+        {
             m_neuronSidebar->addTool(m_neuronLinkButton);
+            m_neuronLinkButton->show();
+        }
 
         m_updateNeuronLinkIcon();
         m_updateConnectionLinkIcon();
     }
     else if ( m_connectionSidebar->containsTool(m_connectionLinkButton))
-            m_connectionSidebar->removeTool(m_connectionLinkButton);
-
-}
-
-
-void AttributeWidget::addNeuronRangeAttribute(QString name, float minVal, float maxVal)
-{
-    m_neuronRangeWidgets[name] = new ColorRangeWidget();
-    if (m_connectionRangeWidgets.contains(name))
     {
-        m_attributeShared[name] = true;
-        m_attributeLinked[name] = true;
-
+        m_connectionSidebar->removeTool(m_connectionLinkButton);
+        m_connectionLinkButton->hide();
     }
 
-    m_neuronRangeWidgets[name]->setLowThreshold(minVal);
-    m_neuronRangeWidgets[name]->setHighThreshold(maxVal);
-    m_neuronRangeWidgets[name]->setWidth(300);
-    float step = (maxVal -  minVal) / 2;
-    m_neuronRangeWidgets[name]->addMarker(minVal ,QColor(0,255,0));
-    m_neuronRangeWidgets[name]->addMarker(minVal + step,QColor(0,0,255));
-    m_neuronRangeWidgets[name]->addMarker(minVal + step*2,QColor(255,0,0));
-    m_neuronSidebar->addWidget(m_neuronRangeWidgets[name],name);
-    neuronRangeColorationChanged(name,m_neuronRangeWidgets[name]->getData(),m_neuronRangeWidgets[name]->getImageSize().width());
-
-
-    connect(m_neuronRangeWidgets[name],SIGNAL(colorRangeChanged()),m_neuronMapper,SLOT(map()));
-    m_neuronMapper->setMapping(m_neuronRangeWidgets[name],name);
-    connect(m_neuronMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_neuronColorationChanged(const QString& )));
-
 }
 
-void AttributeWidget::addNeuronBitAttribute(QString name, QColor offColor, QColor onColor)
+
+void AttributeWidget::addContinuousAttribute(QString name, NCVContinuousAttribute *attrib )
 {
-    m_neuronFlagWidgets[name] = new ColorBitWidget();
-    if (m_connectionFlagWidgets.contains(name))
+    if (attrib->elementType() == Neuron)
     {
-        m_attributeShared[name] = true;
-        m_attributeLinked[name] = true;
+        m_neuronContinuousAttributes[name] = attrib;
+        m_neuronContinuousWidgets[name] = new ContinuousColorSelector();
+        if (m_connectionContinuousWidgets.contains(name))
+        {
+            m_attributeShared[name] = true;
+            m_attributeLinked[name] = true;
+
+        }
+        else
+        {
+            m_attributeShared[name] = false;
+            m_attributeLinked[name] = false;
+        }
+        m_neuronContinuousWidgets[name]->setLowThreshold(attrib->minValue());
+        m_neuronContinuousWidgets[name]->setHighThreshold(attrib->maxValue());
+        m_neuronContinuousWidgets[name]->setWidth(300);
+        float step = (attrib->maxValue() -  attrib->minValue()) / 2;
+        m_neuronContinuousWidgets[name]->addMarker(attrib->minValue() ,QColor(0,255,0));
+        m_neuronContinuousWidgets[name]->addMarker(attrib->minValue() + step,QColor(0,0,255));
+        m_neuronContinuousWidgets[name]->addMarker(attrib->minValue() + step*2,QColor(255,0,0));
+        m_neuronSidebar->addWidget(m_neuronContinuousWidgets[name],name);
+        m_neuronContinuousAttributes[name]->attachColoration(m_neuronContinuousWidgets[name]->getData());
+
+        connect(m_neuronContinuousWidgets[name],SIGNAL(colorRangeChanged()),m_neuronMapper,SLOT(map()));
+        m_neuronMapper->setMapping(m_neuronContinuousWidgets[name],name);
     }
+    else if(attrib->elementType() == Connection)
+    {
 
-    connect(m_neuronFlagWidgets[name],SIGNAL(colorsChanged(QColor,QColor)),m_neuronMapper,SLOT(map()));
-    m_neuronMapper->setMapping(m_neuronFlagWidgets[name],name);
-    connect(m_neuronMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_neuronColorationChanged(const QString&)));
+        m_connectionContinuousAttributes[name] = attrib;
+        m_connectionContinuousWidgets[name] = new ContinuousColorSelector();
+        if (m_neuronContinuousWidgets.contains(name))
+        {
+            m_attributeShared[name] = true;
+            m_attributeLinked[name] = true;
+        }
+        else
+        {
+            m_attributeShared[name] = false;
+            m_attributeLinked[name] = false;
+        }
 
-    m_neuronFlagWidgets[name]->setOffColor(offColor);
-    m_neuronFlagWidgets[name]->setOnColor(onColor);
-    m_neuronSidebar->addWidget(m_neuronFlagWidgets[name],name);
+        m_connectionContinuousWidgets[name]->setLowThreshold(attrib->minValue());
+        m_connectionContinuousWidgets[name]->setHighThreshold(attrib->maxValue());
+        m_connectionContinuousWidgets[name]->setWidth(300);
+        float step = (attrib->maxValue() -  attrib->minValue()) / 2;
+        m_connectionContinuousWidgets[name]->addMarker(attrib->minValue() ,QColor(0,255,0));
+        m_connectionContinuousWidgets[name]->addMarker(attrib->minValue() + step,QColor(0,0,255));
+        m_connectionContinuousWidgets[name]->addMarker(attrib->minValue() + step*2,QColor(255,0,0));
+        m_connectionSidebar->addWidget(m_connectionContinuousWidgets[name],name);
+        m_connectionContinuousAttributes[name]->attachColoration(m_connectionContinuousWidgets[name]->getData());
+
+        connect(m_connectionContinuousWidgets[name],SIGNAL(colorRangeChanged()),m_connectionMapper,SLOT(map()));
+        m_connectionMapper->setMapping(m_connectionContinuousWidgets[name],name);
+    }
 }
 
-void AttributeWidget::addConnectionRangeAttribute(QString name, float minVal, float maxVal)
+void AttributeWidget::addDiscreteAttribute(QString name, NCVDiscreteAttribute * attrib)
 {
-    m_connectionRangeWidgets[name] = new ColorRangeWidget();
-    if (m_neuronRangeWidgets.contains(name))
+    if (attrib->elementType() == Neuron)
     {
-        m_attributeShared[name] = true;
-        m_attributeLinked[name] = true;
+
+        m_neuronDiscreteAttributes[name] = attrib;
+        m_neuronDiscreteWidgets[name] = new DiscreteColorSelector();
+        if (m_connectionDiscreteWidgets.contains(name))
+        {
+            m_attributeShared[name] = true;
+            m_attributeLinked[name] = true;
+        }
+        else
+        {
+            m_attributeShared[name] = false;
+            m_attributeLinked[name] = false;
+        }
+
+        connect(m_neuronDiscreteWidgets[name],SIGNAL(changed()),m_neuronMapper,SLOT(map()));
+        m_neuronMapper->setMapping(m_neuronDiscreteWidgets[name],name);
+
+
+        QMap<QString,QColor> states = attrib->coloration();
+
+        for (QMap<QString,QColor>::iterator it = states.begin(); it != states.end(); it++)
+            m_neuronDiscreteWidgets[name]->addState(it.key(),it.value());
+
+        m_neuronSidebar->addWidget(m_neuronDiscreteWidgets[name],name);
+
     }
+    else if(attrib->elementType() == Connection)
+    {
+
+        m_connectionDiscreteAttributes[name] = attrib;
+        m_connectionDiscreteWidgets[name] = new DiscreteColorSelector();
+        if (m_neuronDiscreteWidgets.contains(name))
+        {
+            m_attributeShared[name] = true;
+            m_attributeLinked[name] = true;
+        }
+        else
+        {
+            m_attributeShared[name] = false;
+            m_attributeLinked[name] = false;
+        }
+        connect(m_connectionDiscreteWidgets[name],SIGNAL(changed()),m_connectionMapper,SLOT(map()));
+        m_connectionMapper->setMapping(m_connectionDiscreteWidgets[name],name);
 
 
-    m_connectionRangeWidgets[name]->setLowThreshold(minVal);
-    m_connectionRangeWidgets[name]->setHighThreshold(maxVal);
-    m_connectionRangeWidgets[name]->setWidth(300);
-    float step = (maxVal -  minVal) / 2;
-    m_neuronRangeWidgets[name]->addMarker(minVal ,QColor(0,255,0));
-    m_neuronRangeWidgets[name]->addMarker(minVal + step,QColor(0,0,255));
-    m_neuronRangeWidgets[name]->addMarker(minVal + step*2,QColor(255,0,0));
-    m_connectionSidebar->addWidget(m_connectionRangeWidgets[name],name);
-    connectionRangeColorationChanged(name,m_connectionRangeWidgets[name]->getData(),m_connectionRangeWidgets[name]->getImageSize().width());
+        QMap<QString,QColor> states = attrib->coloration();
+        for (QMap<QString,QColor>::iterator it = states.begin(); it != states.end(); it++)
+            m_connectionDiscreteWidgets[name]->addState(it.key(),it.value());
 
-
-    connect(m_connectionRangeWidgets[name],SIGNAL(colorRangeChanged()),m_connectionMapper,SLOT(map()));
-    m_connectionMapper->setMapping(m_connectionRangeWidgets[name],name);
-    connect(m_connectionMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_connectionColorationChanged(const QString&  )));
+        m_connectionSidebar->addWidget(m_connectionDiscreteWidgets[name],name);
+    }
 }
 
-void AttributeWidget::addConnectionBitAttribute(QString name, QColor offColor, QColor onColor)
-{
-    m_connectionFlagWidgets[name] = new ColorBitWidget();
-    if (m_neuronFlagWidgets.contains(name))
-    {
-        m_attributeShared[name] = true;
-        m_attributeLinked[name] = true;
-    }
-
-    connect(m_connectionFlagWidgets[name],SIGNAL(colorsChanged(QColor,QColor)),m_connectionMapper,SLOT(map()));
-    m_connectionMapper->setMapping(m_connectionFlagWidgets[name],name);
-    connect(m_connectionMapper,SIGNAL(mapped(const QString& )),this,SLOT(m_connectionColorationChanged(const QString& )));
-
-    m_connectionFlagWidgets[name]->setOffColor(offColor);
-    m_connectionFlagWidgets[name]->setOnColor(onColor);
-    m_connectionSidebar->addWidget(m_connectionFlagWidgets[name],name);
-}
 
 void AttributeWidget::m_neuronColorationChanged(const QString & attributeName)
 {
 
-    if (m_neuronFlagWidgets.contains(attributeName))
+    if (m_neuronDiscreteWidgets.contains(attributeName))
     {
+        QMap<QString,QColor> states =  m_neuronDiscreteWidgets[attributeName]->states();
+        m_neuronDiscreteAttributes[attributeName]->attachColoration(states);
         if (m_neuronSidebar->containsTool(m_neuronLinkButton) && m_neuronLinkButton->icon().cacheKey() == m_linkedIcon.cacheKey() )
         {
 
-            if (m_connectionSidebar->containsWidget(attributeName)  && m_connectionFlagWidgets.contains(attributeName) && !m_flagAttributeConsistent(attributeName))
-                    m_connectionFlagWidgets[attributeName]->setColors(m_neuronFlagWidgets[attributeName]->getOffColor(),m_neuronFlagWidgets[attributeName]->getOnColor());
+            if (m_connectionSidebar->containsWidget(attributeName)  && m_connectionDiscreteWidgets.contains(attributeName) && !m_discreteAttributeConsistent(attributeName))
+            {
+
+                 for (QMap<QString,QColor>::iterator it = states.begin(); it != states.end(); it++)
+                     if (m_neuronDiscreteWidgets[attributeName]->color(it.key()) != m_connectionDiscreteWidgets[attributeName]->color(it.key()))
+                         m_connectionDiscreteWidgets[attributeName]->setState(it.key(),m_neuronDiscreteWidgets[attributeName]->color(it.key()));
+
+            }
 
         }
-        neuronBitColorationChanged(attributeName, m_neuronFlagWidgets[attributeName]->getOffColor(),m_neuronFlagWidgets[attributeName]->getOnColor());
 
     }
     else
     {
-        if(m_neuronRangeWidgets.contains(attributeName))
+
+        m_neuronContinuousAttributes[attributeName]->attachColoration(m_neuronContinuousWidgets[attributeName]->getData());
+        if(m_neuronContinuousWidgets.contains(attributeName))
         {
-            if ( m_attributeLinked[attributeName] && m_connectionRangeWidgets.contains(attributeName))
-                m_connectionRangeWidgets[attributeName]->setMarkers(m_neuronRangeWidgets[attributeName]->getMarkers());
+            if ( m_attributeLinked[attributeName] && m_connectionContinuousWidgets.contains(attributeName))
+                m_connectionContinuousWidgets[attributeName]->setMarkers(m_neuronContinuousWidgets[attributeName]->getMarkers());
 
 
-            neuronRangeColorationChanged(attributeName,m_neuronRangeWidgets[attributeName]->getData(),m_neuronRangeWidgets[attributeName]->getImageSize().width());
         }
         else
         {
-            if ( m_attributeLinked[attributeName] && m_connectionRangeWidgets.contains(attributeName))
-                m_connectionRangeWidgets[attributeName]->setMarkers(m_neuronRangeWidgets[attributeName]->getMarkers());
+            if ( m_attributeLinked[attributeName] && m_connectionContinuousWidgets.contains(attributeName))
+                m_connectionContinuousWidgets[attributeName]->setMarkers(m_neuronContinuousWidgets[attributeName]->getMarkers());
         }
     }
 
@@ -317,31 +393,38 @@ void AttributeWidget::m_neuronColorationChanged(const QString & attributeName)
 
 void AttributeWidget::m_connectionColorationChanged(const QString & attributeName)
 {
-    if (m_connectionFlagWidgets.contains(attributeName))
+    if (m_connectionDiscreteWidgets.contains(attributeName))
     {
+        QMap<QString,QColor> states =  m_connectionDiscreteWidgets[attributeName]->states();
+        m_connectionDiscreteAttributes[attributeName]->attachColoration(states);
         if (m_connectionSidebar->containsTool(m_connectionLinkButton)&&  m_connectionLinkButton->icon().cacheKey() == m_linkedIcon.cacheKey() )
         {
-            if (m_neuronSidebar->containsWidget(attributeName) && m_neuronFlagWidgets.contains(attributeName) && !m_flagAttributeConsistent(attributeName))
-                m_neuronFlagWidgets[attributeName]->setColors(m_connectionFlagWidgets[attributeName]->getOffColor(),m_connectionFlagWidgets[attributeName]->getOnColor());
+            if (m_neuronSidebar->containsWidget(attributeName) && m_neuronDiscreteWidgets.contains(attributeName) && !m_discreteAttributeConsistent(attributeName))
+            {
+                QMap<QString,QColor> states =  m_neuronDiscreteWidgets[attributeName]->states();
+                for (QMap<QString,QColor>::iterator it = states.begin(); it != states.end(); it++)
+                    if (m_neuronDiscreteWidgets[attributeName]->color(it.key()) != m_connectionDiscreteWidgets[attributeName]->color(it.key()))
+                        m_neuronDiscreteWidgets[attributeName]->setState(it.key(),m_connectionDiscreteWidgets[attributeName]->color(it.key()));
+
+            }
 
         }
-        connectionBitColorationChanged(attributeName,m_connectionFlagWidgets[attributeName]->getOffColor(),m_connectionFlagWidgets[attributeName]->getOnColor());
 
     }
     else
     {
-        if(m_connectionRangeWidgets.contains(attributeName))
+        m_connectionContinuousAttributes[attributeName]->attachColoration(m_connectionContinuousWidgets[attributeName]->getData());
+        if(m_connectionContinuousWidgets.contains(attributeName))
         {
-            if ( m_attributeLinked[attributeName] && m_neuronRangeWidgets.contains(attributeName))
-                    m_neuronRangeWidgets[attributeName]->setMarkers(m_connectionRangeWidgets[attributeName]->getMarkers());
+            if ( m_attributeLinked[attributeName] && m_neuronContinuousWidgets.contains(attributeName))
+                    m_neuronContinuousWidgets[attributeName]->setMarkers(m_connectionContinuousWidgets[attributeName]->getMarkers());
 
 
-            connectionRangeColorationChanged(attributeName,m_connectionRangeWidgets[attributeName]->getData(),m_connectionRangeWidgets[attributeName]->getImageSize().width());
         }
         else
         {
-            if ( m_attributeLinked[attributeName] && m_neuronRangeWidgets.contains(attributeName))
-                m_neuronRangeWidgets[attributeName]->setMarkers(m_connectionRangeWidgets[attributeName]->getMarkers());
+            if ( m_attributeLinked[attributeName] && m_neuronContinuousWidgets.contains(attributeName))
+                m_neuronContinuousWidgets[attributeName]->setMarkers(m_connectionContinuousWidgets[attributeName]->getMarkers());
         }
 
     }

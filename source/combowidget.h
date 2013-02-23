@@ -10,35 +10,6 @@
 #include <QComboBox>
 #include <QHBoxLayout>
 
-class LabeledWidget:public QWidget
-{
-    Q_OBJECT
-public:
-    LabeledWidget(const QString & label, QWidget * widget, QWidget * parent =0)
-        :QWidget(parent)
-    {
-        m_layout = new QHBoxLayout();
-        m_layout->setAlignment(Qt::AlignCenter);
-        m_label = new QLabel(label);
-        m_layout->addWidget(m_label);
-        m_widget = widget;
-        m_layout->addWidget(widget);
-        this->setLayout(m_layout);
-    }
-    ~LabeledWidget()
-    {
-
-    }
-
-    QLabel * getLabel() {  return m_label;}
-    QWidget * getWidget(){ return m_widget;}
-private:
-    QHBoxLayout * m_layout;
-    QLabel * m_label;
-    QWidget * m_widget;
-
-};
-
 class ComboWidget : public QWidget
 {
     Q_OBJECT
