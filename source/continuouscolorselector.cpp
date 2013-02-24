@@ -35,9 +35,6 @@ ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
     connect(m_valueLayerContainer,SIGNAL(doubleClicked(Qt::MouseButton,QPoint)),this,SLOT(m_valueLayerDoubleClicked(Qt::MouseButton,QPoint)));
     m_valueLayerContainer->installEventFilter( this );
     m_layout->addWidget(m_valueLayerContainer);
-    m_rangeLayer = NULL;
-    m_markerLayer = NULL;
-    m_valueLayer = NULL;
 
     m_markerHeight = QImage(":/assets/markerWholeTemplate.png").height();
 
@@ -51,8 +48,55 @@ ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
 
     this->setLayout(m_layout);
 
+    m_rangeLayer = new QImage(200,m_markerHeight,QImage::Format_RGB32);
+    m_markerLayer = new QImage(300,m_markerHeight,QImage::Format_ARGB32);
+    m_markerLayer->fill(QColor(0,0,0,0));
+    m_valueLayer = new QImage(300 ,m_markerHeight,QImage::Format_ARGB32);
+    m_valueLayer->fill(QColor(0,0,0,0));
+    m_updateRange();
+    m_updateValueLayerContainer();
+
 
 }
+/*void ContinuousColorSelector::setWidth(int width)
+{
+    QImage * oldImage = m_rangeLayer;
+
+    int imagePosition = width - 100;
+    int imageHeight = m_markerHeight;
+
+    m_rangeLayer = new QImage(imagePosition,imageHeight,QImage::Format_RGB32);
+    if (oldImage != NULL)
+    {
+        for (int y = 0; y < imageHeight; y++)
+            for (int x = 0; x < imagePosition; x++)
+            {
+                if (x < oldImage->width() && y < oldImage->height())
+                    m_rangeLayer->setPixel(x,y,oldImage->pixel(x,y));
+                else
+                    m_rangeLayer->setPixel(x,y,qRgb(0,0,0));
+            }
+        delete oldImage;
+
+    }
+
+    if (m_markerLayer != NULL)
+        delete m_markerLayer;
+    m_markerLayer = new QImage(width,imageHeight,QImage::Format_ARGB32);
+    m_markerLayer->fill(QColor(0,0,0,0));
+
+    for (int i = 0; i < m_markers.size();i++)
+        m_markers[i].setPosition( width * ((m_markers[i].value() - m_lowThreshold) /(m_highThreshold - m_lowThreshold)));
+
+    m_updateRange();
+
+    if (m_valueLayer != NULL)
+        delete m_valueLayer;
+    m_valueLayer = new QImage(width ,m_markerHeight,QImage::Format_ARGB32);
+    m_valueLayer->fill(QColor(0,0,0,0));
+    m_updateValueLayerContainer();
+
+}*/
 void ContinuousColorSelector::m_markerTypeSelected(QString name)
 {
     if (name == "Solid")
@@ -61,19 +105,19 @@ void ContinuousColorSelector::m_markerTypeSelected(QString name)
         m_currentMarkerType = Marker::Divided;
 }
 
-QList<Marker> & ContinuousColorSelector::getMarkers()
+QVector<Marker> & ContinuousColorSelector::getMarkers()
 {
     return m_markers;
 }
 
-void ContinuousColorSelector:: setMarkers( QList<Marker> & markers)
+void ContinuousColorSelector:: setMarkers( QVector<Marker> & markers)
 {
 
     bool markersSame = true;
 
     for (int i = 0 ; i< markers.size();i++)
     {
-        if (i < m_markers.size())
+        if (i < m_markers.count())
         {
             if (markers[i] != m_markers[i])
             {
@@ -121,50 +165,59 @@ void ContinuousColorSelector::setHighThreshold(float threshold)
 
 }
 
-
-void ContinuousColorSelector::setWidth(int width)
+void ContinuousColorSelector::setData(QVector<QColor> data)
 {
-    QImage * oldImage = m_rangeLayer;
+    QVector<QRgb> newData;
+    for (int i = 0; i < data.count(); i ++)
+        newData.append( data[i].rgb());
+    setData(newData);
+}
 
-    int imagePosition = width - 100;
+void ContinuousColorSelector::setData(QVector<QRgb> data)
+{
+
     int imageHeight = m_markerHeight;
 
-    m_rangeLayer = new QImage(imagePosition,imageHeight,QImage::Format_RGB32);
-    if (oldImage != NULL)
-    {
-        for (int y = 0; y < imageHeight; y++)
-            for (int x = 0; x < imagePosition; x++)
-            {
-                if (x < oldImage->width() && y < oldImage->height())
-                    m_rangeLayer->setPixel(x,y,oldImage->pixel(x,y));
-                else
-                    m_rangeLayer->setPixel(x,y,qRgb(0,0,0));
-            }
-        delete oldImage;
-
-    }
+    if (m_rangeLayer != NULL)
+        delete m_rangeLayer;
+    m_rangeLayer = new QImage(data.count(),imageHeight,QImage::Format_RGB32);
+    for (int i = 0; i < imageHeight; i ++)
+        for (int j = 0; j < data.count(); j ++)
+        {
+            QRgb * pixels = (QRgb *)m_rangeLayer->scanLine(i);
+            pixels[j] = data[j];
+        }
 
     if (m_markerLayer != NULL)
         delete m_markerLayer;
-    m_markerLayer = new QImage(width,imageHeight,QImage::Format_ARGB32);
+    m_markerLayer = new QImage(data.count() +  m_rangeLayerPadding,imageHeight,QImage::Format_ARGB32);
     m_markerLayer->fill(QColor(0,0,0,0));
 
-    for (int i = 0; i < m_markers.size();i++)
-        m_markers[i].setPosition( width * ((m_markers[i].value() - m_lowThreshold) /(m_highThreshold - m_lowThreshold)));
+
+    m_markers.clear();
+    float valStep = (m_highThreshold - m_lowThreshold)/2.0;
+    int posStep = data.count() /2;
+    for (int i = 0; i < 3;i++)
+    {
+        Marker marker;
+        int index = qMin(posStep *i,data.count() -1);
+        marker.setColor(QColor::fromRgb(data[index]));
+        marker.setValue( qMin(m_lowThreshold + (valStep*i),m_highThreshold));
+        marker.setPosition( index);
+        m_markers.append(marker);
+    }
 
     m_updateRange();
 
     if (m_valueLayer != NULL)
         delete m_valueLayer;
-    m_valueLayer = new QImage(width ,m_markerHeight,QImage::Format_ARGB32);
+    m_valueLayer = new QImage(data.count() +  m_rangeLayerPadding,m_markerHeight,QImage::Format_ARGB32);
     m_valueLayer->fill(QColor(0,0,0,0));
+
     m_updateValueLayerContainer();
 
 }
-QSize ContinuousColorSelector::getImageSize()
-{
-    return m_rangeLayer->size();
-}
+
 
 
 void ContinuousColorSelector::addMarker(float value, QColor color)
@@ -172,12 +225,12 @@ void ContinuousColorSelector::addMarker(float value, QColor color)
 
     int position =  ((value - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
     int toRemove =-1;
-    for (int i = 0; i < m_markers.size();i++)
+    for (int i = 0; i < m_markers.count();i++)
         if (qAbs(m_markers[i].value() - value) < 0.01 )
             toRemove = i;
 
     if (toRemove != -1)
-        m_markers.removeAt(toRemove);
+        m_markers.remove(toRemove);
 
     Marker marker;
     marker.setColor(color);
@@ -194,12 +247,12 @@ void ContinuousColorSelector::addMarker(float value, QColor leftColor, QColor ri
 
     int position =  ((value - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width();
     int toRemove =-1;
-    for (int i = 0; i < m_markers.size();i++)
+    for (int i = 0; i < m_markers.count();i++)
         if (qAbs(m_markers[i].value() - value) < 0.01 )
             toRemove = i;
 
     if (toRemove != -1)
-        m_markers.removeAt(toRemove);
+        m_markers.remove(toRemove);
     Marker marker;
     marker.setLeftColor(leftColor);
     marker.setRightColor(rightColor);
@@ -239,7 +292,7 @@ QVector<QRgb> ContinuousColorSelector::getData()
 {
     QVector<QRgb> data;
     QRgb * pixels =  (QRgb *)m_rangeLayer->scanLine(0);
-    for (int i= 0; i < width(); i ++)
+    for (int i= 0; i < m_rangeLayer->width(); i ++)
         data.append(pixels[i]);
     return data;
 }
@@ -248,7 +301,7 @@ QVector<QRgb> ContinuousColorSelector::getData()
 void  ContinuousColorSelector::m_updateRange()
 {
 
-    if (m_markers.size() > 0)
+    if (m_markers.count() > 0)
     {
         Marker selected;
         if (m_selectedMarker != NO_MARKER)
@@ -259,7 +312,7 @@ void  ContinuousColorSelector::m_updateRange()
             m_fillRangeLayer(m_lowThreshold,m_markers[i].value(),m_markers[0].leftColor(),m_markers[0].leftColor());
 
 
-        for (i = 1; i < m_markers.size(); i ++)
+        for (i = 1; i < m_markers.count(); i ++)
             m_fillRangeLayer(m_markers[i-1].value(),m_markers[i].value(),m_markers[i-1].rightColor(),m_markers[i].leftColor());
 
 
@@ -269,8 +322,8 @@ void  ContinuousColorSelector::m_updateRange()
         if (m_selectedMarker != NO_MARKER)
             m_selectedMarker = m_markers.indexOf(selected);
     }
-    else
-        m_fillRangeLayer(m_lowThreshold,m_highThreshold,QColor(0,0,0),QColor(0,0,0));
+    //else
+        //m_fillRangeLayer(m_lowThreshold,m_highThreshold,QColor(0,0,0),QColor(0,0,0));
 
 
     m_markerLayer->fill(QColor(0,0,0,0));
@@ -282,7 +335,7 @@ void  ContinuousColorSelector::m_updateRange()
     if (m_selectedMarker != NO_MARKER)
         selected = m_markers[m_selectedMarker];
 
-    for (int i =0; i < m_markers.size(); i ++)
+    for (int i =0; i < m_markers.count(); i ++)
     {
         if (m_selectedMarker != NO_MARKER && m_markers[i] == selected)
             continue;
@@ -299,7 +352,7 @@ void ContinuousColorSelector::m_updateValueLayerContainer()
     QPainter painter(m_valueLayer);
 
     QPen pen= painter.pen();
-    for (int i =0; i < m_markers.size(); i ++)
+    for (int i =0; i < m_markers.count(); i ++)
     {
         if (m_selectedMarker !=NO_MARKER)
         {
@@ -396,7 +449,7 @@ void ContinuousColorSelector::m_valueLayerDoubleClicked(Qt::MouseButton button,Q
 
             if (qAbs(m_markers[selectedMarker].value() - newVal) > 0.01 )
             {
-                for (int i = 0; i < m_markers.size();i++)
+                for (int i = 0; i < m_markers.count();i++)
                     if (qAbs(m_markers[i].value() - newVal) < 0.01 )
                     {
 
@@ -423,7 +476,7 @@ void ContinuousColorSelector::m_valueLayerDoubleClicked(Qt::MouseButton button,Q
                     m_markers[selectedMarker].setPosition(  ((newVal - m_lowThreshold) / (m_highThreshold - m_lowThreshold) )* m_rangeLayer->width() );
 
                     if (toRemove >=0)
-                        m_markers.removeAt(toRemove);
+                        m_markers.remove(0);
                     qSort(m_markers.begin(),m_markers.end());
 
                     m_updateRange();
@@ -495,7 +548,7 @@ bool ContinuousColorSelector::eventFilter( QObject* watched, QEvent* event )
                     val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
                 }
 
-                if(m_selectedMarker < m_markers.size() -1 && m_markers[m_selectedMarker+1].position() ==imagePosition)
+                if(m_selectedMarker < m_markers.count() -1 && m_markers[m_selectedMarker+1].position() ==imagePosition)
                 {
                     imagePosition -=1;
                     val = (((float)(imagePosition)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
@@ -518,7 +571,7 @@ bool ContinuousColorSelector::eventFilter( QObject* watched, QEvent* event )
             if ( m_selectedMarker != NO_MARKER)
             {
                 if ( m_selectedMarker != NO_MARKER)
-                    m_markers.removeAt(m_selectedMarker);
+                    m_markers.remove(m_selectedMarker);
                 m_selectedMarker = NO_MARKER;
                 m_hoveredMarker = NO_MARKER;
                 m_updateRange();
@@ -566,7 +619,7 @@ bool ContinuousColorSelector::eventFilter( QObject* watched, QEvent* event )
                     val = qMin(qMax(val,m_lowThreshold),m_highThreshold);
                 }
 
-                if(m_selectedMarker < m_markers.size() -1 && m_markers[m_selectedMarker+1].position() ==imagePosition)
+                if(m_selectedMarker < m_markers.count() -1 && m_markers[m_selectedMarker+1].position() ==imagePosition)
                 {
                     imagePosition -=1;
                     val = (((float)(imagePosition)/(float)m_rangeLayer->width()) *(m_highThreshold - m_lowThreshold)) + m_lowThreshold;
@@ -588,8 +641,8 @@ bool ContinuousColorSelector::eventFilter( QObject* watched, QEvent* event )
         {
             if ( m_selectedMarker != NO_MARKER )
             {
-                if ( m_selectedMarker != 0 && m_selectedMarker != m_markers.size()-1)
-                    m_markers.removeAt(m_selectedMarker);
+                if ( m_selectedMarker != 0 && m_selectedMarker != m_markers.count()-1)
+                    m_markers.remove(m_selectedMarker);
                 m_selectedMarker = NO_MARKER;
                 m_updateRange();
                 m_updateValueLayerContainer();
@@ -611,7 +664,7 @@ bool ContinuousColorSelector::eventFilter( QObject* watched, QEvent* event )
 int ContinuousColorSelector::m_overValue(QPoint pos)
 {
     int position = pos.x();
-    for (int i = 0; i < m_markers.size(); i ++)
+    for (int i = 0; i < m_markers.count(); i ++)
     {
         QString text = QString::number(m_markers[i].value());
         QSize size = QFontMetrics(text).size(Qt::TextSingleLine,text);
@@ -628,7 +681,7 @@ int ContinuousColorSelector::m_overValue(QPoint pos)
 
 int ContinuousColorSelector::m_overMarker(QPoint pos)
 {
-    for (int i = 0; i < m_markers.size(); i ++)
+    for (int i = 0; i < m_markers.count(); i ++)
     {
         int imagePos = (m_markerLayer->height() - m_markers[i].image().height());
         int relativeHeight = pos.y() - imagePos;
@@ -645,4 +698,6 @@ int ContinuousColorSelector::m_overMarker(QPoint pos)
     return NO_MARKER;
 }
 
+float ContinuousColorSelector::lowThreshold(){return m_lowThreshold;}
+float ContinuousColorSelector::highThreshold(){return m_highThreshold;}
 

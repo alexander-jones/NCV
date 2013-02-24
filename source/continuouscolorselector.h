@@ -175,16 +175,18 @@ public:
     explicit ContinuousColorSelector(QWidget *parent = NULL);
     void setLowThreshold(float threshold);
     void setHighThreshold(float threshold);
-    void setWidth(int width);
-    QSize getImageSize();
     QVector<QRgb> getData();
-    QList<Marker> & getMarkers();
+    QVector<Marker> & getMarkers();
+    float lowThreshold();
+    float highThreshold();
 
 signals:
     void colorRangeChanged();
 
 public slots:
-    void setMarkers( QList<Marker> &markers) ;
+    void setData(QVector<QColor> data);
+    void setData(QVector<QRgb> data);
+    void setMarkers( QVector<Marker> &markers) ;
     void addMarker(float value, QColor color);
     void addMarker(float value, QColor leftColor, QColor rightColor);
 
@@ -217,7 +219,7 @@ private:
     QIcon m_solidMarkerIcon,m_dividedMarkerIcon;
     ImageContainer  *m_markerRangeContainer, * m_valueLayerContainer;
     QVBoxLayout * m_layout;
-    QList<Marker> m_markers;
+    QVector<Marker> m_markers;
     bool m_leftMouseDown, m_rightMouseDown, m_isEditable;
     float m_lowThreshold, m_highThreshold;
     int m_rangeLayerPadding;

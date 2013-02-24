@@ -7,6 +7,7 @@
 #include "distributewidget.h"
 //#include "clusterEditor.h"
 #include <QwwConfigWidget>
+#include "ncvbuildwidget.h"
 
 namespace Ui {
 class MainWindow;
@@ -27,7 +28,7 @@ private:
     Ui::MainWindow *ui;
     QVBoxLayout * m_layout;
     QwwConfigWidget * m_tabWidget;
-    QWidget * m_buildWidget;
+    NCVBuildWidget * m_buildWidget;
     NCVWidget * m_visualizationWidget;
     //QWidget * m_buildWidget;
     DistributeWidget  * m_distributeWidget;

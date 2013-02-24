@@ -23,7 +23,6 @@ public:
     void resolve();
 
 private:
-
     NCVElementType m_type;
     QGLShaderProgram m_program;
     GLfloat m_minValue, m_maxValue;

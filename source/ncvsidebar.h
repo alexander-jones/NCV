@@ -14,32 +14,33 @@
 #include "combowidget.h"
 #include "qlabel.h"
 #include "qgridlayout.h"
-#include "attributewidget.h"
 #include <QwwTaskPanel>
+#include "ncvcore.h"
 
 
-class ManagementSidebar : public QTabWidget
+class NCVSidebar : public QTabWidget
 {
     Q_OBJECT
 public:
-    explicit ManagementSidebar(QWidget *tool = 0);
-    ~ManagementSidebar();
-    void addChildren(QTreeWidgetItem* item,QString filePath);
-    AttributeWidget * attributeWidget();
+    explicit NCVSidebar(QWidget *tool = 0);
+    ~NCVSidebar();
+
+    void setTabWidget(const QString& string, NCVElementType element, QWidget * widget,bool show = false);
+    void addTab(const QIcon & icon, const QString & string);
+    void addTab(const QString & string);
+
 
 signals:
-    
-public slots:
-    void setFPS(float framesPerSecond);
+
     
 private:
+    void m_addChildren(QTreeWidgetItem* item,QString filePath);
     void m_buildPresentationTab();
     void m_buildOrganizationTab();
 
     QLabel *m_framesPerSecond;
-    AttributeWidget * m_attributeWidget;
-    QWidget * m_groupDisplayWidget;
-    QwwTaskPanel * m_presentationTaskPanel, * m_organizationTaskPanel;
+    QWidget * m_emptyWidget;
+    QMap<QString, QwwTaskPanel *>m_taskPanels;
 };
 
 #endif // GroupingSidebar_H

@@ -33,14 +33,12 @@ SOURCES += \
     main.cpp \
     qglxbuffer.cpp \
     ncvwidget.cpp \
-    managementSidebar.cpp \
     spinbox3d.cpp \
     qglxtexture1d.cpp \
     qglxtexture3d.cpp \
     qglxtexture2d.cpp \
     qglxtexture.cpp \
     qglxframebufferobject.cpp \
-    attributewidget.cpp \
     combowidget.cpp \
     qcustomplot.cpp \
     orientationbutton.cpp \
@@ -52,7 +50,9 @@ SOURCES += \
     ncvconnectionset.cpp \
     ncvcontinuousattribute.cpp \
     ncvdiscreteattribute.cpp \
-    ncvcanvas.cpp
+    ncvcanvas.cpp \
+    ncvsidebar.cpp \
+    ncvbuildwidget.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -67,9 +67,7 @@ HEADERS  += \
     qglxtexture3d.h \
     qglxtexture2d.h \
     qglxframebufferobject.h \
-    attributewidget.h \
     combowidget.h \
-    managementSidebar.h \
     qcustomplot.h \
     orientationbutton.h \
     distributewidget.h \
@@ -81,7 +79,9 @@ HEADERS  += \
     ncvconnectionset.h \
     ncvcontinuousattribute.h \
     ncvdiscreteattribute.h \
-    ncvcanvas.h
+    ncvcanvas.h \
+    ncvsidebar.h \
+    ncvbuildwidget.h
 
 FORMS    += \
     mainwindow.ui

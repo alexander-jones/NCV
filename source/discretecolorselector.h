@@ -58,6 +58,7 @@ signals:
 public slots:
     void addState(QString name, QColor color);
     void setState(QString name, QColor color);
+    void setStates(QMap<QString,QColor> states);
     void removeState(QString name);
 
 private slots:

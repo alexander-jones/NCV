@@ -57,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //m_tabWidget->setTabPosition(QTabWidget::West);
 
-    m_buildWidget = new QWidget();
+    m_buildWidget = new NCVBuildWidget();
     m_tabWidget->addGroup(m_buildWidget,QIcon(":/assets/setupIcon.png"),"Build");
 
     m_distributeWidget = new DistributeWidget();
@@ -65,7 +65,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_visualizationWidget = new NCVWidget();
     m_tabWidget->addGroup(m_visualizationWidget,QIcon(":/assets/visualizationIcon.png"),"Analyze");
+
+    connect(m_buildWidget,SIGNAL(neuronsFinalized(NCVNeuronSet*)),m_visualizationWidget,SLOT(setNeurons(NCVNeuronSet*)));
+    connect(m_buildWidget,SIGNAL(connectionsFinalized(NCVConnectionSet*)),m_visualizationWidget,SLOT(setConnections(NCVConnectionSet*)));
     this->setCentralWidget(m_tabWidget);
+
+
+    m_buildWidget->createNetwork(50000,50000,QVector3D(50000,50000,50000)); // temporary (see buildwidget)
+
+
 }
 
 void MainWindow::m_updateTimeScale(int value)

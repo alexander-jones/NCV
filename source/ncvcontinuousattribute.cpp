@@ -15,7 +15,7 @@ NCVContinuousAttribute::NCVContinuousAttribute( NCVElementType type, GLfloat min
 void NCVContinuousAttribute::attachData(QVector<GLfloat> data)
 {
     m_data = data;
-    m_dataDirty = true; //titties
+    m_dataDirty = true;
 }
 
 void NCVContinuousAttribute::attachColoration(QVector< QRgb> data)

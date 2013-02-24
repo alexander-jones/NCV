@@ -35,6 +35,16 @@ void DiscreteColorSelector::addState(QString name, QColor color)
 
 }
 
+void DiscreteColorSelector::setStates(QMap<QString,QColor> states)
+{
+    for (QMap<QString, QColor>::iterator it = states.begin(); it != states.end(); it ++)
+    {
+        m_colorButtons[it.key()]->setColor(it.value());
+        m_states[it.key()] = it.value();
+    }
+    changed();
+}
+
 void DiscreteColorSelector::setState(QString name, QColor color)
 {
     m_colorButtons[name]->setColor(color);
