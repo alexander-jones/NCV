@@ -14,22 +14,23 @@ struct NeuronConnection
 
     GLuint inNeuron,outNeuron;
 };
-class NCVConnectionSet: public NCVElementSet
+class NCVConnectionSet:QObject
 {
 
     Q_OBJECT
 public:
 
     NCVConnectionSet(NCVNeuronSet * neurons,QVector<NeuronConnection> connections);
-
-
     void bind(QGLXCamera camera,bool deselected = false);
     void bindSilhouettes(QGLXCamera camera);
     int count();
-    void draw();
+	void draw();
+	bool dirty();
     void drawSubset(int startElement, int count);
+    void resolve();
     void release();
     void releaseSilhouettes();
+	NCVNeuronSet * neurons();
     QMap<QString,NCVAttribute *> attributes();
 
 public slots:
@@ -39,12 +40,11 @@ public slots:
 
 
 private:
-    void m_resolve();
 
     int m_count;
     QGLXBuffer m_neuronIdBuffer, m_idBuffer;
     QMatrix4x4 m_scale;
-    bool m_initialized;
+    bool m_initialized,m_dirty;
     QMap<QString,NCVAttribute *> m_attributes;
     NCVAttribute * m_currentAttribute;
     QVector<NeuronConnection> m_connections;

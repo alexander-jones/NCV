@@ -14,7 +14,7 @@ CONFIG+= wwwidgets
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lGLEW -lGLU   #/home/alex/Dropbox/brain-viz/source/lib/libslugUtil.so /home/alex/Dropbox/brain-viz/source/lib/libslugSpec.so /home/alex/Dropbox/brain-viz/source/lib/libslugSim.so
+    LIBS +=  -lGLEW -lGLU  -lslugUtil -lslugSpec -lslugSim
 }
 
 #windows specific settings
@@ -42,7 +42,6 @@ SOURCES += \
     combowidget.cpp \
     qcustomplot.cpp \
     orientationbutton.cpp \
-    distributewidget.cpp \
     qglxpainter.cpp \
     discretecolorselector.cpp \
     continuouscolorselector.cpp \
@@ -52,7 +51,11 @@ SOURCES += \
     ncvdiscreteattribute.cpp \
     ncvcanvas.cpp \
     ncvsidebar.cpp \
-    ncvbuildwidget.cpp
+    ncvbuildwidget.cpp \
+    ncvgroupingset.cpp \
+    distributewidget.cpp \
+    slidingstackedwidget.cpp \
+    ncsclustereditor.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -70,7 +73,6 @@ HEADERS  += \
     combowidget.h \
     qcustomplot.h \
     orientationbutton.h \
-    distributewidget.h \
     qglxpainter.h \
     continuouscolorselector.h \
     discretecolorselector.h \
@@ -81,7 +83,12 @@ HEADERS  += \
     ncvdiscreteattribute.h \
     ncvcanvas.h \
     ncvsidebar.h \
-    ncvbuildwidget.h
+    ncvbuildwidget.h \
+    ncvgroupingset.h \
+    distributewidget.h \
+    slidingstackedwidget.h \
+    colorbutton.h \
+    ncsclustereditor.h
 
 FORMS    += \
     mainwindow.ui

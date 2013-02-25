@@ -1,13 +1,13 @@
 #include "ncvconnectionset.h"
 
 NCVConnectionSet::NCVConnectionSet(NCVNeuronSet *neurons,QVector<NeuronConnection> connections)
-    :NCVElementSet()
 {
     m_neurons = neurons;
     m_connections = connections;
     m_count = connections.count();
 
     m_initialized = false;
+	m_dirty = false;
 
     m_scale.scale((m_neurons->bounds().size().length()/m_neurons->count()) * 5.0f );
 }
@@ -15,6 +15,7 @@ NCVConnectionSet::NCVConnectionSet(NCVNeuronSet *neurons,QVector<NeuronConnectio
 
 void NCVConnectionSet::addAttribute(QString name,NCVAttribute * attribute)
 {
+	m_dirty = true;
     m_attributes[name] = attribute;
     if (m_attributes.count() ==1)
         m_currentAttribute = attribute;
@@ -22,15 +23,28 @@ void NCVConnectionSet::addAttribute(QString name,NCVAttribute * attribute)
 
 void NCVConnectionSet::setCurrentAttribute(QString name)
 {
+	m_dirty = true;
     if (m_attributes.contains(name))
         m_currentAttribute = m_attributes[name];
 }
 void NCVConnectionSet::removeAttribute(QString name)
 {
+	m_dirty = true;
     m_attributes.remove(name);
 }
 
+bool NCVConnectionSet::dirty()
+{
+	if (m_dirty)
+        return true;
+    else if(m_currentAttribute != NULL)
+        if (m_currentAttribute->dirty())
+                return true;
+		
 
+	return false;
+
+}
 QMap<QString,NCVAttribute *> NCVConnectionSet::attributes()
 {
     return m_attributes;
@@ -41,12 +55,11 @@ void NCVConnectionSet::bind(QGLXCamera camera,bool deselected )
 
     if (m_currentAttribute != NULL)
     {
-        m_resolve();
         m_currentAttribute->bind(camera);
         QGLShaderProgram * program = m_currentAttribute->program();
 
         glActiveTexture(GL_TEXTURE2);
-        m_neurons->m_positionBuffer.bind();
+        m_neurons->positionBuffer().bind();
         program->setUniformValue("Inst_Translation", 2);
 
         program->setUniformValue("Deselected", (int)deselected);
@@ -69,7 +82,6 @@ void NCVConnectionSet::bind(QGLXCamera camera,bool deselected )
 void NCVConnectionSet::bindSilhouettes(QGLXCamera camera)
 {
 
-    m_resolve();
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glEnable(GL_POLYGON_OFFSET_LINE);
     glPolygonOffset(1,1.5);
@@ -79,7 +91,7 @@ void NCVConnectionSet::bindSilhouettes(QGLXCamera camera)
     // perform silhouetting
     m_silhouetteProgram.bind();
     glActiveTexture(GL_TEXTURE0);
-    m_neurons->m_positionBuffer.bind();
+    m_neurons->positionBuffer().bind();
     m_silhouetteProgram.setUniformValue("Inst_Translation", 0);
 
     m_silhouetteProgram.setUniformValue("WVP",camera.projection() * camera.view());
@@ -94,8 +106,6 @@ void NCVConnectionSet::bindSilhouettes(QGLXCamera camera)
     m_silhouetteProgram.enableAttributeArray( "Inst_ID");
     m_silhouetteProgram.setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
     glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Inst_ID"), 0);
-
-
 
 
     m_silhouetteProgram.setUniformValue("Scale",m_scale);
@@ -117,7 +127,7 @@ void NCVConnectionSet::release()
         program->disableAttributeArray( "Inst_ID" );
         m_neuronIdBuffer.release();
         m_idBuffer.release();
-        m_neurons->m_positionBuffer.release();
+        m_neurons->positionBuffer().release();
         m_currentAttribute->release();
     }
 
@@ -134,9 +144,14 @@ void NCVConnectionSet::draw()
 
 void NCVConnectionSet::drawSubset(int startElement, int count)
 {
+	m_dirty = false;
     glDrawArrays(GL_LINES,startElement * 2,count  * 2);
 }
 
+NCVNeuronSet * NCVConnectionSet::neurons()
+{
+	return m_neurons;
+}
 void NCVConnectionSet::releaseSilhouettes()
 {
 
@@ -144,7 +159,7 @@ void NCVConnectionSet::releaseSilhouettes()
     m_silhouetteProgram.disableAttributeArray( "Inst_ID" );
     m_neuronIdBuffer.release();
     m_idBuffer.release();
-    m_neurons->m_positionBuffer.release();
+    m_neurons->positionBuffer().release();
     m_silhouetteProgram.release();
 
     glDisable(GL_BLEND);
@@ -153,7 +168,7 @@ void NCVConnectionSet::releaseSilhouettes()
 }
 
 
-void NCVConnectionSet::m_resolve()
+void NCVConnectionSet::resolve()
 {
     if (!m_initialized)
     {
@@ -182,4 +197,6 @@ void NCVConnectionSet::m_resolve()
 
         m_initialized = true;
     }
+    for(QMap<QString,NCVAttribute *>::iterator it = m_attributes.begin(); it != m_attributes.end(); it++)
+        it.value()->resolve();
 }

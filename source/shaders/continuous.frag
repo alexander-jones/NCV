@@ -17,7 +17,7 @@ flat out uint PickData;
 
 void main( void )
 {
-    float samplePoint = (Value - MinimumValue)/(MaximumValue - MinimumValue);
+    float samplePoint = min(1.0,max(0.001,(Value - MinimumValue)/(MaximumValue - MinimumValue)));
 
     vec3 color = texture(RangeMap,samplePoint).rgb;
     if (Deselected > 0 )

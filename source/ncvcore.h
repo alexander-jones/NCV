@@ -3,14 +3,14 @@
 
 #include "qglxbuffer.h"
 #include "qglxcamera.h"
+#include "qglxboundingbox.h"
 
 
 enum NCVElementType
 {
     Neuron,
     Connection,
-    Column,
-    Layer
+    Grouping
 };
 enum NCVAttributeType
 {
@@ -32,31 +32,33 @@ public:
     virtual QGLShaderProgram * program(){return NULL;}
     virtual void bind(QGLXCamera camera){Q_UNUSED(camera)}
     virtual void release(){}
+	virtual bool dirty(){return false;}
     virtual NCVElementType elementType(){return Neuron;}
     virtual NCVAttributeType type(){return Continuous;}
     virtual void resolve(){}
 };
 
-class NCVElementSet: public QObject
+struct NCVConvexHull
 {
-    Q_OBJECT
-public:
-    NCVElementSet(){}
+	NCVConvexHull(){}
+	NCVConvexHull(GLuint id,Range hullIndexRange,QVector<Range> neuronRanges,QVector<Range> connectionRanges, QGLXBoundingBox bounds)
+	{
+		this->id = id;
+		this->hullIndexRange = hullIndexRange;
+		this->neuronRanges = neuronRanges;
+		this->connectionRanges = connectionRanges;
+		this->bounds = bounds;
+	}
 
-    virtual void bind(QGLXCamera camera){Q_UNUSED(camera)}
-    virtual void bindSilhouettes(QGLXCamera camera){Q_UNUSED(camera)}
-    virtual int count(){return 0;}
-    virtual void draw(){}
-    virtual void drawSubset(int, int){}
-    virtual void release(){}
-    virtual void releaseSilhouettes(){}
-    virtual QMap<QString,NCVAttribute *> attributes(){return QMap<QString,NCVAttribute *>();}
-public slots:
-    virtual void addAttribute(QString , NCVAttribute * ){}
-    virtual void setCurrentAttribute(QString, NCVAttribute * ){}
-    virtual void removeAttribute(QString , NCVAttribute * ){}
-
-
+	bool show;
+	QGLXBoundingBox bounds;
+	QVector<Range> neuronRanges;
+	QVector<Range> connectionRanges;
+	Range hullIndexRange;
+	QVector<NCVConvexHull> children;
+	GLuint id;
+    // NCVElement type elementType     // could help in differentiating Columns from Layers without using multiple NCVGroupingSets
 };
+
 
 #endif // NCVCORE_H

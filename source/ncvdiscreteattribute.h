@@ -15,7 +15,8 @@ public:
     QVector<QString> stateValues(int startElement, int count);
     QGLShaderProgram * program();
     void bind(QGLXCamera camera);
-    void release();
+	void release();
+	bool dirty();
     NCVElementType elementType();
     QMap<QString,QColor> coloration();
     NCVAttributeType type(){return Discrete;}
@@ -25,7 +26,7 @@ private:
 
     NCVElementType m_type;
     QGLShaderProgram m_program;
-    bool m_dataDirty,m_colorationDirty, m_shaderDirty;
+    bool m_dataDirty,m_colorationDirty, m_shaderDirty,m_renderedNewData;
     int m_bitsPerValue, m_bitsVal;
     QVector<GLubyte> m_data;
     QVector<QString> m_states;

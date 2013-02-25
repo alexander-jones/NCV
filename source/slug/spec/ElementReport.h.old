@@ -1,0 +1,83 @@
+#pragma once
+#include <slug/spec/Element.h>
+#include <slug/spec/Report.h>
+#include <slug/util/Unique.h>
+
+namespace slug
+{
+
+namespace spec
+{
+
+/**
+	Reports that report on a set of elements.
+*/
+struct ElementReport : public Report
+{
+	///Returns the appropriate level ID for elements
+	virtual unsigned int elementID(const Element* element) const = 0;
+
+	///Returns the ID of the object that would hold data for this element
+	virtual util::Unique sourceID(const Element* element) const = 0;
+
+	///List of elements to report on
+	ElementList elements;
+
+	///Write out data specific to this classification of report
+	virtual bool write(util::OutputStream& bs);
+
+	///Readies a report after all elements have been distributed
+	virtual bool finalize();
+};
+
+/**
+	Reports on element data stored at the plugin level.
+*/
+struct PluginElementReport : public ElementReport
+{
+	///Returns the appropriate level ID for elements
+	virtual unsigned int elementID(const Element* element) const;
+
+	///Returns the ID of the object that would hold data for this element
+	virtual util::Unique sourceID(const Element* element) const;
+};
+
+/**
+	Reports on element data stored at the device level.
+*/
+struct DeviceElementReport : public ElementReport
+{
+	///Returns the appropriate level ID for elements
+	virtual unsigned int elementID(const Element* element) const;
+
+	///Returns the ID of the object that would hold data for this element
+	virtual util::Unique sourceID(const Element* element) const;
+};
+
+/**
+	Reports on element data stored at the machine level.
+*/
+struct MachineElementReport : public ElementReport
+{
+	///Returns the appropriate level ID for elements
+	virtual unsigned int elementID(const Element* element) const;
+
+	///Returns the ID of the object that would hold data for this element
+	virtual util::Unique sourceID(const Element* element) const;
+};
+
+/**
+	Reports on element data stored at the global level.
+*/
+struct GlobalElementReport : public ElementReport
+{
+	///Returns the appropriate level ID for elements
+	virtual unsigned int elementID(const Element* element) const;
+
+	///Returns the ID of the object that would hold data for this element
+	virtual util::Unique sourceID(const Element* element) const;
+};
+} //namespace spec
+
+} //namespace slug
+

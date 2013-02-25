@@ -9,6 +9,7 @@ NCVContinuousAttribute::NCVContinuousAttribute( NCVElementType type, GLfloat min
     m_minValue = minValue;
     m_maxValue = maxValue;
     m_shaderDirty = true;
+	m_renderedNewData = true;
     m_type = type;
 
 }
@@ -40,6 +41,12 @@ void NCVContinuousAttribute::attachColoration(QVector< QColor> data)
     m_colorationDirty = true;
 }
 
+
+
+bool NCVContinuousAttribute::dirty()
+{
+    return !m_renderedNewData;
+}
 QGLShaderProgram * NCVContinuousAttribute::program()
 {
     return &m_program;
@@ -74,6 +81,7 @@ void NCVContinuousAttribute::bind(QGLXCamera camera)
 {
     resolve();
 
+	m_renderedNewData = true;
     m_program.bind();
 
 
@@ -95,7 +103,7 @@ void NCVContinuousAttribute::bind(QGLXCamera camera)
 }
 void NCVContinuousAttribute::release()
 {
-    m_colorTexture.release(); //Ass
+    m_colorTexture.release();
     m_buffer.release();
     m_program.release();
 }
@@ -130,11 +138,12 @@ void NCVContinuousAttribute::resolve()
         m_buffer.allocate(&m_data[0],componentSize * m_data.count(),textureFormat);
         m_buffer.release();
         m_dataDirty = false;
+        m_renderedNewData = false;
     }
     if (m_colorationDirty)
     {
 
-        if (!m_colorTexture.isCreated()) //Alex is horrible
+        if (!m_colorTexture.isCreated())
             m_colorTexture.create();
         m_colorTexture.bind();
         m_colorTexture.allocate(m_colorationData.count()  ,GL_RGB32F,&m_colorationData[0]);
@@ -144,5 +153,6 @@ void NCVContinuousAttribute::resolve()
         m_colorTexture.setWrapFunction(QGLXTexture1D::Clamp);
         m_colorTexture.release();
         m_colorationDirty = false;
+        m_renderedNewData = false;
     }
 }

@@ -19,14 +19,15 @@ public:
     GLfloat maxValue();
     QVector<QColor> coloration();
     NCVAttributeType type(){return Continuous;}
-    QMap<QString,NCVAttribute *> attributes();
+	QMap<QString,NCVAttribute *> attributes();
+	bool dirty();
     void resolve();
 
 private:
     NCVElementType m_type;
     QGLShaderProgram m_program;
     GLfloat m_minValue, m_maxValue;
-    bool m_dataDirty,m_colorationDirty, m_shaderDirty;
+    bool m_dataDirty,m_colorationDirty, m_shaderDirty,m_renderedNewData;
     QVector<GLfloat> m_data;
     QVector<QColor> m_coloration;
     QVector<QVector3D > m_colorationData;

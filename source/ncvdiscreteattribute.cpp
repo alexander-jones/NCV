@@ -8,9 +8,15 @@ NCVDiscreteAttribute::NCVDiscreteAttribute(NCVElementType type, QVector<QString>
     m_dataDirty = false;
     m_colorationDirty = false;
     m_shaderDirty = true;
+	m_renderedNewData = true;
     m_states = states;
     m_type =type;
 
+}
+
+bool NCVDiscreteAttribute::dirty()
+{
+    return !m_renderedNewData;
 }
 void NCVDiscreteAttribute::attachData(QVector<GLubyte> data, int bitsPerValue )
 {
@@ -67,6 +73,7 @@ void NCVDiscreteAttribute::bind(QGLXCamera camera)
 {
     resolve();
 
+    m_renderedNewData = true;
     m_program.bind();
 
 
@@ -158,6 +165,7 @@ void NCVDiscreteAttribute::resolve()
         m_buffer.allocate(&m_data[0],componentSize * m_data.count(),textureFormat);
         m_buffer.release();
         m_dataDirty = false;
+        m_renderedNewData = false;
     }
     if (m_colorationDirty)
     {
@@ -171,5 +179,6 @@ void NCVDiscreteAttribute::resolve()
         m_colorBuffer.allocate(&m_colorationData[0],componentSize * 3 * m_colorationData.count(),textureFormat);
         m_colorBuffer.release();
         m_colorationDirty = false;
+        m_renderedNewData = false;
     }
 }

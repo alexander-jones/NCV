@@ -78,7 +78,7 @@ private:
     void m_drawLegend();
 
     QGLXPainter m_painter;
-    bool m_renderOnlySelection;
+    bool m_renderOnlySelection, m_renderDirty;
     QTime m_timer, m_idleTimer;
     GLfloat m_legendShowTime;
     NCVNeuronSet * m_neurons;

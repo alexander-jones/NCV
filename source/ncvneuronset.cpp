@@ -1,7 +1,6 @@
 #include "ncvneuronset.h"
 
 NCVNeuronSet::NCVNeuronSet(QVector<QVector3D> positions)
-    :NCVElementSet()
 {
     m_currentAttribute = NULL;
     m_positions = positions;
@@ -38,15 +37,28 @@ NCVNeuronSet::NCVNeuronSet(QVector<QVector3D> positions)
 
     m_positionBuffer = QGLXBuffer(QGLXBuffer::TextureBuffer);
     m_initialized = false;
+    m_dirty = false;
 }
 
 
+bool NCVNeuronSet::dirty()
+{
+	if (m_dirty)
+		return true;
+    else if(m_currentAttribute != NULL)
+        if (m_currentAttribute->dirty())
+                return true;
+	return false;
+
+}
+QGLXBuffer NCVNeuronSet::positionBuffer()
+{
+	return m_positionBuffer;
+}
 void NCVNeuronSet::bind(QGLXCamera camera,bool deselected)
 {
     if (m_currentAttribute != NULL)
     {
-        m_resolve();
-
         m_currentAttribute->bind(camera);
 
         QGLShaderProgram * program = m_currentAttribute->program();
@@ -80,7 +92,6 @@ void NCVNeuronSet::bind(QGLXCamera camera,bool deselected)
 }
 void NCVNeuronSet::bindSilhouettes(QGLXCamera camera)
 {
-    m_resolve();
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glEnable(GL_POLYGON_OFFSET_LINE);
     glPolygonOffset(1,1.5);
@@ -178,16 +189,22 @@ void NCVNeuronSet::addAttribute(QString name,NCVAttribute * attribute)
     m_attributes[name] = attribute;
     if (m_attributes.count() ==1)
         m_currentAttribute = attribute;
+
+	m_dirty = true;
 }
 
 void NCVNeuronSet::setCurrentAttribute(QString name)
 {
     if (m_attributes.contains(name))
         m_currentAttribute = m_attributes[name];
+
+	m_dirty = true;
 }
 void NCVNeuronSet::removeAttribute(QString name)
 {
     m_attributes.remove(name);
+
+	m_dirty = true;
 }
 
 
@@ -203,11 +220,12 @@ void NCVNeuronSet::draw()
 
 void NCVNeuronSet::drawSubset(int startElement, int count)
 {
+	m_dirty = false;
     glDrawElementsInstancedBaseInstance(GL_TRIANGLES,36 ,GL_UNSIGNED_INT,0,count , startElement  );
 }
 
 
-void NCVNeuronSet::m_resolve()
+void NCVNeuronSet::resolve()
 {
     if (!m_initialized)
     {
@@ -280,4 +298,6 @@ void NCVNeuronSet::m_resolve()
 
 
     }
+    for(QMap<QString,NCVAttribute *>::iterator it = m_attributes.begin(); it != m_attributes.end(); it++)
+        it.value()->resolve();
 }

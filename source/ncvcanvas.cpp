@@ -28,6 +28,7 @@ NCVCanvas::NCVCanvas(  const QGLFormat& format, QWidget* parent )
     this->setMouseTracking(true);//Qt::WA_Hover
     srand(time(NULL));
     m_idleTimer.start();
+	m_renderDirty= true;
 
 
 }
@@ -197,6 +198,7 @@ void NCVCanvas::resizeGL( int w, int h )
     if (!isValid())
         return;
 
+	m_renderDirty = true;
     // Set the viewport to window dimensions
     m_width = w;
     m_height = h;
@@ -334,7 +336,7 @@ void NCVCanvas::m_performSelectionRender()
 
     if (m_renderNeurons )
     {
-        m_neurons->bind(m_camera);
+        m_neurons->bindSilhouettes(m_camera);
         for (QVector<Range>::iterator it = m_ranges.begin(); it != m_ranges.end() ; it++)
         {
             Range range = *it;
@@ -349,12 +351,12 @@ void NCVCanvas::m_performSelectionRender()
                 m_neurons->drawSubset(range.start-1,range.end-range.start);
         }
 
-        m_neurons->release();
+        m_neurons->releaseSilhouettes();
     }
     if (m_renderConnections )
     {
 
-        m_connections->bind(m_camera);
+        m_connections->bindSilhouettes(m_camera);
         for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
         {
             Range range = *it;
@@ -367,7 +369,7 @@ void NCVCanvas::m_performSelectionRender()
                 m_connections->drawSubset(range.start-1 - m_neurons->count(),range.end-range.start);
 
         }
-        m_connections->release();
+        m_connections->releaseSilhouettes();
 
     }
 
@@ -446,14 +448,16 @@ void NCVCanvas::paintEvent(QPaintEvent *e)
 
     // check to see if any changes were requested externally
 
-
-    if (m_selectedObjects.count() >0)
-        m_performSelectionRender();
-    else
-        m_performRegularRender();
-
-
-
+    m_connections->resolve();
+    m_neurons->resolve();
+    if (m_renderDirty || m_connections->dirty() || m_neurons->dirty())
+	{
+        if (m_selectedObjects.count() >0)
+			m_performSelectionRender();
+		else
+			m_performRegularRender();
+		m_renderDirty = false;
+	}
     m_frameBufferObject.blitTexture(m_maps["diffuse"],QGLXTexture::Color0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
 
 
@@ -522,9 +526,11 @@ void NCVCanvas::mouseMoveEvent(QMouseEvent* e)
     }
     // if right mouse button down, rotate camera
     else if (m_rightMouseDown)
-    {
+	{
+		m_renderDirty = true;
         m_camera.rotate((float)(newPos.x() - m_mousePosition.x()) * -m_turnSpeed,(float)(newPos.y() - m_mousePosition.y()) * -m_turnSpeed);
         cameraUpdated(m_camera);
+
     }
     m_mousePosition = newPos;
 
@@ -565,7 +571,8 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
     if (!isValid())
         return;
     if (e->button() == Qt::LeftButton)
-    {
+	{
+		m_renderDirty = true;
         // correct selection rectangles
         int width = abs(m_selectionRect.width());
         int height = abs(m_selectionRect.height());
@@ -655,71 +662,84 @@ void NCVCanvas::keyPressEvent( QKeyEvent* e )
             break;
 
 
-        case Qt::Key_A:
+		case Qt::Key_A:
+			m_renderDirty = true;
             m_camera.pan(-m_moveSpeed,0.0f,0.0f);
             cameraUpdated(m_camera);
             break;
 
-        case Qt::Key_D:
+		case Qt::Key_D:
+			m_renderDirty = true;
             m_camera.pan(m_moveSpeed,0.0f,0.0f);
             cameraUpdated(m_camera);
             break;
 
 
-        case Qt::Key_R:
+		case Qt::Key_R:
+			m_renderDirty = true;
             m_camera.pan(0.0f,0.0f,m_moveSpeed/ 25.0f);
             cameraUpdated(m_camera);
             break;
 
 
-        case Qt::Key_N:
+		case Qt::Key_N:
+			m_renderDirty = true;
             m_renderNeurons= !m_renderNeurons;
             break;
 
-        case Qt::Key_C:
+		case Qt::Key_C:
+			m_renderDirty = true;
             m_renderConnections= !m_renderConnections;
             break;
 
         case Qt::Key_Shift:
             m_shiftDown = true;
             break;
-        case Qt::Key_T:
+		case Qt::Key_T:
+			m_renderDirty = true;
             m_camera.pan(0.0f,0.0f,m_moveSpeed/ 25.0f);
             cameraUpdated(m_camera);
             break;
 
 
-        case Qt::Key_P:
+		case Qt::Key_P:
+			m_renderDirty = true;
             m_camera.pan(0.0f,0.0f,m_moveSpeed/ 25.0f);
             cameraUpdated(m_camera);
             break;
 
-        case Qt::Key_V:
+		case Qt::Key_V:
+			m_renderDirty = true;
             m_camera.pan(0.0f,0.0f,-m_moveSpeed/ 10.0f);
             cameraUpdated(m_camera);
             break;
 
-        case Qt::Key_W:
+		case Qt::Key_W:
+			m_renderDirty = true;
             m_camera.pan(0.0f,0.0f,m_moveSpeed);
             cameraUpdated(m_camera);
             break;
 
         case Qt::Key_S:
+			m_renderDirty = true;
             m_camera.pan(0.0f,0.0f,-m_moveSpeed);
             cameraUpdated(m_camera);
             break;
 
-        case Qt::Key_Q:
+		case Qt::Key_Q:
+			m_renderDirty = true;
             m_camera.pan(0.0f,m_moveSpeed,0.0f);
             cameraUpdated(m_camera);
             break;
 
-        case Qt::Key_E:
+		case Qt::Key_E:
+			m_renderDirty = true;
             m_camera.pan(0.0f,-m_moveSpeed,0.0f);
             cameraUpdated(m_camera);
             break;
 
-        case Qt::Key_B:
+		case Qt::Key_B:
+			m_renderDirty = true;
             m_renderOnlySelection = !m_renderOnlySelection;
             break;
 

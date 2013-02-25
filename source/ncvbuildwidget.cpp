@@ -1,4 +1,4 @@
-#include "ncvbuildwidget.h"
+ #include "ncvbuildwidget.h"
 
 NCVBuildWidget::NCVBuildWidget(QWidget *parent) :
     QWidget(parent)

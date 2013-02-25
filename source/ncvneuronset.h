@@ -4,11 +4,10 @@
 #include "qglxtexture2d.h"
 #include "qglxboundingbox.h"
 
-class NCVNeuronSet: public NCVElementSet
+class NCVNeuronSet:QObject
 {
 
     Q_OBJECT
-    friend class NCVConnectionSet;
 public:
     NCVNeuronSet(QVector<QVector3D> positions);
 
@@ -17,9 +16,11 @@ public:
     int count();
     void draw();
     void drawSubset(int startElement, int count);
-
+	bool dirty();
+    void resolve();
     void release();
     void releaseSilhouettes();
+	QGLXBuffer positionBuffer();
     QGLXBoundingBox bounds();
     QMap<QString,NCVAttribute *> attributes();
 
@@ -29,12 +30,11 @@ public slots:
     void removeAttribute(QString name);
 
 private:
-    void m_resolve();
 
     int m_count;
     QGLXBuffer m_indexBuffer, m_normalBuffer, m_vertexBuffer, m_idBuffer;
     QMatrix4x4 m_scale;
-    bool m_initialized;
+    bool m_initialized,m_dirty;
     QMap<QString,NCVAttribute *> m_attributes;
     NCVAttribute * m_currentAttribute;
     QGLXBoundingBox m_bounds;

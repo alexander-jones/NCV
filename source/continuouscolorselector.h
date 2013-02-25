@@ -84,22 +84,22 @@ public:
 
     void setRightColor(QColor color)
     {
-        m_rightColor = color;
+        m_setColors(m_leftColor,color);
         m_drawImage();
     }
 
     void setLeftColor(QColor color)
     {
-        m_leftColor = color;
+        m_setColors(color,m_rightColor);
         m_drawImage();
+
     }
 
     void setColor(QColor color)
     {
-        m_leftColor = color;
-        m_rightColor = color;
-        m_drawImage();
+        m_setColors(color,color);
     }
+
 
     bool operator< (const Marker& other) const { return m_value < other.m_value; }
 
@@ -107,8 +107,29 @@ public:
     bool operator != (const Marker& other) const { return !(*this == other); }
 
 private:
+
+    void m_setColors(QColor leftColor, QColor rightColor)
+    {
+        m_leftColor = leftColor;
+        m_rightColor = rightColor;
+
+        float leftBrightness = m_leftColor.redF() *0.299 + m_leftColor.greenF()*0.587 + m_leftColor.blueF()*0.114;
+        if (leftBrightness > 0.5)
+            m_leftColorBorder = QColor(0,0,0);
+        else
+            m_leftColorBorder = QColor(255,255,255);
+
+        float rightBrightness = m_rightColor.redF() *0.299 + m_rightColor.greenF()*0.587 + m_rightColor.blueF()*0.114;
+        if (rightBrightness > 0.5)
+            m_rightColorBorder = QColor(0,0,0);
+        else
+            m_rightColorBorder = QColor(255,255,255);
+        m_drawImage();
+    }
+
     void m_drawImage()
     {
+
         if (m_type == Solid)
         {
             if (m_size == Large)
@@ -139,13 +160,13 @@ private:
                         pixelData[col] = m_leftColor.rgb();
 
                     else if (pixel == m_leftColorBorderTemplate())
-                        pixelData[col] = QColor(255 - m_leftColor.red(),255- m_leftColor.green(),255- m_leftColor.blue()).rgb();
+                        pixelData[col] = m_leftColorBorder.rgb();
 
                     else if (pixel == m_rightColorTemplate())
                         pixelData[col] = m_rightColor.rgb();
 
                     else if (pixel == m_rightColorBorderTemplate())
-                        pixelData[col] = QColor(255 - m_rightColor.red(),255- m_rightColor.green(),255- m_rightColor.blue()).rgb();
+                        pixelData[col] = m_rightColorBorder.rgb();
                 }
             }
 
@@ -164,6 +185,7 @@ private:
     int m_position;
     float m_value;
     QColor m_leftColor,m_rightColor;
+    QColor m_leftColorBorder, m_rightColorBorder;
     QImage m_image;
     Size m_size;
 };

@@ -376,6 +376,7 @@ void NCVWidget::m_discreteNeuronColorationChanged( QString attributeName)
     QMap<QString,QColor> states =  m_neuronDiscreteWidgets[attributeName]->states();
     NCVDiscreteAttribute * attrib = dynamic_cast<NCVDiscreteAttribute *>((m_neurons->attributes())[attributeName]);
     attrib->attachColoration(states);
+
     if (m_neuronSidebar->containsTool(m_neuronLinkButton) && m_neuronLinkButton->icon().cacheKey() == m_linkedIcon.cacheKey() )
     {
 

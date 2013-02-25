@@ -4,8 +4,8 @@
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include "ncvwidget.h"
+
 #include "distributewidget.h"
-//#include "clusterEditor.h"
 #include <QwwConfigWidget>
 #include "ncvbuildwidget.h"
 

@@ -23,15 +23,14 @@ DiscreteColorSelector::DiscreteColorSelector(QWidget *parent) :
 void DiscreteColorSelector::addState(QString name, QColor color)
 {
     m_colorButtons[name] = new ColorButton();
-    m_colorButtons[name]->setColor(color);
     m_colorButtons[name]->setText(name);
-
-    m_states[name] = color;
 
     m_layout->addWidget(m_colorButtons[name]);
 
     connect(m_colorButtons[name],SIGNAL(clicked()),m_mapper,SLOT(map()));
     m_mapper->setMapping(m_colorButtons[name],name);
+
+    m_setState(name,color);
 
 }
 
@@ -39,19 +38,28 @@ void DiscreteColorSelector::setStates(QMap<QString,QColor> states)
 {
     for (QMap<QString, QColor>::iterator it = states.begin(); it != states.end(); it ++)
     {
-        m_colorButtons[it.key()]->setColor(it.value());
-        m_states[it.key()] = it.value();
+        m_setState(it.key(),it.value());
     }
     changed();
 }
 
 void DiscreteColorSelector::setState(QString name, QColor color)
 {
-    m_colorButtons[name]->setColor(color);
-
-    m_states[name] = color;
+    m_setState(name,color);
     stateChanged(name,color);
     changed();
+}
+
+void DiscreteColorSelector::m_setState(QString name, QColor color)
+{
+    float brightness = color.redF() *0.299 + color.greenF()*0.587 + color.blueF()*0.114;
+    QColor textColor;
+    if (brightness > 0.5)
+        textColor = QColor(0,0,0);
+    else
+        textColor = QColor(255,255,255);
+    m_colorButtons[name]->setColor(color,textColor);
+    m_states[name] = color;
 }
 
 
