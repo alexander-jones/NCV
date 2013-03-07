@@ -1,5 +1,7 @@
 #include "ncvneuronset.h"
 
+
+
 NCVNeuronSet::NCVNeuronSet(QVector<QVector3D> positions)
 {
     m_currentAttribute = NULL;
@@ -27,8 +29,8 @@ NCVNeuronSet::NCVNeuronSet(QVector<QVector3D> positions)
 
         else if (m_positions[i].z() > highBound.z())
             highBound.setZ(m_positions[i].z());
-
     }
+
     QVector3D size = QVector3D(highBound.x() - lowBound.x(),highBound.y() - lowBound.y(),highBound.z() - lowBound.z());
     QVector3D center = QVector3D(lowBound.x()+ size.x()/2, lowBound.y() + size.y()/2,lowBound.z()+ size.z()/2);
     m_bounds = QGLXBoundingBox(center,size);
@@ -41,21 +43,30 @@ NCVNeuronSet::NCVNeuronSet(QVector<QVector3D> positions)
 }
 
 
+
 bool NCVNeuronSet::dirty()
 {
-	if (m_dirty)
+    if(m_dirty)
 		return true;
     else if(m_currentAttribute != NULL)
-        if (m_currentAttribute->dirty())
+    {
+        if(m_currentAttribute->dirty())
                 return true;
-	return false;
+    }
 
+	return false;
 }
+
+
+
 QGLXBuffer NCVNeuronSet::positionBuffer()
 {
 	return m_positionBuffer;
 }
-void NCVNeuronSet::bind(QGLXCamera camera,bool deselected)
+
+
+
+void NCVNeuronSet::bind(QGLXCamera camera, bool deselected)
 {
     if (m_currentAttribute != NULL)
     {
@@ -69,8 +80,6 @@ void NCVNeuronSet::bind(QGLXCamera camera,bool deselected)
 
         program->setUniformValue("Deselected", (int)deselected);
         program->setUniformValue("Scale",m_scale);
-
-
 
         m_indexBuffer.bind();
 
@@ -90,6 +99,9 @@ void NCVNeuronSet::bind(QGLXCamera camera,bool deselected)
         glVertexAttribDivisor( program->attributeLocation("Inst_ID"), 1);
     }
 }
+
+
+
 void NCVNeuronSet::bindSilhouettes(QGLXCamera camera)
 {
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -98,6 +110,7 @@ void NCVNeuronSet::bindSilhouettes(QGLXCamera camera)
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
     // perform silhouetting
     m_silhouetteProgram.bind();
 
@@ -106,8 +119,6 @@ void NCVNeuronSet::bindSilhouettes(QGLXCamera camera)
     m_silhouetteProgram.setUniformValue("Inst_Translation", 0);
 
     m_silhouetteProgram.setUniformValue("WVP",camera.projection() * camera.view());
-
-
 
     m_indexBuffer.bind();
 
@@ -135,8 +146,10 @@ void NCVNeuronSet::bindSilhouettes(QGLXCamera camera)
     m_silhouetteProgram.setUniformValue("ZStop",camera.farPlane()/2);
     m_silhouetteProgram.setUniformValue("DepthExponent",2.0f);
     m_silhouetteProgram.setUniformValue("MaxAlpha",0.5f);
-
 }
+
+
+
 void NCVNeuronSet::release()
 {
     if (m_currentAttribute != NULL)
@@ -154,9 +167,11 @@ void NCVNeuronSet::release()
         m_currentAttribute->release();
     }
 }
+
+
+
 void NCVNeuronSet::releaseSilhouettes()
 {
-
     m_silhouetteProgram.disableAttributeArray( "Vert_Position" );
     m_silhouetteProgram.disableAttributeArray( "Vert_Normal" );
     m_silhouetteProgram.disableAttributeArray( "Inst_ID" );
@@ -173,10 +188,13 @@ void NCVNeuronSet::releaseSilhouettes()
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 }
 
+
+
 QGLXBoundingBox NCVNeuronSet::bounds()
 {
     return m_bounds;
 }
+
 
 
 QMap<QString,NCVAttribute *> NCVNeuronSet::attributes()
@@ -184,7 +202,16 @@ QMap<QString,NCVAttribute *> NCVNeuronSet::attributes()
     return m_attributes;
 }
 
-void NCVNeuronSet::addAttribute(QString name,NCVAttribute * attribute)
+
+
+NCVAttribute* NCVNeuronSet::getCurrentAttribute()
+{
+    return m_currentAttribute;
+}
+
+
+
+void NCVNeuronSet::addAttribute(QString name, NCVAttribute * attribute)
 {
     m_attributes[name] = attribute;
     if (m_attributes.count() ==1)
@@ -193,6 +220,8 @@ void NCVNeuronSet::addAttribute(QString name,NCVAttribute * attribute)
 	m_dirty = true;
 }
 
+
+
 void NCVNeuronSet::setCurrentAttribute(QString name)
 {
     if (m_attributes.contains(name))
@@ -200,6 +229,9 @@ void NCVNeuronSet::setCurrentAttribute(QString name)
 
 	m_dirty = true;
 }
+
+
+
 void NCVNeuronSet::removeAttribute(QString name)
 {
     m_attributes.remove(name);
@@ -208,21 +240,27 @@ void NCVNeuronSet::removeAttribute(QString name)
 }
 
 
+
 int NCVNeuronSet::count()
 {
     return m_count;
 }
+
+
 
 void NCVNeuronSet::draw()
 {
     drawSubset(0,m_count);
 }
 
+
+
 void NCVNeuronSet::drawSubset(int startElement, int count)
 {
 	m_dirty = false;
     glDrawElementsInstancedBaseInstance(GL_TRIANGLES,36 ,GL_UNSIGNED_INT,0,count , startElement  );
 }
+
 
 
 void NCVNeuronSet::resolve()
@@ -236,7 +274,6 @@ void NCVNeuronSet::resolve()
         m_positionBuffer.bind();
         m_positionBuffer.allocate(&m_positions[0],3* componentSize * m_count,textureFormat);
         m_positionBuffer.release();
-
 
         QVector3D vertices[8] = {
             QVector3D(-0.57735, -0.57735, -0.57735) ,
@@ -261,7 +298,6 @@ void NCVNeuronSet::resolve()
 
         GLuint indices[36] = {0,1,2, 0,2,3, 0, 3,4, 0,4,5 ,0,5,6 ,0,6,1 ,7,4,3 ,7,3,2 ,7,2,1 , 7,1,6 ,7,6,5, 7,5,4};
 
-
         QVector<GLuint> sysIDs;
         for (int i =0; i < m_count; i ++)
             sysIDs.append( i+1);
@@ -271,12 +307,10 @@ void NCVNeuronSet::resolve()
         m_normalBuffer.allocate( &normals[0], 8 * sizeof(QVector3D));
         m_normalBuffer.release();
 
-
         m_vertexBuffer.create();
         m_vertexBuffer.bind();
         m_vertexBuffer.allocate( &vertices[0], 8 * sizeof(QVector3D));
         m_vertexBuffer.release();
-
 
         m_indexBuffer = QGLXBuffer(QGLXBuffer::IndexBuffer);
         m_indexBuffer.create();
@@ -289,15 +323,13 @@ void NCVNeuronSet::resolve()
         m_idBuffer.allocate( &sysIDs[0], m_count * sizeof(GLuint));
         m_idBuffer.release();
 
-
         m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Vertex,":/shaders/neuronSilhouette.vert" );
         m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Fragment,":/shaders/silhouette.frag" );
         m_silhouetteProgram.link();
 
         m_initialized = true;
-
-
     }
+
     for(QMap<QString,NCVAttribute *>::iterator it = m_attributes.begin(); it != m_attributes.end(); it++)
         it.value()->resolve();
 }

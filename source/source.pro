@@ -55,7 +55,8 @@ SOURCES += \
     ncvgroupingset.cpp \
     distributewidget.cpp \
     slidingstackedwidget.cpp \
-    ncsclustereditor.cpp
+    ncsclustereditor.cpp \
+    ncsdatasource.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -88,7 +89,8 @@ HEADERS  += \
     distributewidget.h \
     slidingstackedwidget.h \
     colorbutton.h \
-    ncsclustereditor.h
+    ncsclustereditor.h \
+    ncsdatasource.h
 
 FORMS    += \
     mainwindow.ui

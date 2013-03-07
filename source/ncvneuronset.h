@@ -1,12 +1,13 @@
 #ifndef NCVNEURONSET_H
 #define NCVNEURONSET_H
+
 #include "ncvcore.h"
 #include "qglxtexture2d.h"
 #include "qglxboundingbox.h"
 
+
 class NCVNeuronSet:QObject
 {
-
     Q_OBJECT
 public:
     NCVNeuronSet(QVector<QVector3D> positions);
@@ -23,6 +24,7 @@ public:
 	QGLXBuffer positionBuffer();
     QGLXBoundingBox bounds();
     QMap<QString,NCVAttribute *> attributes();
+    NCVAttribute* getCurrentAttribute();
 
 public slots:
     void addAttribute(QString name, NCVAttribute * attribute);
@@ -30,7 +32,6 @@ public slots:
     void removeAttribute(QString name);
 
 private:
-
     int m_count;
     QGLXBuffer m_indexBuffer, m_normalBuffer, m_vertexBuffer, m_idBuffer;
     QMatrix4x4 m_scale;
@@ -42,5 +43,6 @@ private:
     QGLXBuffer m_positionBuffer;
     QGLShaderProgram m_silhouetteProgram;
 };
+
 
 #endif // NCVNEURONSET_H

@@ -45,7 +45,6 @@ void NCVBuildWidget::createNetwork(int numNeurons, int numConnections,QVector3D 
     QVector<GLubyte> neuronFirings;
     QVector<GLubyte> neuronTypes;
 
-
     int fireVal;
     float threshold = 25.0f;
 
@@ -54,7 +53,7 @@ void NCVBuildWidget::createNetwork(int numNeurons, int numConnections,QVector3D 
         int x = (abs(rand() * rand() * rand() )% (int)worldSize.x()) - (worldSize.x()/2);
         int y = (abs(rand() * rand() * rand() ) % (int)worldSize.y()) - (worldSize.y()/2);
         int z = (abs(rand() * rand() * rand() ) % (int)worldSize.z()) - (worldSize.z()/2);
-        neuronPositions.append(QVector3D(x,y,z));
+        neuronPositions.append(QVector3D(x, y, z));
         neuronVoltages.append((float)(abs(rand() % 120)) -80.0);
 
         if (neuronVoltages[i] >= threshold)
@@ -74,24 +73,22 @@ void NCVBuildWidget::createNetwork(int numNeurons, int numConnections,QVector3D 
     // create neurons and related attributes
     m_neurons= new NCVNeuronSet(neuronPositions);
 
-    m_continuousNeuronAttributes["voltage"] = new NCVContinuousAttribute(Neuron,voltageRange->lowThreshold(),voltageRange->highThreshold());
+    m_continuousNeuronAttributes["voltage"] = new NCVContinuousAttribute(Neuron,voltageRange->lowThreshold(), voltageRange->highThreshold());
     m_continuousNeuronAttributes["voltage"]->attachData(neuronVoltages);
     m_continuousNeuronAttributes["voltage"]->attachColoration(voltageRange->getData());
     m_neurons->addAttribute("voltage",m_continuousNeuronAttributes["voltage"]);
 
-    m_discreteNeuronAttributes["firing"] = new NCVDiscreteAttribute(Neuron,firingStates);
+    m_discreteNeuronAttributes["firing"] = new NCVDiscreteAttribute(Neuron, firingStates);
     m_discreteNeuronAttributes["firing"]->attachData(neuronFirings,1);
     m_discreteNeuronAttributes["firing"]->attachColoration(firingColors);
     m_neurons->addAttribute("firing",m_discreteNeuronAttributes["firing"]);
-
 
     m_discreteNeuronAttributes["type"] = new NCVDiscreteAttribute(Neuron,typeStates);
     m_discreteNeuronAttributes["type"]->attachData(neuronTypes);
     m_discreteNeuronAttributes["type"]->attachColoration(typeColors);
     m_neurons->addAttribute("type",m_discreteNeuronAttributes["type"]);
 
-    neuronsFinalized(m_neurons);
-
+    emit neuronsFinalized(m_neurons);
 
     // create stub connection data
     QVector<NeuronConnection> connections;
@@ -99,7 +96,7 @@ void NCVBuildWidget::createNetwork(int numNeurons, int numConnections,QVector3D 
     {
         connections.append(NeuronConnection(i % numNeurons,i % numNeurons));
         while (connections[i].outNeuron == connections[i].inNeuron)
-            connections[i].outNeuron = (rand() % numNeurons) +1;
+            connections[i].outNeuron = rand() % numNeurons;
     }
 
     QVector<GLfloat> connectionVoltages;
@@ -119,23 +116,20 @@ void NCVBuildWidget::createNetwork(int numNeurons, int numConnections,QVector3D 
         if(i %8 == 0)
             connectionFirings.append(0);
         connectionFirings[i/8] += fireVal<<(i % 8);
-
-
     }
 
     //create connections and related attributes
-    m_connections= new NCVConnectionSet(m_neurons,connections);
+    m_connections = new NCVConnectionSet(m_neurons, connections);
 
-    m_continuousConnectionAttributes["voltage"] = new NCVContinuousAttribute(Connection,voltageRange->lowThreshold(),voltageRange->highThreshold());
+    m_continuousConnectionAttributes["voltage"] = new NCVContinuousAttribute(Connection, voltageRange->lowThreshold(), voltageRange->highThreshold());
     m_continuousConnectionAttributes["voltage"]->attachData(connectionVoltages);
     m_continuousConnectionAttributes["voltage"]->attachColoration(voltageRange->getData());
-    m_connections->addAttribute("voltage",m_continuousConnectionAttributes["voltage"]);
+    m_connections->addAttribute("voltage", m_continuousConnectionAttributes["voltage"]);
 
-    m_discreteConnectionAttributes["firing"] = new NCVDiscreteAttribute(Connection,firingStates);
-    m_discreteConnectionAttributes["firing"]->attachData(connectionFirings,1);
+    m_discreteConnectionAttributes["firing"] = new NCVDiscreteAttribute(Connection, firingStates);
+    m_discreteConnectionAttributes["firing"]->attachData(connectionFirings, 1);
     m_discreteConnectionAttributes["firing"]->attachColoration(firingColors);
-    m_connections->addAttribute("firing",m_discreteConnectionAttributes["firing"]);
+    m_connections->addAttribute("firing", m_discreteConnectionAttributes["firing"]);
 
-    connectionsFinalized(m_connections);
-
+    emit connectionsFinalized(m_connections);
 }

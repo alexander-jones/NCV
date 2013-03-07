@@ -18,9 +18,11 @@ public:
     
     //TEMPORARY METHOD. USED IN ABSENCE OF UI TO BUILD NETWORK
     void createNetwork(int numNeurons, int numConnections,QVector3D worldSize);
+
 signals:
     void neuronsFinalized(NCVNeuronSet *);
     void connectionsFinalized(NCVConnectionSet *);
+
 public slots:
     
 private:
@@ -28,7 +30,6 @@ private:
     NCVConnectionSet * m_connections;
     QMap<QString,NCVDiscreteAttribute *> m_discreteNeuronAttributes,m_discreteConnectionAttributes;
     QMap<QString,NCVContinuousAttribute *> m_continuousNeuronAttributes,m_continuousConnectionAttributes;
-
 };
 
 #endif // NCVBUILDWIDGET_H

@@ -32,6 +32,7 @@ public:
     void releaseSilhouettes();
 	NCVNeuronSet * neurons();
     QMap<QString,NCVAttribute *> attributes();
+    NCVAttribute* getCurrentAttribute();
 
 public slots:
     void addAttribute(QString name, NCVAttribute * attribute);
