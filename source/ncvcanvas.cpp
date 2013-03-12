@@ -29,6 +29,7 @@ NCVCanvas::NCVCanvas(  const QGLFormat& format, QWidget* parent )
     srand(time(NULL));
     m_idleTimer.start();
 	m_renderDirty= true;
+	this->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
 
 }

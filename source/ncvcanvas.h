@@ -15,8 +15,6 @@
 #include "time.h"
 
 
-
-
 /*!
     \class NCV
     \author Alex Jones
@@ -37,17 +35,14 @@ public:
     ~NCVCanvas();
 
     /*!
-        \brief This function indicates whether a proper OpenGL 4.X Context is established.
+        \brief This function indicates whether a proper OpenGL 3.3 Context is established.
     */
     bool isValid();
+	bool isInitialized();
 
 public slots:
     void setNeurons(NCVNeuronSet * neurons);
     void setConnections(NCVConnectionSet * connections);
-
-
-    bool isInitialized();
-
 
 signals:
 
@@ -70,7 +65,6 @@ protected:
     void timerEvent(QTimerEvent *e);
     void leaveEvent(QEvent * e);
     void enterEvent(QEvent * e);
-
 
 private:
     void m_performRegularRender();

@@ -143,7 +143,6 @@ void QGLXCamera::rotate(GLfloat horizRot, GLfloat vertRot)
         m_horizontalAngle += horizRot;
     m_verticalAngle += vertRot;
 
-
     if (m_horizontalAngle <= 0)
         m_horizontalAngle = TWO_PI + m_horizontalAngle;
 

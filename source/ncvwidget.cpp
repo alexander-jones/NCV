@@ -14,6 +14,8 @@ NCVWidget::NCVWidget(QWidget *parent) :
 
     m_ncvSidebar = new NCVSidebar();
     m_ncvSidebar->addTab(QIcon(":/assets/presentationIcon.png"),"Presentation");
+    m_ncvSidebar->addTab(QIcon(":/assets/toolIcon.png"),"Tools");
+
     m_layout->addWidget(m_ncvSidebar);
 
     m_collapsed = false;
@@ -39,7 +41,6 @@ NCVWidget::NCVWidget(QWidget *parent) :
     glFormat.setProfile( QGLFormat::CompatibilityProfile ); // Requires >=Qt-4.8.0
     glFormat.setSampleBuffers( true );
     m_canvas = new NCVCanvas( glFormat );
-    m_canvas->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     m_layout->addWidget(m_canvas);
 
     setLayout(m_layout);
@@ -222,7 +223,7 @@ void NCVWidget::m_createContinuousAttributeColorWidget(QString name,NCVContinuou
 
 void NCVWidget::m_updateNeuronLinkIcon()
 {
-    if (m_attributeLinked[m_neuronSidebar->currentWidgetName()])
+    if (m_attributeLinked[m_neuronSidebar->currentWidgetKey()])
         m_neuronLinkButton->setIcon(m_linkedIcon);
     else
         m_neuronLinkButton->setIcon(m_unlinkedIcon);
@@ -230,7 +231,7 @@ void NCVWidget::m_updateNeuronLinkIcon()
 
 void NCVWidget::m_updateConnectionLinkIcon()
 {
-    if (m_attributeLinked[m_connectionSidebar->currentWidgetName()])
+    if (m_attributeLinked[m_connectionSidebar->currentWidgetKey()])
         m_connectionLinkButton->setIcon(m_linkedIcon);
     else
         m_connectionLinkButton->setIcon(m_unlinkedIcon);
@@ -245,7 +246,7 @@ void NCVWidget::m_currentNeuronAttributeSet(QString name)
             m_neuronSidebar->addTool(m_neuronLinkButton);
             m_neuronLinkButton->show();
         }
-        if ( m_connectionSidebar->currentWidgetName() == name && !m_connectionSidebar->containsTool(m_connectionLinkButton))
+        if ( m_connectionSidebar->currentWidgetKey() == name && !m_connectionSidebar->containsTool(m_connectionLinkButton))
         {
             m_connectionSidebar->addTool(m_connectionLinkButton);
             m_connectionLinkButton->show();
@@ -276,7 +277,7 @@ void NCVWidget::m_currentConnectionAttributeSet(QString name)
             m_connectionLinkButton->show();
         }
 
-        if ( m_neuronSidebar->currentWidgetName() == name && !m_neuronSidebar->containsTool(m_neuronLinkButton))
+        if ( m_neuronSidebar->currentWidgetKey() == name && !m_neuronSidebar->containsTool(m_neuronLinkButton))
         {
             m_neuronSidebar->addTool(m_neuronLinkButton);
             m_neuronLinkButton->show();
@@ -451,7 +452,7 @@ void NCVWidget::m_continuousConnectionColorationChanged( QString attributeName)
 
 void NCVWidget::m_neuronLinkButtonPressed()
 {
-    QString attributeName = m_neuronSidebar->currentWidgetName();
+    QString attributeName = m_neuronSidebar->currentWidgetKey();
     m_attributeLinked[attributeName] = !m_attributeLinked[attributeName];
     m_checkAndFixInconsistantColorations(attributeName);
     m_updateNeuronLinkIcon();
@@ -461,7 +462,7 @@ void NCVWidget::m_neuronLinkButtonPressed()
 
 void NCVWidget::m_connectionLinkButtonPressed()
 {
-    QString attributeName = m_connectionSidebar->currentWidgetName();
+    QString attributeName = m_connectionSidebar->currentWidgetKey();
     m_attributeLinked[attributeName] = !m_attributeLinked[attributeName];
 
     m_checkAndFixInconsistantColorations(attributeName);

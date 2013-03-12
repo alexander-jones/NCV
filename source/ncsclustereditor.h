@@ -1,9 +1,7 @@
 #include <QtGui>
 #include <QwwLoginBox>
 #include <QtGui>
-#include <iostream>
-#include <slug/spec/Cluster.h>
-#include <slug/spec/Cluster.h>
+#include <connectionwidget.h>
 
 class NCSClusterEditor : public QWidget
 {
@@ -11,44 +9,57 @@ class NCSClusterEditor : public QWidget
 
 public:
     NCSClusterEditor();
+    void saveHostFile( QString filename);
+    void saveClusterFile(QString filename);
+    void loadClusterFile(QString filename);
+    int enabledMachines();
+    void clear();
 
 private slots:
-	void open();
-	void save();
-	void hostfile();
 	void machineSelected(QListWidgetItem* current, QListWidgetItem* previous);
 	void machineEnabled(QListWidgetItem* item);
 	void deviceSelected(QListWidgetItem* current, QListWidgetItem* previous);
 	void deviceEnabled(QListWidgetItem* item);
 
 private:
+    struct Device
+    {
+        QString type;
+        float power;
+        bool enabled;
+        int number;
+
+    };
+
+    struct Machine
+    {
+        QString name;
+        QVector<Device> devices;
+        bool enabled;
+    };
+
+    struct Cluster
+    {
+        QVector<Machine> machines;
+    };
+
+
+
 	typedef std::pair<QLabel*, QLabel*> LabelSet;
-	LabelSet infoParam(const std::string& key, const std::string& value);
-
-    void m_updateCluster(slug::spec::Cluster* cluster);
-    QAction* m_openAction;
-    QAction* m_saveAction;
-    QAction* m_exitAction;
-    QAction* m_hostfileAction;
-
-    QwwLoginBox * m_loginWidget;
-
-    QMenu* m_fileMenu;
+    LabelSet m_infoParam(const QString & key, const QString & value);
 
     QVBoxLayout* m_layout;
+    QPushButton * m_detectDevicesButton;
     QHBoxLayout* m_mainLayout;
-    QToolBar * m_toolbar;
     QWidget * m_machineWidgdet;
 
     QListWidget* m_machineList;
     QGroupBox* m_machineBox;
-    slug::spec::Machine* m_machine;
 
     QListWidget* m_deviceList;
     QGroupBox* m_deviceListBox;
     QGroupBox* m_deviceBox;
-    slug::spec::Device* m_device;
-
-    slug::spec::Cluster* m_cluster;
+    Cluster m_cluster;
+    Machine m_machineSelection;
 };
 

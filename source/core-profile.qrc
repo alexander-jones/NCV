@@ -2,7 +2,6 @@
     <qresource prefix="/">
         <file>assets/linked.png</file>
         <file>assets/unlinked.png</file>
-        <file>assets/sphere.nff</file>
         <file>assets/connectionIcon.png</file>
         <file>assets/neuronIcon.png</file>
         <file>assets/cameraIcon.png</file>
@@ -35,5 +34,8 @@
         <file>shaders/neuronContinuous.vert</file>
         <file>assets/columnIcon.png</file>
         <file>assets/layerIcon.png</file>
+        <file>assets/toolIcon.png</file>
+        <file>assets/cluster.png</file>
+        <file>assets/localComputer.png</file>
     </qresource>
 </RCC>

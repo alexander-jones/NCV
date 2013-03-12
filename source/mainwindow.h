@@ -1,12 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "distributewidget.h"
 #include <QMainWindow>
 #include <QVBoxLayout>
-#include "ncvwidget.h"
-
-#include "distributewidget.h"
 #include <QwwConfigWidget>
+#include "ncvwidget.h"
 #include "ncvbuildwidget.h"
 
 namespace Ui {
@@ -23,6 +22,7 @@ public:
 
 private slots:
     void m_updateTimeScale(int multiplier);
+    void m_distributionFinalized();
 
 private:
     Ui::MainWindow *ui;
@@ -35,9 +35,8 @@ private:
     QToolBar * m_toolbar;
     QSlider * m_timeScaleSlider;
     QLabel * m_timeScale;
-    QPushButton * m_playButton, *m_pauseButton, *m_stopButton, *m_recordButton;
     QMenu * m_fileMenu, * m_editMenu, *m_toolsMenu;
-    QMenuBar * m_menuBar;
+	QMenuBar * m_menuBar;
 
 
 };

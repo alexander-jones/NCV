@@ -4,17 +4,16 @@
 #
 #-------------------------------------------------
 
-QMAKE_CXXFLAGS += "-std=gnu++0x"
+QMAKE_CXXFLAGS += -std=c++0x
 
-QT  += core gui opengl
-TARGET = source
+QT  += core network gui opengl
+TARGET = ncv
 TEMPLATE = app
 CONFIG+= wwwidgets
 
-
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lGLEW -lGLU  -lslugUtil -lslugSpec -lslugSim
+    LIBS +=  -lssh -lGLEW -lGLU -lslugUtil -lslugSpec -lslugSim
 }
 
 #windows specific settings
@@ -33,7 +32,6 @@ SOURCES += \
     main.cpp \
     qglxbuffer.cpp \
     ncvwidget.cpp \
-    spinbox3d.cpp \
     qglxtexture1d.cpp \
     qglxtexture3d.cpp \
     qglxtexture2d.cpp \
@@ -56,6 +54,11 @@ SOURCES += \
     distributewidget.cpp \
     slidingstackedwidget.cpp \
     ncsclustereditor.cpp \
+    connectionwidget.cpp \
+    simplecrypt.cpp \
+    modelselector.cpp \
+    sshsocket.cpp \
+    deploymentwidget.cpp \
     ncsdatasource.cpp
 
 HEADERS  += \
@@ -66,7 +69,6 @@ HEADERS  += \
     qglxbuffer.h \
     ncvwidget.h \
     qglxtexture.h \
-    spinbox3d.h \
     qglxtexture1d.h \
     qglxtexture3d.h \
     qglxtexture2d.h \
@@ -90,6 +92,12 @@ HEADERS  += \
     slidingstackedwidget.h \
     colorbutton.h \
     ncsclustereditor.h \
+    connectionwidget.h \
+    simplecrypt.h \
+    modelselector.h \
+    sshsocket.h \
+    loadingwidget.h \
+    deploymentwidget.h \
     ncsdatasource.h
 
 FORMS    += \
@@ -100,7 +108,6 @@ OTHER_FILES += \
     assets/cube.nff \
     shaders/synapse.frag \
     shaders/synapse.vert \
-    shaders/neuron.vert \
     shaders/neuron.frag \
     shaders/synapse.geom \
     assets/sphere.nff \
@@ -111,21 +118,15 @@ OTHER_FILES += \
     shaders/silhouette.frag \
     shaders/connectionSilhouette.vert \
     shaders/connectionSilhouette.geom \
-    shaders/neuronSilhouetteTest.vert \
-    shaders/neuronSilhouetteTest.geom \
     shaders/neuronSilhouette.vert \
     shaders/connectionDiscrete.geom \
     shaders/connectionDiscrete.vert \
     shaders/discrete.frag \
-    shaders/neuronDiscrete.vert \
-    shaders/neuronDiscreteTest.vert \
-    shaders/neuronDiscreteTest.geom \
     shaders/connectionContinuous.geom \
     shaders/connectionContinuous.vert \
     shaders/continuous.frag \
-    shaders/neuronContinuous.vert \
-    shaders/neuronContinuousTest.geom \
-    shaders/neuronContinuousTest.vert
+    shaders/neuronDiscrete.vert \
+    shaders/neuronContinuous.vert
 
 RESOURCES += \
     core-profile.qrc

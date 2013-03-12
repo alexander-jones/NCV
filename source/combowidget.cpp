@@ -10,8 +10,8 @@ ComboWidget::ComboWidget(QWidget *parent) :
 
     m_toolbar = new QWidget();
     m_toolbarLayout = new QHBoxLayout();
-    m_panelSelector = new QComboBox();
-    m_toolbarLayout->addWidget(m_panelSelector);
+    m_widgetSelector = new QComboBox();
+    m_toolbarLayout->addWidget(m_widgetSelector);
 
     m_toolbar->setLayout(m_toolbarLayout);
 
@@ -22,34 +22,52 @@ ComboWidget::ComboWidget(QWidget *parent) :
     m_layout->addWidget(m_voidWidget);
     this->setLayout(m_layout);
 
-    connect(m_panelSelector, SIGNAL( currentIndexChanged( QString )), this, SLOT(setWidget( QString )));
+    connect(m_widgetSelector, SIGNAL( currentIndexChanged( QString )), this, SLOT(setWidget( QString )));
 }
 int ComboWidget::count()
 {
-    return m_panels.count();
+    return m_widgets.count();
 }
 
+void ComboWidget::setWidget( QWidget * widget)
+{
+	QString key = m_widgets.key(widget, "");
+	if (key  != "")
+	{
+
+		m_layout->removeWidget(m_currentWidget);
+		m_currentWidget->hide();
+		m_currentWidget = widget;
+		m_layout->addWidget(m_currentWidget);
+		m_currentWidget->show();
+
+		widgetChanged(widget);
+		widgetChanged(key);
+	
+	}
+
+}
 void ComboWidget::removeWidget(QString name)
 {
-    if (currentWidgetName() == name)
-        m_layout->removeWidget(m_panels[name]);
+    if (currentWidgetKey() == name)
+        m_layout->removeWidget(m_widgets[name]);
 
 
-    m_panels.remove(name);
-    if (m_panels.count() == 0)
+    m_widgets.remove(name);
+    if (m_widgets.count() == 0)
         m_layout->addWidget(m_voidWidget);
 
-    m_panelSelector->removeItem(m_panelSelector->findText(name));
+    m_widgetSelector->removeItem(m_widgetSelector->findText(name));
 }
 
 bool ComboWidget::containsWidget(QString name)
 {
-    return m_panels.contains(name);
+    return m_widgets.contains(name);
 }
 
-QString ComboWidget::currentWidgetName()
+QString ComboWidget::currentWidgetKey()
 {
-    return m_panelSelector->currentText();
+    return m_widgetSelector->currentText();
 }
 
 void ComboWidget::addTool(QWidget * tool)
@@ -73,8 +91,8 @@ void ComboWidget::removeTool(QWidget * tool)
 
 void ComboWidget::addWidget(QWidget * panel,const QString& name)
 {
-    m_panels[name] = panel;
-    m_panelSelector->addItem(name);
+    m_widgets[name] = panel;
+    m_widgetSelector->addItem(name);
 
 }
 bool ComboWidget::containsTool(QWidget * tool)
@@ -85,7 +103,7 @@ bool ComboWidget::containsTool(QWidget * tool)
 void ComboWidget::setVoidWidget(QWidget * panel)
 {
 
-    if (m_panels.count() == 0)
+    if (m_widgets.count() == 0)
     {
         m_layout->removeWidget(m_currentWidget);
         m_currentWidget->hide();
@@ -93,7 +111,7 @@ void ComboWidget::setVoidWidget(QWidget * panel)
 
     m_voidWidget = panel;
 
-    if (m_panels.count() == 0)
+    if (m_widgets.count() == 0)
     {
         m_currentWidget = m_voidWidget;
         m_layout->addWidget(m_voidWidget);
@@ -103,14 +121,15 @@ void ComboWidget::setVoidWidget(QWidget * panel)
 }
 void ComboWidget::setWidget( QString name)
 {
-    if (m_panels.contains(name))
+    if (m_widgets.contains(name))
     {
         m_layout->removeWidget(m_currentWidget);
         m_currentWidget->hide();
-        m_currentWidget = m_panels[name];
+        m_currentWidget = m_widgets[name];
         m_layout->addWidget(m_currentWidget);
         m_currentWidget->show();
 
+		widgetChanged(m_widgets[name]);
         widgetChanged(name);
     }
 
