@@ -5,7 +5,7 @@
 
 
 
-NCSDataSource::NCSDataSource() : QObject(0), m_neurons(0), m_connections(0)
+NCSDataSource::NCSDataSource(QObject *parent) : QObject(parent), m_neurons(0), m_connections(0)
 {
 }
 
@@ -38,16 +38,16 @@ void NCSDataSource::replaceNeuronSet(NCVNeuronSet *neurons)
 
     if(m_neurons)
     {
-        //In the future, stop any update threads that might be running.
+        //Delete current reported attributes that match the ones being replaced.
+        attributes = m_neurons->attributes();
 
-        //Delete current reported attributes.
-        for(QMap<NCVAttribute*, ReportedAttribute>::iterator it = m_reported.begin(); it != m_reported.end(); ++it)
+        for(QMap<QString, NCVAttribute*>::iterator it = attributes.begin(); it != attributes.end(); it++)
         {
-            delete it.value().report;
+            delete m_reported[it.value()].report;
+            m_reported.remove(it.value());
         }
 
-        m_reported.clear();
-        delete[] m_neurons;
+        //delete m_neurons;
     }
 
     m_neurons = neurons;
@@ -70,13 +70,29 @@ void NCSDataSource::replaceConnectionSet(NCVConnectionSet *connections)
     QMap<QString, NCVAttribute*> attributes;
 
     if(m_connections)
-        delete[] m_connections;
+    {
+        //Delete current reported attributes that match the ones being replaced.
+        attributes = m_neurons->attributes();
+
+        for(QMap<QString, NCVAttribute*>::iterator it = attributes.begin(); it != attributes.end(); it++)
+        {
+            delete m_reported[it.value()].report;
+            m_reported.remove(it.value());
+        }
+
+        //delete m_connections;
+    }
 
     m_connections = connections;
 
     if(m_connections)
     {
         attributes = m_connections->attributes();
+
+        for(QMap<QString, NCVAttribute*>::iterator it = attributes.begin(); it != attributes.end(); it++)
+        {
+            addAttribute(it.key(), it.value());
+        }
     }
 }
 
@@ -99,8 +115,29 @@ void NCSDataSource::updateAttribute(NCVAttribute *attribute)
         reportedAttribute.report->permute(data, values);
         contAttr->attachData(QVector<GLfloat>::fromStdVector(values));
     }
-    //How will discrete attributes work here?
-}
+    else if(reportedAttribute.ncvAttribute->type() == Discrete)
+    {
+        //Note: this will just handle bit attributes for now, since the mechanism for
+        //more complex discrete attributes doesn't exist in NCS yet. At some point we
+        //should probably convert to NCS's bit array format to speed this update process
+        //up a little. Let's see how this performs first though.
+        std::vector<unsigned int> values;
+        QVector<GLubyte> byteValues;
+        NCVDiscreteAttribute *discAttr = dynamic_cast<NCVDiscreteAttribute*>(reportedAttribute.ncvAttribute);
+        reportedAttribute.report->permute(data, values);
+        byteValues.resize(values.size() * sizeof(unsigned int));
+
+        for(int i = 0; i < m_neurons->count(); i++)
+        {
+            if(values[i >> 5] & (0x80000000 >> (i & 0x1F)))
+            {
+                byteValues[i >> 3] |= 1 << (i & 0x07);
+            }
+        }
+
+        discAttr->attachData(byteValues, 1);
+    }
+}//updateAttribute()
 
 
 
@@ -111,7 +148,7 @@ void NCSDataSource::updateCurrentAttributes()
 
     if(NULL != m_connections)
         updateAttribute(m_connections->getCurrentAttribute());
-}
+}//updateCurrentAttributes()
 
 
 
@@ -148,4 +185,4 @@ void NCSDataSource::addAttribute(const QString& name, NCVAttribute *ncvAttribute
     ra.ncvAttribute = ncvAttribute;
     ra.report = report;
     m_reported[ncvAttribute] = ra;
-}
+}//addAttribute()

@@ -59,7 +59,9 @@ SOURCES += \
     modelselector.cpp \
     sshsocket.cpp \
     deploymentwidget.cpp \
-    ncsdatasource.cpp
+    ncsdatasource.cpp \
+    networkupdatemanager.cpp \
+    networkupdatethread.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -98,7 +100,9 @@ HEADERS  += \
     sshsocket.h \
     loadingwidget.h \
     deploymentwidget.h \
-    ncsdatasource.h
+    ncsdatasource.h \
+    networkupdatemanager.h \
+    networkupdatethread.h
 
 FORMS    += \
     mainwindow.ui

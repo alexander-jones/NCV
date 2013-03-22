@@ -20,7 +20,7 @@ class NCSDataSource : public QObject
 {
     Q_OBJECT
 public:
-    explicit NCSDataSource();
+    NCSDataSource(QObject *parent = 0);
     virtual ~NCSDataSource();
     
 signals:
