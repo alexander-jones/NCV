@@ -32,9 +32,9 @@ void QGLXCamera::setView(QVector3D pos, GLfloat horizAngle, GLfloat vertAngle)
    ).normalized();
 
    m_right = QVector3D(
-       sin(m_horizontalAngle - PI/2.0),
+       sin(m_horizontalAngle - M_PI/2.0),
        0,
-       cos(m_horizontalAngle - PI/2.0)
+       cos(m_horizontalAngle - M_PI/2.0)
    ).normalized();
    m_up = QVector3D::crossProduct( m_right, m_direction ).normalized();
 
@@ -54,9 +54,9 @@ void QGLXCamera::setView(QVector3D pos, QVector3D target, QVector3D m_up)
    m_horizontalAngle = acos(m_direction.z() / cos(m_verticalAngle));
 
    m_right = QVector3D(
-       sin(m_horizontalAngle - PI/2.0),
+       sin(m_horizontalAngle - M_PI/2.0),
        0,
-       cos(m_horizontalAngle - PI/2.0)
+       cos(m_horizontalAngle - M_PI/2.0)
    ).normalized();
    m_compileViewMatrix();
 }
@@ -69,9 +69,9 @@ void QGLXCamera::setForward(QVector3D dir)
     m_horizontalAngle = acos(m_direction.z() / cos(m_verticalAngle));
 
     m_right = QVector3D(
-        sin(m_horizontalAngle - PI/2.0),
+        sin(m_horizontalAngle - M_PI/2.0),
         0,
-        cos(m_horizontalAngle - PI/2.0)
+        cos(m_horizontalAngle - M_PI/2.0)
     ).normalized();
     m_compileViewMatrix();
 }
@@ -137,23 +137,23 @@ GLfloat QGLXCamera::rotationY()
 void QGLXCamera::rotate(GLfloat horizRot, GLfloat vertRot)
 {
 
-    if (m_verticalAngle >=  (PI / 2.0) && m_verticalAngle <=  PI +(PI / 2.0))
+    if (m_verticalAngle >=  (M_PI / 2.0) && m_verticalAngle <=  M_PI +(M_PI / 2.0))
         m_horizontalAngle -= horizRot;
     else
         m_horizontalAngle += horizRot;
     m_verticalAngle += vertRot;
 
     if (m_horizontalAngle <= 0)
-        m_horizontalAngle = TWO_PI + m_horizontalAngle;
+        m_horizontalAngle = 2.0f * M_PI + m_horizontalAngle;
 
-    else if (m_horizontalAngle >= TWO_PI)
-        m_horizontalAngle = m_horizontalAngle - TWO_PI;
+    else if (m_horizontalAngle >= 2.0f * M_PI)
+        m_horizontalAngle = m_horizontalAngle - 2.0f * M_PI;
 
     if (m_verticalAngle <= 0)
-        m_verticalAngle = TWO_PI + m_verticalAngle;
+        m_verticalAngle = 2.0f * M_PI + m_verticalAngle;
 
-    else if (m_verticalAngle >= TWO_PI)
-        m_verticalAngle = m_verticalAngle - TWO_PI;
+    else if (m_verticalAngle >= 2.0f * M_PI)
+        m_verticalAngle = m_verticalAngle - 2.0f * M_PI;
 
     m_direction = QVector3D(
         cos(m_verticalAngle) * sin(m_horizontalAngle),
@@ -162,9 +162,9 @@ void QGLXCamera::rotate(GLfloat horizRot, GLfloat vertRot)
     ).normalized();
 
     m_right = QVector3D(
-        sin(m_horizontalAngle - PI/2.0),
+        sin(m_horizontalAngle - M_PI/2.0),
         0,
-        cos(m_horizontalAngle - PI/2.0)
+        cos(m_horizontalAngle - M_PI/2.0)
     ).normalized();
     m_up = QVector3D::crossProduct( m_right, m_direction ).normalized();
 

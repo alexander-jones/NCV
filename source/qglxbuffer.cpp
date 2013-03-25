@@ -2,157 +2,113 @@
 #include <QDebug>
 
 const unsigned int NOT_CREATED = 10000;
-QGLXBuffer::QGLXBuffer() :
-    QGLBuffer()
+QGLXBuffer::QGLXBuffer()
 {
-    m_type = QGLXBuffer::VertexBuffer;
-    m_isQGLX= false;
     m_bufferID = NOT_CREATED;
     m_textureID = NOT_CREATED;
 
 }
 
 
-
-QGLXBuffer::QGLXBuffer(QGLXBuffer::Type type) :
-    QGLBuffer((QGLBuffer::Type)type)
-{
-    m_type = type;
-    if (m_type == QGLXBuffer::TextureBuffer || m_type == QGLXBuffer::AtomicCounterBuffer || m_type == QGLXBuffer::TransformFeedbackBuffer
-        || m_type == QGLXBuffer::UniformBuffer  || m_type == QGLXBuffer::ShaderStorageBuffer  || m_type == QGLXBuffer::DispatchIndirectBuffer)
-       m_isQGLX= true;
-    else
-       m_isQGLX= false;
-    m_bufferID = NOT_CREATED;
-    m_textureID = NOT_CREATED;
-
-}
 bool QGLXBuffer::create()
 {
-    if (m_isQGLX)
-    {
-        glGenBuffers(1, &m_bufferID);
-        if (m_type == TextureBuffer)
-            glGenTextures(1, &m_textureID);
-        return true;
-    }
-    else
-        return QGLBuffer::create();
+    glGenBuffers(1, &m_bufferID);
+    glGenTextures(1, &m_textureID);
+    return true;
 
 }
 void QGLXBuffer::destroy()
 {
-    if (m_isQGLX)
-    {
-        glDeleteBuffers(1, &m_bufferID);
-        if (m_type == TextureBuffer)
-            glDeleteTextures(1, &m_textureID);
-    }
-    else
-        QGLBuffer::destroy();
+    glDeleteBuffers(1, &m_bufferID);
+    glDeleteTextures(1, &m_textureID);
 
 }
-void QGLXBuffer::allocate(const void *data, int count,GLenum dataType )
+void QGLXBuffer::allocate(const void *data, int count, UsagePattern usage )
 {
-    if (m_isQGLX)
-    {
-        glBufferData(m_type, count , data, usagePattern());
-        if (m_type == TextureBuffer)
-            glTexBuffer(m_type, dataType, m_bufferID);
-
-    }
-
-    else
-        QGLBuffer::allocate(data,count);
-
+    glBindBuffer(ArrayBuffer,m_bufferID);
+    glBufferData(ArrayBuffer, count , data, usage);
+    glBindBuffer(ArrayBuffer,0);
 }
+
+void QGLXBuffer::allocate(const void *data, int count,GLenum textureFormat , UsagePattern usage)
+{
+
+    glBindBuffer(TextureBuffer,m_bufferID);
+    glBufferData(TextureBuffer, count , data, usage);
+    glTexBuffer(m_targetBinding, textureFormat, m_bufferID);
+    glBindBuffer(TextureBuffer,0);
+}
+
+GLuint QGLXBuffer::id()
+{
+    return m_bufferID;
+}
+
 GLint QGLXBuffer::textureID()
 {
-    if (m_type == TextureBuffer)
+
+    if (m_targetBinding == TextureBuffer)
         return m_textureID;
     else
         return -1;
 }
 
 
-bool QGLXBuffer::bind()
+bool QGLXBuffer::bind(TargetBinding binding)
 {
-    if (m_isQGLX)
-    {
-        glBindBuffer(m_type, m_bufferID);
-        if (m_type == TextureBuffer)
-            glBindTexture(m_type, m_textureID);
-        return true;
-    }
-    else
-        return QGLBuffer::bind();
+    m_targetBinding = binding;
+    glBindBuffer(m_targetBinding, m_bufferID);
+    if (m_targetBinding == TextureBuffer)
+        glBindTexture(m_targetBinding,m_textureID);
+
+    return true;
 }
 
-void * QGLXBuffer::map(QGLXBuffer::Access access)
+void * QGLXBuffer::map(TargetBinding binding, QGLXBuffer::Access access)
 {
-    if (m_isQGLX)
-    {
-        glBindBuffer(m_type, m_bufferID);
-        return glMapBuffer(m_type,access);
-    }
-    else
-        return QGLBuffer::map(access);
+    m_targetBinding = binding;
+    glBindBuffer(m_targetBinding, m_bufferID);
+    return glMapBuffer(m_targetBinding,access);
 }
 
 bool QGLXBuffer::isCreated()
 {
-    if (m_isQGLX)
-    {
-        return m_bufferID != NOT_CREATED;
-    }
-    else
-        return QGLBuffer::isCreated();
+    return m_bufferID != NOT_CREATED;
 }
 
 void  QGLXBuffer::unmap()
 {
-    if (m_isQGLX)
-    {
-        glUnmapBuffer(m_type);
-        glBindBuffer(m_type, 0);
-    }
-    else
-        QGLBuffer::unmap();
+    if (m_targetBinding == Unbound)
+        return;
+    glUnmapBuffer(m_targetBinding);
+    glBindBuffer(m_targetBinding, 0);
+
 }
 void QGLXBuffer::release()
 {
-    if (m_isQGLX)
-    {
-        glBindBuffer(m_type, 0);
-        if (m_type == TextureBuffer)
-            glBindTexture(m_type, 0);
-    }
-    else
-        QGLBuffer::release();
+    if (m_targetBinding == Unbound)
+        return;
+    glBindBuffer(m_targetBinding, 0);
+    if (m_targetBinding == TextureBuffer)
+        glBindTexture(m_targetBinding,0);
+    m_targetBinding = Unbound;
+
 }
 
 bool QGLXBuffer::read(int offset, void *data, int count)
 {
-    if (m_isQGLX)
-    {
-        GLenum before = glGetError();
-        glBindBuffer(m_type, m_bufferID);
-        glGetBufferSubData(m_type,offset,count,data);
-        glBindBuffer(m_type, 0);
-        GLenum after = glGetError();
-        return after == 0 && before != 0;
-    }
-    else
-        return QGLBuffer::read(offset,data,count);
+    GLenum before = glGetError();
+    glBindBuffer(m_targetBinding, m_bufferID);
+    glGetBufferSubData(m_targetBinding,offset,count,data);
+    glBindBuffer(m_targetBinding, 0);
+    GLenum after = glGetError();
+    return after == 0 && before != 0;
 }
 
 void QGLXBuffer::write(int offset, void *data, int count)
 {
-    if (m_type == TextureBuffer)
-    {
-        glBufferSubData(m_type,offset,count,data);
-        glTexBuffer(m_type, m_dataType, m_bufferID);
-    }
-    else
-        QGLBuffer::write(offset,data,count);
+    if (m_targetBinding == Unbound)
+    glBufferSubData(m_targetBinding,offset,count,data);
+    if (m_targetBinding == TextureBuffer)
+        glTexBuffer(m_targetBinding, m_dataType, m_bufferID);
 }

@@ -3,29 +3,50 @@
 
 #include "qglxcore.h"
 #include <QGLWidget>
-#include <QGLBuffer>
+#include "qglxtexture1d.h"
 /*!
     \class QGLXBuffer
     \author Alex Jones
     \brief An QGL extension class for managing OpenGL buffers. Extends functionality of \htmlonly<a href="http://qt-project.org/doc/qt-4.8/qglbuffer.html"> QGLBuffer</a>  \endhtmlonly to include Texture Buffers.
 */
-class QGLXBuffer : public QGLBuffer
+class QGLXBuffer
 {
 public:
+
+    enum UsagePattern
+    {
+        StreamDraw = GL_STREAM_DRAW,
+        StreamRead = GL_STREAM_READ,
+        StreamCopy	= GL_STREAM_COPY,
+        StaticDraw	= GL_STATIC_DRAW,
+        StaticRead	= GL_STATIC_READ,
+        StaticCopy	= GL_STATIC_COPY,
+        DynamicDraw	= GL_DYNAMIC_DRAW,
+        DynamicRead	= GL_DYNAMIC_READ,
+        DynamicCopy = GL_DYNAMIC_COPY
+    };
+
+    enum Access
+    {
+        ReadOnly = GL_READ_ONLY,
+        WriteOnly = GL_WRITE_ONLY,
+        ReadWrite = GL_READ_WRITE
+    };
 
     /*!
         \brief This enum defines the type of GL buffer object to create with QGLXBuffer.
     */
-    enum Type
+    enum TargetBinding
     {
+        Unbound = -1,
         /*! \brief A buffer used for specifing vertex arrays. */
-        VertexBuffer = QGLBuffer::VertexBuffer,
+        ArrayBuffer  = GL_ARRAY_BUFFER,
         /*! \brief A buffer used to specify vertex indices for use with glDrawElements / glDrawElementsInstanced */
-        IndexBuffer = QGLBuffer::IndexBuffer,
+        IndexBuffer = GL_ELEMENT_ARRAY_BUFFER ,
         /*! \brief A buffer for reading pixel data from the GL server (for example, with glReadPixels()). Not supported under OpenGL/ES. */
-        PixelPackBuffer = QGLBuffer::PixelPackBuffer,
+        PixelPackBuffer = GL_PIXEL_PACK_BUFFER,
         /*! \brief A buffer for writing pixel data to the GL server (for example, with glTexImage2D()). Not supported under OpenGL/ES. */
-        PixelUnpackBuffer = QGLBuffer::PixelUnpackBuffer,
+        PixelUnpackBuffer  = GL_PIXEL_UNPACK_BUFFER,
         /*! \brief A one dimensional buffer used for specifing buffer data as a texture. */
         TextureBuffer  = GL_TEXTURE_BUFFER,
         /*! \brief A buffer that can be incremented / decrimented in any shader stage by any GPU core. */
@@ -44,13 +65,9 @@ public:
 
 
     /*!
-        \brief Constructs a new buffer object of Type VertexBuffer.
+        \brief Constructs a new buffer object.
     */
     QGLXBuffer();
-    /*!
-        \brief Constructs a new buffer object of Type specified by type.
-    */
-    QGLXBuffer(QGLXBuffer::Type type) ;
 
 
     /*!
@@ -60,12 +77,15 @@ public:
         \brief This function allocates memory for this buffer. It is assumed that create() has been called on this buffer and that it has
         been bound to the current context.
     */
-    void allocate(const void *data, int ,GLenum  dataType = GL_UNSIGNED_INT);
+    void allocate(const void *data, int count,UsagePattern usage = StaticDraw);
+
+
+    void allocate(const void *data, int count,GLenum textureFormat,UsagePattern usage = StaticDraw);
 
     /*!
         \brief This function binds this buffer to the current context.
     */
-    bool bind();
+    bool bind(TargetBinding binding);
 
     /*!
         \brief This function creates this buffer in OpenGL controlled memory.
@@ -78,6 +98,8 @@ public:
     void destroy();
 
 
+    GLuint id();
+
     /*!
         \brief This function indicates whether or not this buffer has been created.
     */
@@ -87,7 +109,7 @@ public:
         \param access The Read / Write permissions of this mapping.
         \brief This function maps the content of this buffer to a pointer.
     */
-    void * map(Access access);
+    void * map(TargetBinding binding, Access access);
 
     /*!
         \brief This function releases this buffer from the current context.
@@ -121,10 +143,9 @@ public:
     void unmap();
 
 private:
-    bool m_isQGLX;
     GLuint m_bufferID,m_textureID;
     GLenum m_dataType;
-    Type m_type;
+    TargetBinding m_targetBinding;
 };
 
 #endif // QGLXBUFFER_H

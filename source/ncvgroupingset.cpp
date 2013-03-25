@@ -28,14 +28,14 @@ void NCVGroupingSet::bind(NCVElementType type,QGLXCamera camera,bool deselected)
         QGLShaderProgram * program = m_currentAttribute->program();
 
         glActiveTexture(GL_TEXTURE2);
-        m_neurons->positionBuffer().bind();
+        m_neurons->positionBuffer().bind(QGLXBuffer::TextureBuffer);
         program->setUniformValue("Inst_Translation", 2);
 
-        m_neuronIdBuffer.bind();
+        m_neuronIdBuffer.bind(QGLXBuffer::ArrayBuffer);
         program->enableAttributeArray( "Neuron_ID");
         program->setAttributeBuffer("Neuron_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
 
-        m_idBuffer.bind();
+        m_idBuffer.bind(QGLXBuffer::ArrayBuffer);
         program->enableAttributeArray( "Inst_ID");
         program->setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
         glVertexAttribDivisor(program->attributeLocation("Inst_ID"), 0);
@@ -63,17 +63,17 @@ void NCVGroupingSet::bindSilhouettes(NCVElementType type,QGLXCamera camera)
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         m_silhouetteProgram.bind();
         glActiveTexture(GL_TEXTURE0);
-        m_neurons->positionBuffer().bind();
+        m_neurons->positionBuffer().bind(QGLXBuffer::TextureBuffer);
         m_silhouetteProgram.setUniformValue("Inst_Translation", 0);
 
         m_silhouetteProgram.setUniformValue("WVP",camera.projection() * camera.view());
 
-        m_neuronIdBuffer.bind();
+        m_neuronIdBuffer.bind(QGLXBuffer::ArrayBuffer);
         m_silhouetteProgram.enableAttributeArray( "Neuron_ID");
         m_silhouetteProgram.setAttributeBuffer("Neuron_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
         glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Neuron_ID"), 0);
 
-        m_idBuffer.bind();
+        m_idBuffer.bind(QGLXBuffer::ArrayBuffer);
         m_silhouetteProgram.enableAttributeArray( "Inst_ID");
         m_silhouetteProgram.setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
         glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Inst_ID"), 0);
@@ -208,8 +208,8 @@ void NCVGroupingSet::resolve()
 
 
         m_idBuffer.create();
-        m_idBuffer.bind();
-        m_idBuffer.allocate( &m_hullIndices[0], m_hullIndices.count() * sizeof(GLuint));
+        m_idBuffer.bind(QGLXBuffer::ArrayBuffer);
+        m_idBuffer.allocate( &m_hullIndices[0], m_hullIndices.count() * sizeof(GLuint),GL_UNSIGNED_INT);
         m_idBuffer.release();
 
         QVector<GLuint> neuronIds;
@@ -219,8 +219,8 @@ void NCVGroupingSet::resolve()
            m_fillIDVector(*it,neuronIds);
 
         m_neuronIdBuffer.create();
-        m_neuronIdBuffer.bind();
-        m_neuronIdBuffer.allocate( &neuronIds[0], neuronIds.count() * sizeof(GLuint));
+        m_neuronIdBuffer.bind(QGLXBuffer::ArrayBuffer);
+        m_neuronIdBuffer.allocate( &neuronIds[0], neuronIds.count() * sizeof(GLuint),GL_UNSIGNED_INT);
         m_neuronIdBuffer.release();
         m_initialized = true;
     }

@@ -121,7 +121,8 @@ private slots:
     void m_handleExitRange();
     void m_markerTypeSelected(QString name);
 
-
+protected:
+    void resizeEvent(QResizeEvent *);
 private:
 
     QPoint m_clampPosToImage(QPoint pos);
@@ -135,7 +136,7 @@ private:
     bool m_fillRangeLayer(float start,float end, QColor startColor, QColor endColor);
 
     QComboBox * m_markerSelector;
-    int m_markerHeight;
+    int m_markerHeight,m_markerWidth;
     Marker::Type m_currentMarkerType;
     QColor m_voidColor;
     QColorDialog * m_colorPicker;

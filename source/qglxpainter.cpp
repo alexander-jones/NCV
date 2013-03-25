@@ -55,19 +55,13 @@ void QGLXPainter::begin(QPaintDevice *device)
     if (!m_screenVertices.isCreated())
     {
         m_screenVertices.create();
-        m_screenVertices.bind();
-        m_screenVertices.setUsagePattern( QGLXBuffer::StaticDraw );
-        m_screenVertices.allocate(&screenVerts[0],4 * sizeof(QVector3D),GL_FLOAT);
-        m_screenVertices.release();
+        m_screenVertices.allocate(&screenVerts[0],4 * sizeof(QVector3D),QGLXBuffer::StaticDraw);
     }
 
     if (!m_screenCoords.isCreated())
     {
         m_screenCoords.create();
-        m_screenCoords.bind();
-        m_screenCoords.setUsagePattern( QGLXBuffer::StaticDraw );
-        m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D),GL_FLOAT);
-        m_screenCoords.release();
+        m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D),QGLXBuffer::StaticDraw);
     }
 
     if (!m_program.isLinked())
@@ -93,12 +87,12 @@ void QGLXPainter::end()
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
     m_program.bind();
-    m_screenVertices.bind();
+    m_screenVertices.bind(QGLXBuffer::ArrayBuffer);
     m_program.setAttributeBuffer( "Vert_Position", GL_FLOAT,  0 ,3,sizeof(GL_FLOAT) * 3);
     m_program.enableAttributeArray("Vert_Position");
     glVertexAttribDivisor( m_program.attributeLocation("Vert_Position"),0);
 
-    m_screenCoords.bind();
+    m_screenCoords.bind(QGLXBuffer::ArrayBuffer);
     m_program.setAttributeBuffer( "Vert_Coord", GL_FLOAT,  0 ,2,sizeof(GL_FLOAT) * 2);
     m_program.enableAttributeArray("Vert_Coord");
     glVertexAttribDivisor( m_program.attributeLocation("Vert_Coord"), 0);

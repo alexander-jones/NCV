@@ -13,7 +13,7 @@ CONFIG+= wwwidgets
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lssh -lGLEW -lGLU -lslugUtil -lslugSpec -lslugSim
+    LIBS +=  -lssh -lGLU  -lGLEW -lslugUtil -lslugSpec -lslugSim
 }
 
 #windows specific settings
@@ -48,7 +48,6 @@ SOURCES += \
     ncvcontinuousattribute.cpp \
     ncvdiscreteattribute.cpp \
     ncvcanvas.cpp \
-    ncvsidebar.cpp \
     ncvbuildwidget.cpp \
     ncvgroupingset.cpp \
     distributewidget.cpp \
@@ -60,8 +59,12 @@ SOURCES += \
     sshsocket.cpp \
     deploymentwidget.cpp \
     ncsdatasource.cpp \
-    networkupdatemanager.cpp \
-    networkupdatethread.cpp
+    ncvrendertool.cpp \
+    qswitch.cpp \
+    qwidgetvector.cpp \
+    skysphere.cpp \
+    networkupdatethread.cpp \
+    networkupdatemanager.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -87,7 +90,6 @@ HEADERS  += \
     ncvcontinuousattribute.h \
     ncvdiscreteattribute.h \
     ncvcanvas.h \
-    ncvsidebar.h \
     ncvbuildwidget.h \
     ncvgroupingset.h \
     distributewidget.h \
@@ -101,8 +103,13 @@ HEADERS  += \
     loadingwidget.h \
     deploymentwidget.h \
     ncsdatasource.h \
-    networkupdatemanager.h \
-    networkupdatethread.h
+    ncvwidgetplugin.h \
+    ncvrendertool.h \
+    qswitch.h \
+    qwidgetvector.h \
+    skysphere.h \
+    networkupdatethread.h \
+    networkupdatemanager.h
 
 FORMS    += \
     mainwindow.ui
@@ -130,7 +137,8 @@ OTHER_FILES += \
     shaders/connectionContinuous.vert \
     shaders/continuous.frag \
     shaders/neuronDiscrete.vert \
-    shaders/neuronContinuous.vert
+    shaders/neuronContinuous.vert \
+    styles/switch.qss
 
 RESOURCES += \
     core-profile.qrc

@@ -18,11 +18,20 @@ enum NCVAttributeType
     Continuous
 };
 
+enum SelectionFlag
+{
+	RenderDeselected = 1,
+	CompoundSelection = 2
+};
 
 struct Range
 {
     int start;
     int end;
+	bool operator==(const Range &rhs)
+	{
+		return start == rhs.start && end == rhs.end;
+	}
 };
 
 class NCVAttribute

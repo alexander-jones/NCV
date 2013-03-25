@@ -13,6 +13,7 @@
 #include <QTextDocument>
 #include <QCoreApplication>
 #include "time.h"
+#include "skysphere.h"
 
 
 /*!
@@ -20,6 +21,8 @@
     \author Alex Jones
     \brief The OpenGL Widget housing the core NCV rendering context.
 */
+
+
 class NCVCanvas : public QGLWidget
 {
     Q_OBJECT
@@ -43,9 +46,14 @@ public:
 public slots:
     void setNeurons(NCVNeuronSet * neurons);
     void setConnections(NCVConnectionSet * connections);
+    void renderNeurons(bool render);
+    void renderConections(bool render);
+	void setSelection(QVector<Range> selection, SelectionFlag flags);
+
 
 signals:
-
+	void selectionChanged(QVector<Range> selection, SelectionFlag flags);
+	void deselectedRenderSet(bool on);
     void initialized();
     void frameRendered();
     void cameraUpdated(QGLXCamera camera);
@@ -70,9 +78,12 @@ private:
     void m_performRegularRender();
     void m_performSelectionRender();
     void m_drawLegend();
+    bool m_outsideOfWorld(QVector3D pos);
 
     QGLXPainter m_painter;
-    bool m_renderOnlySelection, m_renderDirty;
+    SkySphere m_skySphere;
+	SelectionFlag m_selectionFlags;
+    bool m_renderDirty,m_performSilhouetting;
     QTime m_timer, m_idleTimer;
     GLfloat m_legendShowTime;
     NCVNeuronSet * m_neurons;
@@ -85,7 +96,7 @@ private:
     QVector2D m_mousePosition;
     QRect m_selectionRect;
     float m_moveSpeed, m_turnSpeed;
-    bool m_leftMouseDown,m_rightMouseDown,m_shiftDown,m_renderNeurons,m_renderConnections,m_versionCapable,m_initialized;
+    bool m_leftMouseDown,m_rightMouseDown,m_renderNeurons,m_renderConnections,m_versionCapable,m_initialized;
     QGLXBuffer m_screenVertices,m_screenCoords;
     QSet<GLuint> m_selectedObjects;
     QVector<Range> m_ranges;

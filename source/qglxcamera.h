@@ -6,9 +6,7 @@
 #include <QMatrix4x4>
 #include "math.h"
 
-#define PI 3.141592653589793238462643383
 
-#define TWO_PI 2.0 * 3.141592653589793238462643383
 
 /*!
     \class QGLXCamera

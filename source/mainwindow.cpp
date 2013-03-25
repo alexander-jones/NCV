@@ -26,10 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_tabWidget = new QwwConfigWidget();
     m_tabWidget->setIconSize(QSize(64,64));
 
-    //m_tabWidget->setTabPosition(QTabWidget::West);
-
     m_buildWidget = new NCVBuildWidget();
-    m_tabWidget->addGroup(m_buildWidget,QIcon(":/assets/setupIcon.png"),"Build");
+	m_tabWidget->addGroup(m_buildWidget,QIcon(":/assets/setupIcon.png"),"Build");
 
     m_distributeWidget = new DistributeWidget();
     m_tabWidget->addGroup(m_distributeWidget,QIcon(":/assets/hardwareIcon.png"),"Distribute");
@@ -43,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setCentralWidget(m_tabWidget);
 
 
-    m_buildWidget->createNetwork(50000,50000,QVector3D(50000,50000,50000)); // temporary (see buildwidget)
+    m_buildWidget->createNetwork(50000,50000,QVector3D(5000,5000,5000)); // temporary (see buildwidget)
 
 
 }

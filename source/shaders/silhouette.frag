@@ -16,6 +16,6 @@ float linearize(float depth)
 void main(void)
 {
     float cutoff = clamp((ZStop - ZNear) /(ZFar - ZNear),0.0f,1.0f);
-    float depth = clamp(pow((1.0f - linearize(gl_FragCoord.z)),DepthExponent),0.0f,1.0f);
-    Color = vec4(SilhouetteColor,  clamp((depth - cutoff )/cutoff,0.0f,1.0f) * MaxAlpha);
+    float depth =  clamp(pow(linearize(gl_FragCoord.z),DepthExponent),0.0f,cutoff);
+    Color = vec4(SilhouetteColor,  clamp(1.0f - (depth /cutoff),0.0f,1.0f) * MaxAlpha);
 }

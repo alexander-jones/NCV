@@ -73,18 +73,15 @@ QString ComboWidget::currentWidgetKey()
 void ComboWidget::addTool(QWidget * tool)
 {
     m_toolbarLayout->addWidget(tool);
-    m_tools.append(tool);
 }
+void ComboWidget::insertTool(int index,QWidget * tool)
+{
+    m_toolbarLayout->insertWidget(index,tool);
+}
+
 void ComboWidget::removeTool(QWidget * tool)
 {
     m_toolbarLayout->removeWidget(tool);
-    for (int i =0; i < m_tools.size();i++)
-        if (m_tools[i] == tool)
-        {
-            m_tools.remove(i);
-            break;
-        }
-
 }
 
 
@@ -97,7 +94,7 @@ void ComboWidget::addWidget(QWidget * panel,const QString& name)
 }
 bool ComboWidget::containsTool(QWidget * tool)
 {
-    return m_tools.contains(tool);
+    return m_toolbarLayout->indexOf(tool) != -1;
 }
 
 void ComboWidget::setVoidWidget(QWidget * panel)

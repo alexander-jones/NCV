@@ -31,6 +31,14 @@ public:
 		\brief Adds a tool the to the toolbar which always contains the combo box switcher.
 	*/
     void addTool(QWidget * tool);
+
+
+    /*!
+        \param index The index in the toolbar to insert the new tool.
+        \param tool A tool to added to the ComboWidget toolbar.
+        \brief Inserts a tool the to the toolbar which always contains the combo box switcher.
+    */
+    void insertTool(int index,QWidget * tool);
 	
 	/*!
 		\param tool The tool to remove from the ComboWidget toolbar.
@@ -119,7 +127,6 @@ public slots:
     void setWidget( QWidget * widget);
 
 private:
-    QVector<QWidget *> m_tools;
     QWidget * m_currentWidget, *m_toolbar;
     QComboBox * m_widgetSelector;
     QHBoxLayout * m_toolbarLayout;

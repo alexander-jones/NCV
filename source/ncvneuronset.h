@@ -13,7 +13,7 @@ public:
     NCVNeuronSet(QVector<QVector3D> positions);
 
     void bind(QGLXCamera camera,bool deselected = false);
-    void bindSilhouettes(QGLXCamera camera);
+    void bindSilhouettes(QGLXCamera camera, QColor color = QColor(0,0,0));
     int count();
     void draw();
     void drawSubset(int startElement, int count);
@@ -33,7 +33,7 @@ public slots:
 
 private:
     int m_count;
-    QGLXBuffer m_indexBuffer, m_normalBuffer, m_vertexBuffer, m_idBuffer;
+    QGLXBuffer m_indexBuffer, m_vertexBuffer, m_idBuffer;
     QMatrix4x4 m_scale;
     bool m_initialized,m_dirty;
     QMap<QString,NCVAttribute *> m_attributes;

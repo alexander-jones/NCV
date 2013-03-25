@@ -28,6 +28,11 @@ void QGLXTexture1D::bind(QGLXTexture1D::ImageUnit unit,  QGLXTexture1D::ImageTex
 void QGLXTexture1D::create()
 {
     glGenTextures(1, &m_id);
+    bind();
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+    release();
 }
 
 
@@ -57,10 +62,9 @@ void QGLXTexture1D::allocate(GLuint width, GLenum internalFormat, GLvoid * data)
     m_pixelType = internalFormatToPixelType(m_internalFormat);
     m_pixelFormat = internalFormatToPixelFormat(m_internalFormat);
 
+    glBindTexture(GL_TEXTURE_1D,m_id);
     glTexImage1D(GL_TEXTURE_1D, 0, m_internalFormat, m_width, 0, m_pixelFormat, GL_FLOAT, data);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+    glBindTexture(GL_TEXTURE_1D,0);
 
 }
 void QGLXTexture1D::destroy()

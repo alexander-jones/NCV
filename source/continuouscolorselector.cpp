@@ -138,7 +138,6 @@ ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
 
     m_layout = new QVBoxLayout();
     m_layout->setAlignment(Qt::AlignCenter);
-    m_rangeLayerPadding = 100;
 
     m_markerRangeContainer = new ImageContainer();
     m_markerRangeContainer->setAttribute(Qt::WA_TranslucentBackground);
@@ -154,6 +153,7 @@ ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
     m_layout->addWidget(m_valueLayerContainer);
 
     m_markerHeight = QImage(":/assets/markerWholeTemplate.png").height();
+    m_markerWidth = QImage(":/assets/markerWholeTemplate.png").width();
 
     m_markerSelector = new QComboBox();
     m_markerSelector->addItem(QIcon(":/assets/markerWholeTemplate.png"),"Solid");
@@ -164,17 +164,35 @@ ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
     m_layout->addWidget(m_markerSelector);
 
     this->setLayout(m_layout);
-
-    m_rangeLayer = new QImage(200,m_markerHeight,QImage::Format_RGB32);
-    m_markerLayer = new QImage(300,m_markerHeight,QImage::Format_ARGB32);
+    m_rangeLayerPadding = m_markerWidth/2;
+    m_rangeLayer = new QImage(size().width() - m_markerWidth/2,m_markerHeight,QImage::Format_RGB32);
+    m_markerLayer = new QImage(size().width(),m_markerHeight,QImage::Format_ARGB32);
     m_markerLayer->fill(QColor(0,0,0,0));
-    m_valueLayer = new QImage(300 ,m_markerHeight,QImage::Format_ARGB32);
+    m_valueLayer = new QImage(size().width() ,m_markerHeight,QImage::Format_ARGB32);
     m_valueLayer->fill(QColor(0,0,0,0));
     m_updateRange();
     m_updateValueLayerContainer();
 
 
+
 }
+void ContinuousColorSelector::resizeEvent(QResizeEvent *ev)
+{
+    QSize newSize = ev->size();
+    m_rangeLayerPadding = m_markerWidth;
+    m_rangeLayer = new QImage(newSize.width() - m_markerWidth* 2,m_markerHeight,QImage::Format_RGB32);
+    m_markerLayer = new QImage(newSize.width()- m_markerWidth,m_markerHeight,QImage::Format_ARGB32);
+    m_markerLayer->fill(QColor(0,0,0,0));
+    m_valueLayer = new QImage(newSize.width() - m_markerWidth,m_markerHeight,QImage::Format_ARGB32);
+    m_valueLayer->fill(QColor(0,0,0,0));
+
+    for (int i = 0; i < m_markers.size();i++)
+        m_markers[i].setPosition( (m_rangeLayer->width()) * ((m_markers[i].value() - m_lowThreshold) /(m_highThreshold - m_lowThreshold)));
+
+    m_updateRange();
+    m_updateValueLayerContainer();
+}
+
 /*void ContinuousColorSelector::setWidth(int width)
 {
     QImage * oldImage = m_rangeLayer;

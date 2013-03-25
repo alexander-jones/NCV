@@ -96,11 +96,13 @@ void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat,i
         m_multisampled = true;
 
 
+    glBindTexture(GL_TEXTURE_2D,m_id);
     if (m_multisampled)
         glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,m_samples,m_internalFormat,m_width,m_height,GL_FALSE);
     else
         glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width,m_height,0, m_pixelFormat, m_pixelType, data);
 
+    glBindTexture(GL_TEXTURE_2D,0);
 
 }
 void QGLXTexture2D::destroy()

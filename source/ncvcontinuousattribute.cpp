@@ -3,7 +3,6 @@
 NCVContinuousAttribute::NCVContinuousAttribute( NCVElementType type, GLfloat minValue , GLfloat maxValue)
     :NCVAttribute()
 {
-    m_buffer = QGLXBuffer(QGLXBuffer::TextureBuffer);
     m_dataDirty = false;
     m_colorationDirty = false;
     m_minValue = minValue;
@@ -86,7 +85,7 @@ void NCVContinuousAttribute::bind(QGLXCamera camera)
 
 
     glActiveTexture(GL_TEXTURE0);
-    m_buffer.bind();
+    m_buffer.bind(QGLXBuffer::TextureBuffer);
     m_program.setUniformValue("Inst_Attribute", 0);
 
     glActiveTexture(GL_TEXTURE1);
@@ -125,6 +124,7 @@ void NCVContinuousAttribute::resolve()
             m_program.addShaderFromSourceFile( QGLShader::Geometry, ":/shaders/connectionContinuous.geom" );
             m_program.addShaderFromSourceFile( QGLShader::Fragment, ":/shaders/continuous.frag" );
             m_program.link();
+
         }
         m_shaderDirty = false;
     }
@@ -134,7 +134,7 @@ void NCVContinuousAttribute::resolve()
         GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,1,componentSize);
         if (!m_buffer.isCreated())
             m_buffer.create();
-        m_buffer.bind();
+        m_buffer.bind(QGLXBuffer::TextureBuffer);
         m_buffer.allocate(&m_data[0],componentSize * m_data.count(),textureFormat);
         m_buffer.release();
         m_dataDirty = false;
@@ -145,9 +145,9 @@ void NCVContinuousAttribute::resolve()
 
         if (!m_colorTexture.isCreated())
             m_colorTexture.create();
-        m_colorTexture.bind();
         m_colorTexture.allocate(m_colorationData.count()  ,GL_RGB32F,&m_colorationData[0]);
 
+        m_colorTexture.bind();
         m_colorTexture.setMinFilter(QGLXTexture1D::Linear);
         m_colorTexture.setMagFilter(QGLXTexture1D::Linear);
         m_colorTexture.setWrapFunction(QGLXTexture1D::Clamp);

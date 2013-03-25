@@ -19,9 +19,7 @@ NCVCanvas::NCVCanvas(  const QGLFormat& format, QWidget* parent )
     m_legendShowTime = 1300.0;
     m_moveSpeed = 2000;
     m_turnSpeed = 0.0025f;
-    m_shiftDown = false;
     m_worldSize = QVector3D(5000,5000,5000);
-    m_renderOnlySelection = false;
     m_renderNeurons= true;
     m_renderConnections= true;
     m_initialized = false;
@@ -29,6 +27,7 @@ NCVCanvas::NCVCanvas(  const QGLFormat& format, QWidget* parent )
     srand(time(NULL));
     m_idleTimer.start();
 	m_renderDirty= true;
+	m_selectionFlags = RenderDeselected;
 	this->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
 
@@ -140,37 +139,41 @@ void NCVCanvas::initializeGL()
     // initialize target bufferm_neuronsToCreate
     m_frameBufferObject.create();
 
-    QString names[4] = {"diffuse","normal","id","depth"};
-    GLenum formats[4] = {GL_RGB8,GL_RGB8,GL_R32UI,GL_DEPTH_COMPONENT32};
-    GLuint samples[4] = {1,1,1,1};
+    QString names[3] = {"diffuse","id","depth"};
+    GLenum formats[3] = {GL_RGB8,GL_R32UI,GL_DEPTH_COMPONENT32};
+    GLuint samples[3] = {1,1,1};
     GLint maxSamples;
     glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
 
-    for(int i = 0 ; i < 4; i ++)
+    for(int i = 0 ; i < 3; i ++)
     {
         m_maps.insert(names[i],QGLXTexture2D());
         m_maps[names[i]].create();
-        m_maps[names[i]].bind();
         m_maps[names[i]].allocate(1000,1000,formats[i],samples[i]);
+        m_maps[names[i]].bind();
         m_maps[names[i]].setMinFilter(QGLXTexture2D::Nearest);
         m_maps[names[i]].setMagFilter(QGLXTexture2D::Nearest);
         m_maps[names[i]].setWrapFunction(QGLXTexture2D::Clamp,QGLXTexture2D::Clamp);
         m_maps[names[i]].release();
+
     }
 
+    QGLFormat f = format();
     QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
     QVector2D screenCoords[4] = {QVector2D(0,0),QVector2D(1,0),QVector2D(1,1),QVector2D(0,1)};
     m_screenVertices.create();
-    m_screenVertices.bind();
-    m_screenVertices.setUsagePattern( QGLXBuffer::StaticDraw );
-    m_screenVertices.allocate(&screenVerts[0],4 * sizeof(QVector3D),GL_FLOAT);
+    m_screenVertices.bind(QGLXBuffer::ArrayBuffer);
+
+    m_screenVertices.allocate(&screenVerts[0],4 * sizeof(QVector3D));
     m_screenVertices.release();
 
+
     m_screenCoords.create();
-    m_screenCoords.bind();
-    m_screenCoords.setUsagePattern( QGLXBuffer::StaticDraw );
-    m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D),GL_FLOAT);
+    m_screenCoords.bind(QGLXBuffer::ArrayBuffer);
+    m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D));
     m_screenCoords.release();
+
+    m_skySphere.create(m_camera.farPlane() * 10000 ,QImage(":/assets/gray.jpg"),QVector2D(10,10));
 
     this->startTimer(1);
     m_initialized = true;
@@ -229,15 +232,23 @@ void NCVCanvas::m_performRegularRender()
 
     // bind fbo and related targets
     m_frameBufferObject.bind();
-    m_frameBufferObject.enableColorAttachments(3);
+    m_frameBufferObject.enableColorAttachments(1);
     m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
-    m_maps["normal"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color2);
     m_maps["depth"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
 
-    // clear targets
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    m_skySphere.draw(m_camera);
 
+    m_frameBufferObject.enableColorAttachments(1);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    glClear( GL_COLOR_BUFFER_BIT);
+
+    m_frameBufferObject.enableColorAttachments(2);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+
+
+    // clear targets
     if (m_renderNeurons)
     {
         m_neurons->bind(m_camera);
@@ -251,9 +262,9 @@ void NCVCanvas::m_performRegularRender()
         m_connections->release();
     }
 
-    m_maps["normal"].release();
     m_maps["id"].release();
     m_frameBufferObject.enableColorAttachments(1);
+    m_maps["depth"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
 
 
     if (m_renderNeurons)
@@ -270,6 +281,7 @@ void NCVCanvas::m_performRegularRender()
         m_connections->releaseSilhouettes();
     }
 
+
     // release frame buffer and related targets
     m_maps["diffuse"].release();
     m_maps["depth"].release();
@@ -285,14 +297,21 @@ void NCVCanvas::m_performSelectionRender()
 
     // bind frame buffer and all first pass targets
     m_frameBufferObject.bind();
-    m_frameBufferObject.enableColorAttachments(3);
+    m_frameBufferObject.enableColorAttachments(1);
     m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
-    m_maps["normal"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color2);
     m_maps["depth"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
 
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    m_skySphere.draw(m_camera);
+
+    m_frameBufferObject.enableColorAttachments(1);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    glClear( GL_COLOR_BUFFER_BIT);
+
+    m_frameBufferObject.enableColorAttachments(2);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
 
     if (m_renderNeurons )
     {
@@ -374,15 +393,11 @@ void NCVCanvas::m_performSelectionRender()
 
     }
 
-    if (!m_renderOnlySelection)
+    if ((int)m_selectionFlags & (int)RenderDeselected)
     {
 		
-		m_frameBufferObject.enableColorAttachments(3);
-		m_maps["normal"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
-		m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color2);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		m_frameBufferObject.enableColorAttachments(2);
+		m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
 
         if (m_renderNeurons )
         {
@@ -421,9 +436,50 @@ void NCVCanvas::m_performSelectionRender()
 
             m_connections->release();
 
-            glDisable(GL_BLEND);
+
         }
-		m_maps["normal"].release();
+		
+    m_frameBufferObject.enableColorAttachments(1);
+		if (m_renderNeurons )
+		{
+			m_neurons->bindSilhouettes(m_camera);
+            int previousEnd = 1;
+            for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+            {
+                Range range = *it;
+                if (range.start > m_neurons->count())
+                    break;
+                else if (range.start > previousEnd)
+                    m_neurons->drawSubset(previousEnd-1,range.start-previousEnd);
+                previousEnd = range.end;
+            }
+            if (previousEnd < m_neurons->count())
+                m_neurons->drawSubset(previousEnd-1,m_neurons->count()-previousEnd);
+
+
+			m_neurons->releaseSilhouettes();
+		}
+		if (m_renderConnections )
+		{
+
+			m_connections->bindSilhouettes(m_camera);
+            int previousEnd = m_neurons->count() +1;
+            int endOfItems = m_neurons->count() + m_connections->count();
+            for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+            {
+                Range range = *it;
+                if (range.end <= m_neurons->count())
+                    continue;
+                else if (range.start > previousEnd)
+                    m_connections->drawSubset(previousEnd-1- m_neurons->count(),range.start-previousEnd);
+                previousEnd = range.end;
+            }
+            if (previousEnd < endOfItems)
+                m_connections->drawSubset(previousEnd-1- m_neurons->count(),endOfItems-previousEnd);
+
+			m_connections->releaseSilhouettes();
+
+		}
 		m_maps["id"].release();
 
 
@@ -453,7 +509,7 @@ void NCVCanvas::paintEvent(QPaintEvent *e)
     m_neurons->resolve();
     if (m_renderDirty || m_connections->dirty() || m_neurons->dirty())
 	{
-        if (m_selectedObjects.count() >0)
+        if (m_ranges.count() >0)
 			m_performSelectionRender();
 		else
 			m_performRegularRender();
@@ -566,6 +622,19 @@ void NCVCanvas::mousePressEvent(QMouseEvent* e)
 
 }
 
+
+
+void NCVCanvas::setSelection(QVector<Range> selection, SelectionFlag flags)
+{
+	if (selection != m_ranges || flags != m_selectionFlags)
+	{
+		m_ranges = selection;
+        m_selectionFlags = flags;
+		selectionChanged(m_ranges,m_selectionFlags);
+		m_renderDirty = true;
+	}
+}
+
 void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
 {
 
@@ -575,8 +644,8 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
 	{
 		m_renderDirty = true;
         // correct selection rectangles
-        int width = abs(m_selectionRect.width());
-        int height = abs(m_selectionRect.height());
+        int width = qAbs(m_selectionRect.width());
+        int height = qAbs(m_selectionRect.height());
 
         m_selectionRect.setLeft(qMax(0,qMin(m_selectionRect.left(),m_selectionRect.right())));
         m_selectionRect.setTop(qMax(0,qMin(m_selectionRect.top(),m_selectionRect.bottom())));
@@ -598,7 +667,7 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
         m_frameBufferObject.getTextureData(m_maps["id"],m_selectionRect,objectID);
 
         // if not performing compound selection, deselect previously selected items
-        if (!m_shiftDown )
+        if (((int)m_selectionFlags & (int)CompoundSelection ) == 0)
             m_selectedObjects.clear();
 
         // compile new selections into a unique set
@@ -640,7 +709,8 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
 
 
         }
-
+		
+		selectionChanged(m_ranges,m_selectionFlags);
 
         m_leftMouseDown = false;
 
@@ -652,10 +722,16 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
 }
 
 
+bool NCVCanvas::m_outsideOfWorld(QVector3D pos)
+{
+    return false;
+}
+
 void NCVCanvas::keyPressEvent( QKeyEvent* e )
 {
     if (!isValid())
         return;
+
     switch ( e->key() )
     {
         case Qt::Key_Escape:
@@ -663,93 +739,51 @@ void NCVCanvas::keyPressEvent( QKeyEvent* e )
             break;
 
 
-		case Qt::Key_A:
-			m_renderDirty = true;
-            m_camera.pan(-m_moveSpeed,0.0f,0.0f);
-            cameraUpdated(m_camera);
-            break;
-
-		case Qt::Key_D:
-			m_renderDirty = true;
-            m_camera.pan(m_moveSpeed,0.0f,0.0f);
-            cameraUpdated(m_camera);
-            break;
-
-
-		case Qt::Key_R:
-			m_renderDirty = true;
-            m_camera.pan(0.0f,0.0f,m_moveSpeed/ 25.0f);
-            cameraUpdated(m_camera);
-            break;
-
-
-		case Qt::Key_N:
-			m_renderDirty = true;
-            m_renderNeurons= !m_renderNeurons;
-            break;
-
-		case Qt::Key_C:
-			m_renderDirty = true;
-            m_renderConnections= !m_renderConnections;
-            break;
-
-        case Qt::Key_Shift:
-            m_shiftDown = true;
-            break;
-		case Qt::Key_T:
-			m_renderDirty = true;
-            m_camera.pan(0.0f,0.0f,m_moveSpeed/ 25.0f);
-            cameraUpdated(m_camera);
-            break;
-
-
-		case Qt::Key_P:
-			m_renderDirty = true;
-            m_camera.pan(0.0f,0.0f,m_moveSpeed/ 25.0f);
-            cameraUpdated(m_camera);
-            break;
-
-		case Qt::Key_V:
-			m_renderDirty = true;
-            m_camera.pan(0.0f,0.0f,-m_moveSpeed/ 10.0f);
-            cameraUpdated(m_camera);
-            break;
-
-		case Qt::Key_W:
-			m_renderDirty = true;
+        case Qt::Key_W:
             m_camera.pan(0.0f,0.0f,m_moveSpeed);
+            m_renderDirty = true;
             cameraUpdated(m_camera);
             break;
 
         case Qt::Key_S:
-			m_renderDirty = true;
             m_camera.pan(0.0f,0.0f,-m_moveSpeed);
+            m_renderDirty = true;
             cameraUpdated(m_camera);
             break;
 
-		case Qt::Key_Q:
-			m_renderDirty = true;
+        case Qt::Key_A:
+            m_camera.pan(-m_moveSpeed,0.0f,0.0f);
+            m_renderDirty = true;
+            cameraUpdated(m_camera);
+            break;
+
+        case Qt::Key_D:
+            m_camera.pan(m_moveSpeed,0.0f,0.0f);
+            m_renderDirty = true;
+            cameraUpdated(m_camera);
+            break;
+
+
+        case Qt::Key_R:
+            m_camera.pan(0.0f,0.0f,m_moveSpeed/25.0f);
+            m_renderDirty = true;
+            cameraUpdated(m_camera);
+            break;
+
+
+
+        case Qt::Key_E:
             m_camera.pan(0.0f,m_moveSpeed,0.0f);
+            m_renderDirty = true;
             cameraUpdated(m_camera);
             break;
 
-		case Qt::Key_E:
-			m_renderDirty = true;
+        case Qt::Key_C:
             m_camera.pan(0.0f,-m_moveSpeed,0.0f);
+            m_renderDirty = true;
             cameraUpdated(m_camera);
             break;
 
-		case Qt::Key_B:
-			m_renderDirty = true;
-            m_renderOnlySelection = !m_renderOnlySelection;
-            break;
-
-
-
-
-        case Qt::Key_K:
-            //m_octree.setLevels(m_octree.levels() -1);
-            break;
         default:
             QGLWidget::keyPressEvent( e );
     }
@@ -760,9 +794,6 @@ void NCVCanvas::keyReleaseEvent(QKeyEvent *e)
         return;
     switch (e->key())
     {
-    case Qt::Key_Shift:
-        m_shiftDown = false;
-        break;
     }
 
 }
@@ -770,6 +801,17 @@ void NCVCanvas::keyReleaseEvent(QKeyEvent *e)
 
 
 
+void NCVCanvas::renderNeurons(bool render)
+{
+    m_renderNeurons = render;
+    m_renderDirty = true;
+}
+
+void NCVCanvas::renderConections(bool render)
+{
+    m_renderConnections = render;
+    m_renderDirty = true;
+}
 void NCVCanvas::setNeurons(NCVNeuronSet * neurons)
 {
     m_neurons = neurons;

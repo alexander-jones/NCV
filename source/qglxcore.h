@@ -1,6 +1,6 @@
 #ifndef QGLXCORE_H
 #define QGLXCORE_H
-
+#define _USE_MATH_DEFINES 
 #include <GL/glew.h>
 #include <QGLShaderProgram>
 

@@ -7,10 +7,9 @@ flat in uint Vert_Value[2];
 
 flat out uint ID;
 flat out uint Value;
-out vec3 Normal;
 
 layout (lines) in;
-layout (triangle_strip,max_vertices =10) out;
+layout (triangle_strip,max_vertices =8) out;
 
 void main( void )
 {
@@ -47,59 +46,33 @@ void main( void )
     vec3 outDownRightPos =  outPosition +lineRightOffset-lineUpOffset ;
 
     ID = Vert_ID[0];
-
-    //////////////////////////// Left-Up Face ////////////////////////////
-
-    // setup out values for neuron-in located points
     Value = Vert_Value[0];
 
-    Normal = (lineUp- lineRight)/2;
-
     gl_Position = WVP *vec4(inUpPos,1.0f);
+    EmitVertex();
+
+    gl_Position = WVP *vec4(outUpPos,1.0f);
     EmitVertex();
 
     gl_Position = WVP *vec4(inDownLeftPos,1.0f);
     EmitVertex();
 
-    // setup out values for neuron-out located points
-    Value = Vert_Value[1];
-
-    gl_Position = WVP *vec4(outUpPos,1.0f);
-
-    EmitVertex();
 
     gl_Position = WVP *vec4(outDownLeftPos,1.0f);
-
     EmitVertex();
 
 
     //////////////////////////// Down Face ////////////////////////////
 
-    Normal = - lineUp;
+    gl_Position = WVP *vec4(inDownRightPos,1.0f);
+    EmitVertex();
 
     gl_Position = WVP *vec4(outDownRightPos,1.0f);
-    EmitVertex();
-
-    // setup out values for neuron-out located points
-    Value = Vert_Value[0];
-
-    gl_Position = WVP *vec4(inDownLeftPos,1.0f);
-    EmitVertex();
-
-    gl_Position = WVP *vec4(inDownRightPos,1.0f);
     EmitVertex();
 
     //////////////////////////// Right-Up Face ////////////////////////////
 
-    Normal = (lineUp + lineRight)/2;
-
     gl_Position = WVP *vec4(inUpPos,1.0f);
-    EmitVertex();
-
-    // setup out values for neuron-in located points
-    Value = Vert_Value[1];
-
-    gl_Position = WVP *vec4(outDownRightPos,1.0f);
     EmitVertex();
 
     gl_Position = WVP *vec4(outUpPos,1.0f);
