@@ -1,5 +1,6 @@
 #include "qsocketconnection.h"
 #include <QMutexLocker>
+#include <QTcpServer>
 
 
 
@@ -55,7 +56,7 @@ bool QSocketConnection::send(const std::string& data)
     }
 
     return false;
-}
+}//send()
 
 
 
@@ -84,7 +85,7 @@ bool QSocketConnection::recv(std::string& data)
     delete buffer;
 
     return true;
-}
+}//recv()
 
 
 
@@ -100,7 +101,7 @@ bool QSocketConnection::disconnect()
 
     m_socket = 0;
     return true;
-}
+}//disconnect()
 
 
 
@@ -117,8 +118,24 @@ QSocketConnection *QSocketConnection::clone(bool master)
 
     if(master)
     {
-        //TODO: Implement cloning server sockets?
-        return new QSocketConnection(0);
+        QTcpServer *server = new QTcpServer(this);
+        server->listen();
+        int port = server->serverPort();
+        send<int>(&port, 1);
+        m_socket->flush();
+
+        if(server->waitForNewConnection())
+        {
+            QTcpSocket *clientSocket = server->nextPendingConnection();
+            QSocketConnection *connection = new QSocketConnection(clientSocket);
+            //should we close the server socket here?
+            return connection;
+        }
+        else
+        {
+            server->close();
+            return new QSocketConnection(0);
+        }
     }
     else
     {
@@ -127,7 +144,7 @@ QSocketConnection *QSocketConnection::clone(bool master)
         recv<int>(&port, 1);
         return new QSocketConnection(peer, port, 10);
     }
-}
+}//clone()
 
 
 
@@ -148,7 +165,7 @@ bool QSocketConnection::_send(const void *data, unsigned int count)
     }
 
     return totalSent == count;
-}
+}//_send()
 
 
 
@@ -169,4 +186,4 @@ bool QSocketConnection::_recv(void *data, unsigned int count)
     }
 
     return totalRead == count;
-}
+}//_recv()

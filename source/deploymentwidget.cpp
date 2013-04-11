@@ -11,12 +11,11 @@ QString clusterDesc = QString("Distribute a simulation across the hardware avail
 	QString("and 100,000 synapses, and gpu-dense clusters capable of handling models of around 1,000,000 neurons and 1,000,000  ") +
 	QString("synapses . However, this deployment specification requires network communication and thus implies more data latency ");
 
+
 DeploymentWidget::DeploymentWidget(QWidget *parent)
 	: QWidget(parent)
 {
 	m_deploymentLayout = new QVBoxLayout();
-
-
 
 	m_localComputerDescriptionWidget = new QGroupBox();
 	m_localComputerDescriptionWidget->setTitle("Local Computer");
@@ -33,10 +32,7 @@ DeploymentWidget::DeploymentWidget(QWidget *parent)
 	m_localComputerDescriptionLayout->setAlignment(Qt::AlignLeft);
 	m_localComputerDescriptionWidget->setLayout(m_localComputerDescriptionLayout);
 
-
-
 	m_deploymentLayout->addWidget(m_localComputerDescriptionWidget);
-
 
 	m_clusterDescriptionWidget = new QGroupBox();
 	m_clusterDescriptionWidget->setTitle("Cluster");
@@ -52,14 +48,13 @@ DeploymentWidget::DeploymentWidget(QWidget *parent)
 	m_clusterDescriptionLayout->setAlignment(Qt::AlignLeft);
 	m_clusterDescriptionWidget->setLayout(m_clusterDescriptionLayout);
 
-
-
-
 	m_deploymentLayout->addWidget(m_clusterDescriptionWidget);
 
 	this->setLayout(m_deploymentLayout);
 	m_typeSelected = Cluster;
 }
+
+
 
 void DeploymentWidget::paintEvent(QPaintEvent * e)
 {
@@ -86,39 +81,44 @@ void DeploymentWidget::paintEvent(QPaintEvent * e)
 	clusterDescriptionText.setDefaultStyleSheet("* { color: #FFEFEF }");
 	clusterDescriptionText.drawContents(&painter,m_clusterDescriptionLabel->rect());
 }
+
+
+
 void DeploymentWidget::m_onLocalComputerChecked(bool checked)
 { 
 	if (!checked)
 		m_localComputerDescriptionWidget->setChecked(true);
 	else
 	{
-
 		m_clusterDescriptionWidget->setChecked(false);
 		m_typeSelected = LocalComputer;
 		localComputerPicked();
 	}
-
-
 }
+
+
+
 void DeploymentWidget::m_onClusterChecked(bool checked)
 {
 	if (!checked)
 		m_clusterDescriptionWidget->setChecked(true);
 	else
 	{
-
 		m_localComputerDescriptionWidget->setChecked(false);
 		m_typeSelected = Cluster;
 		clusterPicked();
 	}
-
-
 }
+
+
+
 DeploymentType DeploymentWidget::typeSelected()
 {
 	return m_typeSelected;
-
 }
+
+
+
 DeploymentWidget::~DeploymentWidget()
 {
 
