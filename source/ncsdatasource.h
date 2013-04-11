@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QMap>
-#include <slug/sim/ReportClient.h>
+#include <reportclient/qreportclient.h>
 
 #include <string>
 
@@ -38,13 +38,13 @@ private:
     struct ReportedAttribute
     {
         std::string name;
-        slug::sim::ReportClient::Report *report;
+        QReportClient::Report *report;
         NCVAttribute *ncvAttribute;
     };
 
     void addAttribute(const QString& name, NCVAttribute *ncvAttribute);
 
-    slug::sim::ReportClient m_client;
+    QReportClient m_client;
     NCVNeuronSet *m_neurons;
     NCVConnectionSet *m_connections;
     QMap<NCVAttribute*, ReportedAttribute> m_reported;

@@ -1,4 +1,5 @@
 #include "qreportclient.h"
+#include <iostream>
 
 
 /*
@@ -6,7 +7,7 @@
   ****************** Nested Report class ******************
   *********************************************************
   */
-QReportClient::Report::Report(QTcpSocket *connection)
+QReportClient::Report::Report(QSocketConnection *connection)
     : m_connection(connection),
       m_valid(true)
 {
@@ -28,7 +29,7 @@ QReportClient::Report::Report(QTcpSocket *connection)
 
 
 
-bool QReportClient::Report::pull(std::vector &data, unsigned int &step)
+bool QReportClient::Report::pull(std::vector<char>& data, unsigned int &step)
 {
     unsigned int size = 0;
 
@@ -75,17 +76,17 @@ QReportClient::QReportClient()
 
 bool QReportClient::connect(const std::string &server, unsigned int port, float timeout)
 {
-    QMutexLocker lock(m_mutex);
+    QMutexLocker lock(&m_mutex);
 
     m_connection = new QSocketConnection(server, port, timeout);
-    return m_connection->isValid();
+    return m_connection->connected();
 }
 
 
 
-bool QReportClient::connected()
+bool QReportClient::connected() const
 {
-    QMutexLocker lock(m_mutex);
+    QMutexLocker lock(&m_mutex);
     return m_connection != 0;
 }
 
@@ -93,7 +94,7 @@ bool QReportClient::connected()
 
 bool QReportClient::disconnect()
 {
-    QMutexLocker lock(m_mutex);
+    QMutexLocker lock(&m_mutex);
     ClientMessage message;
 
     message.type = ClientMessage::Terminate;
@@ -108,7 +109,7 @@ bool QReportClient::disconnect()
 
 QReportClient::Report* QReportClient::report(const ReportRequest &request)
 {
-    QMutexLocker lock(m_mutex);
+    QMutexLocker lock(&m_mutex);
     ClientMessage message;
 
     message.type = ClientMessage::Report;

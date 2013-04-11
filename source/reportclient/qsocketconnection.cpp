@@ -37,7 +37,7 @@ QSocketConnection::~QSocketConnection()
 
 bool QSocketConnection::send(const char *data)
 {
-    send(std::string(data));
+    return send(std::string(data));
 }
 
 
@@ -90,7 +90,7 @@ bool QSocketConnection::recv(std::string& data)
 
 bool QSocketConnection::disconnect()
 {
-    QMutexLocker lock(m_mutex);
+    QMutexLocker lock(&m_mutex);
 
     if(m_socket)
     {
@@ -99,6 +99,7 @@ bool QSocketConnection::disconnect()
     }
 
     m_socket = 0;
+    return true;
 }
 
 
@@ -139,7 +140,7 @@ bool QSocketConnection::_send(const void *data, unsigned int count)
         if (!connected())
             return false;
 
-        bytesSent = m_socket->write(data + totalSent, count - totalSent);
+        bytesSent = m_socket->write((const char*)data + totalSent, count - totalSent);
         totalSent += bytesSent;
 
         if(bytesSent == 0 && !m_socket->waitForBytesWritten())
@@ -160,7 +161,7 @@ bool QSocketConnection::_recv(void *data, unsigned int count)
         if (!connected())
             return false;
 
-        bytesRead = m_socket->read(data + totalRead, count - totalRead);
+        bytesRead = m_socket->read((char*)data + totalRead, count - totalRead);
         totalRead += bytesRead;
 
         if(bytesRead == 0 && !m_socket->waitForReadyRead())

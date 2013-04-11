@@ -13,7 +13,7 @@ CONFIG+= wwwidgets
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lssh -lGLU  -lGLEW -lslugUtil -lslugSpec -lslugSim
+    LIBS +=  -lssh -lGLU  -lGLEW
 }
 
 #windows specific settings
@@ -64,7 +64,9 @@ SOURCES += \
     qwidgetvector.cpp \
     skysphere.cpp \
     networkupdatethread.cpp \
-    networkupdatemanager.cpp
+    networkupdatemanager.cpp \
+    reportclient/qsocketconnection.cpp \
+    reportclient/qreportclient.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -109,7 +111,9 @@ HEADERS  += \
     qwidgetvector.h \
     skysphere.h \
     networkupdatethread.h \
-    networkupdatemanager.h
+    networkupdatemanager.h \
+    reportclient/qsocketconnection.h \
+    reportclient/qreportclient.h
 
 FORMS    += \
     mainwindow.ui

@@ -154,8 +154,8 @@ void NCSDataSource::updateCurrentAttributes()
 
 void NCSDataSource::addAttribute(const QString& name, NCVAttribute *ncvAttribute)
 {
-    slug::util::ReportRequest req;
-    slug::sim::ReportClient::Report *report;
+    QReportClient::ReportRequest req;
+    QReportClient::Report *report;
     ReportedAttribute ra;
 
     req.key = name.toStdString();

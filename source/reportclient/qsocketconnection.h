@@ -1,6 +1,7 @@
 #ifndef QSOCKETCONNECTION_H
 #define QSOCKETCONNECTION_H
 
+#include <QHostAddress>
 #include <QTcpSocket>
 #include <QMutex>
 #include <string>
@@ -32,6 +33,14 @@ class QSocketConnection : public QObject
         QTcpSocket *m_socket;
         QMutex m_mutex;
 };
+
+
+
+template<>
+bool QSocketConnection::send(const std::string& data);
+
+template<>
+bool QSocketConnection::recv(std::string& data);
 
 
 

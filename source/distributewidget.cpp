@@ -1,5 +1,7 @@
 #include "distributewidget.h"
 
+
+
 DistributeWidget::DistributeWidget(QWidget *parent) :
     QWidget(parent)
 {
@@ -65,7 +67,6 @@ DistributeWidget::DistributeWidget(QWidget *parent) :
     m_previousButton->hide();
     m_buttonLayout->addWidget(m_previousButton);
 
-
     m_validConnection = false;
 
     m_nextButton = new ColorButton();
@@ -89,19 +90,20 @@ DistributeWidget::DistributeWidget(QWidget *parent) :
     m_layout->addWidget(m_buttonWidget);
     m_clusterConnection = NULL;
     this->setLayout(m_layout);
-
-
 }
+
+
 
 void DistributeWidget::m_onConnectionFailed()
 {
-
     QMessageBox msgBox;
-    QPushButton *ok = msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
+    /*QPushButton *ok = */msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
     msgBox.setText("Cannot connect to the remote cluster. Could be due to lack of internet connection or user account not being set up.");
     msgBox.exec();
     m_stepProgress->hide();
 }
+
+
 
 QString DistributeWidget:: m_executeLocalCommand(QString cmd)
 {
@@ -413,16 +415,13 @@ void DistributeWidget::m_onFilePushed(QString localFile,QString remoteFile)
 
         m_stepProgress->setValue(66);
         m_clusterConnection->executeCommand("mpirun --np " + QString::number(m_clusterEditor->enabledMachines()) + "--hostfile ./hostfile.txt ./brainslug/applications/clusterSpecifier/clusterSpecifier ./cluster");
-
-
     }
-
-
 }
+
+
 
 void DistributeWidget::m_onFilePulled(QString localFile,QString remoteFile)
 {
-
     if (localFile == "./cluster")
     {
         m_stepProgress->setValue(100);
@@ -430,8 +429,9 @@ void DistributeWidget::m_onFilePulled(QString localFile,QString remoteFile)
         m_nextButton->setEnabled(true);
         m_clusterEditor->setEnabled(true);
     }
-
 }
+
+
 
 void  DistributeWidget::m_distribute()
 {

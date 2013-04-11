@@ -50,7 +50,7 @@ class QReportClient : public QObject
         class Report
         {
             public:
-                Report(QTcpSocket *connection);
+                Report(QSocketConnection *connection);
                 bool pull(std::vector<char>& data, unsigned int& step);
                 bool valid() const;
                 const std::vector<unsigned int>& permutation() const;
@@ -60,7 +60,7 @@ class QReportClient : public QObject
 
             private:
                 std::vector<unsigned int> m_permutation;
-                QTcpSocket *m_connection;
+                QSocketConnection *m_connection;
                 bool m_valid;
         };
 

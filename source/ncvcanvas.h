@@ -14,6 +14,7 @@
 #include <QCoreApplication>
 #include "time.h"
 #include "skysphere.h"
+#include <QTimer>
 
 
 /*!
@@ -49,7 +50,7 @@ public slots:
     void renderNeurons(bool render);
     void renderConections(bool render);
 	void setSelection(QVector<Range> selection, SelectionFlag flags);
-
+    void updateMovement();
 
 signals:
 	void selectionChanged(QVector<Range> selection, SelectionFlag flags);
@@ -58,7 +59,6 @@ signals:
     void frameRendered();
     void cameraUpdated(QGLXCamera camera);
     void invalidGraphicsConfigurationDetected();
-
 
 protected:
     void initializeGL();
@@ -100,6 +100,8 @@ private:
     QGLXBuffer m_screenVertices,m_screenCoords;
     QSet<GLuint> m_selectedObjects;
     QVector<Range> m_ranges;
+    QMap<int, bool> m_pressedKeys;
+    QTimer *m_movementTimer;
 };
 
 #endif // NCVCANVAS_H
