@@ -4,12 +4,13 @@
 #
 #-------------------------------------------------
 
-QMAKE_CXXFLAGS += -std=c++0x
+#QMAKE_CXXFLAGS += -std=c++0x
 
-QT  += core network gui opengl
+QT  += core network xml gui opengl wwwidgets
 TARGET = ncv
 TEMPLATE = app
 CONFIG+= wwwidgets
+ICON = assets/ncv.png
 
 #linux specific settings
 unix:!macx{
@@ -18,7 +19,7 @@ unix:!macx{
 
 #windows specific settings
 win32{
-    LIBS += -lglew32 -lwwwidgets4d
+    LIBS += -lssh  -lglew32  -lwwwidgets4d
 }
 
 #mac specific settings
@@ -48,25 +49,27 @@ SOURCES += \
     ncvcontinuousattribute.cpp \
     ncvdiscreteattribute.cpp \
     ncvcanvas.cpp \
-    ncvbuildwidget.cpp \
     ncvgroupingset.cpp \
-    distributewidget.cpp \
-    slidingstackedwidget.cpp \
     ncsclustereditor.cpp \
-    connectionwidget.cpp \
     simplecrypt.cpp \
-    modelselector.cpp \
     sshsocket.cpp \
-    deploymentwidget.cpp \
-    ncsdatasource.cpp \
     ncvrendertool.cpp \
     qswitch.cpp \
     qwidgetvector.cpp \
     skysphere.cpp \
+    remoteconnectionwidget.cpp \
+    ncslocalcommandbridge.cpp \
+    ncsmodeldistributionwidget.cpp \
+    ncscommandfileargument.cpp \
+    ncsconnectionwidget.cpp \
+    ncsremotecommandbridge.cpp \
+    ncsdatasource.cpp \
+    reportclient/qsocketconnection.cpp \
+    reportclient/qreportclient.cpp \
     networkupdatethread.cpp \
     networkupdatemanager.cpp \
-    reportclient/qsocketconnection.cpp \
-    reportclient/qreportclient.cpp
+    qglxcanvas.cpp \
+    qgroupvector.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -92,28 +95,32 @@ HEADERS  += \
     ncvcontinuousattribute.h \
     ncvdiscreteattribute.h \
     ncvcanvas.h \
-    ncvbuildwidget.h \
     ncvgroupingset.h \
-    distributewidget.h \
-    slidingstackedwidget.h \
     colorbutton.h \
     ncsclustereditor.h \
-    connectionwidget.h \
     simplecrypt.h \
-    modelselector.h \
     sshsocket.h \
-    loadingwidget.h \
-    deploymentwidget.h \
-    ncsdatasource.h \
-    ncvwidgetplugin.h \
     ncvrendertool.h \
     qswitch.h \
     qwidgetvector.h \
     skysphere.h \
+    remoteconnectionwidget.h \
+    ncscommandbridge.h \
+    ncslocalcommandbridge.h \
+    ncsmodeldistributionwidget.h \
+    ncswidgetplugin.h \
+    ncsapplicationwidgetplugin.h \
+    ncsdistributionwidgetplugin.h \
+    ncscommandfileargument.h \
+    ncsconnectionwidget.h \
+    ncsremotecommandbridge.h \
+    ncsdatasource.h \
+    reportclient/qsocketconnection.h \
+    reportclient/qreportclient.h \
     networkupdatethread.h \
     networkupdatemanager.h \
-    reportclient/qsocketconnection.h \
-    reportclient/qreportclient.h
+    qglxcanvas.h \
+    qgroupvector.h
 
 FORMS    += \
     mainwindow.ui

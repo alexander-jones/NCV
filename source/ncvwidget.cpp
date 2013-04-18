@@ -1,9 +1,10 @@
 #include "ncvwidget.h"
 
-NCVWidget::NCVWidget(QWidget *parent) :
-    QWidget(parent)
+NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
+    NCSWidgetPlugin(projectDir,parent)
 {
 
+    m_projectDir = projectDir;
     m_layout = new QBoxLayout(QBoxLayout::LeftToRight);
     m_layout->setSpacing(0);
 
@@ -11,13 +12,13 @@ NCVWidget::NCVWidget(QWidget *parent) :
     m_framesPerSecond = new QLabel();
     m_framesPerSecond->setAlignment(Qt::AlignCenter);
 
-    m_pluginWidget = new QWidgetVector();
     m_renderTool = new NCVRenderTool();
-    m_pluginWidget->addWidget(m_renderTool);
+    m_renderTool->setMaximumWidth(300);
+    m_layout->addWidget(m_renderTool);
 
 	m_selectionWidget = new QWidgetVector();
     m_selectionWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-	m_selectionWidget->setDirection(QBoxLayout::TopToBottom);
+    m_selectionWidget->setDirection(QWidgetVector::TopToBottom);
     m_deselectAllButton = new QPushButton("Deselect All");
 	connect(m_deselectAllButton,SIGNAL(clicked()),this,SLOT(m_onDeselectAll()));
 	m_selectionWidget->addWidget(m_deselectAllButton);
@@ -37,11 +38,6 @@ NCVWidget::NCVWidget(QWidget *parent) :
 	m_selectionWidget->addWidget(m_compoundSelectionWidget);
 	m_selectionFlags = RenderDeselected;
 
-
-    m_ncvSidebar = new QTabWidget();
-    m_ncvSidebar->setFixedWidth(350);
-    m_ncvSidebar->addTab(m_pluginWidget,QIcon(":/assets/toolIcon.png"),"Plugins");
-    m_layout->addWidget(m_ncvSidebar);
 
     m_collapsed = false;
 
@@ -161,8 +157,8 @@ void NCVWidget::m_collapseButtonPressed()
     if (!m_collapsed)
     {
         m_collapsed = true;
-        m_layout->removeWidget(m_ncvSidebar);
-        m_ncvSidebar->hide();
+        m_layout->removeWidget(m_renderTool);
+        m_renderTool->hide();
         m_collapseButton->setText(m_expandText);
         m_collapseButton->setToolTip("Click to expand the management sidebar");
 
@@ -170,8 +166,8 @@ void NCVWidget::m_collapseButtonPressed()
     else
     {
         m_collapsed = false;
-        m_layout->insertWidget(0,m_ncvSidebar);
-        m_ncvSidebar->show();
+        m_layout->insertWidget(0,m_renderTool);
+        m_renderTool->show();
         m_collapseButton->setText(m_collapseText);
         m_collapseButton->setToolTip("Click to collapse the management sidebar");
     }
@@ -194,7 +190,7 @@ void NCVWidget::m_newFrameReceived()
 NCVWidget::~NCVWidget()
 {
    delete m_layout;
-   delete m_ncvSidebar;
+   delete m_renderTool;
 
    //delete m_statusSidebar;
    //delete m_canvas;
@@ -205,13 +201,24 @@ NCVWidget::~NCVWidget()
 void NCVWidget::m_reportFatalError()
 {
 
+    this->setEnabled(false);
     QMessageBox msgBox;
     msgBox.setText("Graphics Configuration Incapable");
     msgBox.setInformativeText("Cannot create a valid OpenGL 3.3 context.");
     msgBox.setStandardButtons(QMessageBox::Ok);
-
     msgBox.exec();
 }
+
+QIcon NCVWidget::icon()
+{
+    return QIcon(":/assets/visualizationIcon.png");
+}
+
+QString NCVWidget::title()
+{
+    return "Brain Visualizer";
+}
+
 /*void NCVSidebar::m_buildOrganizationTab()
 {
     m_organizationTaskPanel = new QwwTaskPanel();

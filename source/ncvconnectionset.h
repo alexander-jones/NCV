@@ -3,18 +3,7 @@
 #include "ncvcore.h"
 #include "ncvneuronset.h"
 
-struct NeuronConnection
-{
-    NeuronConnection(){}
-    NeuronConnection(GLuint in,GLuint out)
-    {
-        inNeuron = in;
-        outNeuron = out;
-    }
-
-    GLuint inNeuron,outNeuron;
-};
-class NCVConnectionSet:QObject
+class NCVConnectionSet:public QObject
 {
 
     Q_OBJECT
@@ -35,6 +24,7 @@ public:
     NCVAttribute* getCurrentAttribute();
 
 public slots:
+    void setScale(int setScale);
     void addAttribute(QString name, NCVAttribute * attribute);
     void setCurrentAttribute(QString name);
     void removeAttribute(QString name);

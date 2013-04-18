@@ -6,7 +6,7 @@
 #include "qglxboundingbox.h"
 
 
-class NCVNeuronSet:QObject
+class NCVNeuronSet:public QObject
 {
     Q_OBJECT
 public:
@@ -27,6 +27,7 @@ public:
     NCVAttribute* getCurrentAttribute();
 
 public slots:
+    void setScale(int setScale);
     void addAttribute(QString name, NCVAttribute * attribute);
     void setCurrentAttribute(QString name);
     void removeAttribute(QString name);

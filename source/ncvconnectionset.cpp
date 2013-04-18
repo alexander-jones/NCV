@@ -11,10 +11,16 @@ NCVConnectionSet::NCVConnectionSet(NCVNeuronSet *neurons,QVector<NeuronConnectio
     m_initialized = false;
 	m_dirty = false;
 
-    m_scale.scale((m_neurons->bounds().size().length()/m_neurons->count()) * 10.0f );
+    m_scale.scale(15.0f);
 }
 
 
+void NCVConnectionSet::setScale(int scale)
+{
+    m_scale = QMatrix4x4();
+    m_scale.scale(scale);
+    m_dirty = true;
+}
 
 void NCVConnectionSet::addAttribute(QString name,NCVAttribute * attribute)
 {

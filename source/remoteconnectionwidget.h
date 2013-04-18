@@ -1,5 +1,5 @@
-#ifndef CONNECTIONWIDGET_H
-#define CONNECTIONWIDGET_H
+#ifndef RemoteConnectionWidget_H
+#define RemoteConnectionWidget_H
 
 #include "sshsocket.h"
 #include <QWidget>
@@ -15,24 +15,23 @@
 
 
 /*!
-    \class ConnectionWidget
+    \class RemoteConnectionWidget
     \author Alex Jones
     \brief A widget that manages user interaction for connecting to a remote machine via ssh.
 */
-class ConnectionWidget : public QWidget
+class RemoteConnectionWidget : public QWidget
 {
     Q_OBJECT
 public:
 	
 	/*!
-		\class ConnectionWidget
+        \class RemoteConnectionWidget
 		\author Alex Jones
 		\brief A widget that manages user interaction 
 	*/
-    explicit ConnectionWidget(QWidget *parent = 0);
-    
+    explicit RemoteConnectionWidget(QWidget *parent = 0);
+
 signals:
-	
     void connectionAttempted();
 
     void connectionFailed();
@@ -80,4 +79,4 @@ private:
     QPushButton *m_connectButton, * m_loadCredentialsButton, * m_saveCredentialsButton;
 };
 
-#endif // CONNECTIONWIDGET_H
+#endif // RemoteConnectionWidget_H

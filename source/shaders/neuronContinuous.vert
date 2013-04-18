@@ -14,7 +14,7 @@ out float Depth;
 void main( void )
 {
     ID = Inst_ID ;
-    Value = texelFetch(Inst_Attribute,int(Inst_ID)-1).r;
+    Value = texelFetch(Inst_Attribute,int(Inst_ID)-1 ).r ;
     vec3 translation = texelFetch(Inst_Translation,int(Inst_ID)-1).rgb ;
     vec4 translated = vec4(translation,0.0f) + Scale *  vec4( Vert_Position,1.0f);
     gl_Position = WVP *  vec4(translated.xyz,1.0f);

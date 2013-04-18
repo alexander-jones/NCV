@@ -42,7 +42,7 @@ void SkySphere::create(float radius, QImage texture, QVector2D textureRepeat)
             for(s = 0; s < m_sectors; s++)
             {
                 QVector3D normal;
-                normal.setY(sin( -M_PI_2 + M_PI * (float)r * R  ));
+                normal.setY(sin( -(M_PI / 2.0f) + M_PI * (float)r * R  ));
 
                 normal.setX(cos(2.0f*M_PI * (float)s * S) * sin( M_PI * (float)r * R ) );
                 normal.setZ(sin(2.0f*M_PI * (float)s * S) * sin( M_PI * (float)r * R ));
@@ -92,7 +92,7 @@ void SkySphere::create(float radius, QImage texture, QVector2D textureRepeat)
             }
         }
 
-        m_texture.allocate(texture.width(),texture.height(),GL_RGB8,1,&linearData[0]);
+        m_texture.allocate(texture.width(),texture.height(),GL_RGB4,1,&linearData[0]);
 
         m_texture.bind();
         m_texture.setMinFilter(QGLXTexture2D::Linear);

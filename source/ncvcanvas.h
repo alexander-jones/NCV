@@ -14,6 +14,7 @@
 #include <QCoreApplication>
 #include "time.h"
 #include "skysphere.h"
+#include "qglxcanvas.h"
 #include <QTimer>
 
 
@@ -24,7 +25,7 @@
 */
 
 
-class NCVCanvas : public QGLWidget
+class NCVCanvas : public QGLXCanvas
 {
     Q_OBJECT
 public:
@@ -50,7 +51,7 @@ public slots:
     void renderNeurons(bool render);
     void renderConections(bool render);
 	void setSelection(QVector<Range> selection, SelectionFlag flags);
-    void updateMovement();
+    void setBackgroundImage(QImage image);
 
 signals:
 	void selectionChanged(QVector<Range> selection, SelectionFlag flags);
@@ -60,13 +61,12 @@ signals:
     void cameraUpdated(QGLXCamera camera);
     void invalidGraphicsConfigurationDetected();
 
+
 protected:
     void initializeGL();
     void resizeGL( int w, int h );
-    void paintEvent(QPaintEvent *);
-    void wheelEvent(QWheelEvent *e);
+    void paintEvent(QPaintEvent *e);
     void keyPressEvent( QKeyEvent* e );
-    void keyReleaseEvent(QKeyEvent *e);
     void mouseMoveEvent(QMouseEvent* e);
     void mousePressEvent(QMouseEvent* e);
     void mouseReleaseEvent(QMouseEvent* e);
@@ -100,8 +100,6 @@ private:
     QGLXBuffer m_screenVertices,m_screenCoords;
     QSet<GLuint> m_selectedObjects;
     QVector<Range> m_ranges;
-    QMap<int, bool> m_pressedKeys;
-    QTimer *m_movementTimer;
 };
 
 #endif // NCVCANVAS_H

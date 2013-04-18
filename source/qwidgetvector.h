@@ -7,13 +7,21 @@ class QWidgetVector : public QWidget
 {
     Q_OBJECT
 public:
+    enum Direction
+    {
+        TopToBottom = QBoxLayout::TopToBottom,
+        BottomToTop = QBoxLayout::BottomToTop,
+        LeftToRight = QBoxLayout::LeftToRight,
+        RightToLeft = QBoxLayout::RightToLeft
+    };
+
     explicit QWidgetVector(QWidget *parent = 0);
     void addWidget(QWidget *widget);
     bool containsWidget(QWidget *widget);
     void insertWidget(int index,QWidget *widget);
     int indexOfWidget(QWidget *widget);
     void removeWidget(QWidget *widget);
-    void setDirection(QBoxLayout::Direction direction);
+    void setDirection(Direction direction);
     void setAlignment(Qt::Alignment alignment);
     
 signals:

@@ -75,6 +75,7 @@ void NCVDiscreteAttribute::bind(QGLXCamera camera)
     m_program.bind();
 
 
+
     glActiveTexture(GL_TEXTURE0);
     m_buffer.bind(QGLXBuffer::TextureBuffer);
     m_program.setUniformValue("Inst_Attribute", 0);

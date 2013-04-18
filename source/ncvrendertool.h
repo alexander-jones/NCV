@@ -64,6 +64,7 @@ private:
     QBoxLayout * m_layout;
     NCVNeuronSet * m_neurons;
     NCVConnectionSet * m_connections;
+    QSlider * m_neuronScaleSlider, * m_connectionScaleSlider;
 
 };
 

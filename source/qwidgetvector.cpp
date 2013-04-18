@@ -27,9 +27,9 @@ void QWidgetVector::removeWidget(QWidget *widget)
 {
     m_layout->removeWidget(widget);
 }
-void QWidgetVector::setDirection(QBoxLayout::Direction direction)
+void QWidgetVector::setDirection(Direction direction)
 {
-    m_layout->setDirection(direction);
+    m_layout->setDirection((QBoxLayout::Direction)direction);
 }
 
 void QWidgetVector::setAlignment(Qt::Alignment alignment)

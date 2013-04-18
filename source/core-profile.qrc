@@ -16,31 +16,35 @@
         <file>assets/markerDividedTemplateSmall.png</file>
         <file>assets/markerWholeTemplate.png</file>
         <file>assets/markerWholeTemplateSmall.png</file>
-        <file>shaders/connectionSilhouette.vert</file>
-        <file>shaders/silhouette.frag</file>
         <file>assets/presentationIcon.png</file>
         <file>assets/groupIcon.png</file>
         <file>assets/organizationIcon.png</file>
-        <file>shaders/neuronSilhouette.vert</file>
-        <file>shaders/discrete.frag</file>
-        <file>shaders/neuronDiscrete.vert</file>
-        <file>shaders/continuous.frag</file>
-        <file>shaders/neuronContinuous.vert</file>
         <file>assets/columnIcon.png</file>
         <file>assets/layerIcon.png</file>
         <file>assets/toolIcon.png</file>
         <file>assets/cluster.png</file>
         <file>assets/localComputer.png</file>
-        <file>shaders/connectionContinuous.vert</file>
-        <file>shaders/connectionDiscrete.vert</file>
-        <file>shaders/connectionContinuous.geom</file>
-        <file>shaders/connectionDiscrete.geom</file>
-        <file>shaders/connectionSilhouette.geom</file>
         <file>assets/switchBackgroundOff.png</file>
         <file>assets/switchBackgroundOn.png</file>
         <file>assets/selectionIcon.png</file>
         <file>assets/neuronIcon.png</file>
         <file>assets/switchHandle.png</file>
         <file>assets/gray.jpg</file>
+        <file>assets/ncsDistributor.png</file>
+        <file>assets/projectIcon.png</file>
+        <file>assets/connectIcon.png</file>
+        <file>shaders/connectionContinuous.geom</file>
+        <file>shaders/connectionContinuous.vert</file>
+        <file>shaders/connectionDiscrete.geom</file>
+        <file>shaders/connectionDiscrete.vert</file>
+        <file>shaders/connectionSilhouette.geom</file>
+        <file>shaders/connectionSilhouette.vert</file>
+        <file>shaders/continuous.frag</file>
+        <file>shaders/discrete.frag</file>
+        <file>shaders/neuronContinuous.vert</file>
+        <file>shaders/neuronDiscrete.vert</file>
+        <file>shaders/neuronSilhouette.vert</file>
+        <file>shaders/silhouette.frag</file>
+        <file>assets/ncv.png</file>
     </qresource>
 </RCC>

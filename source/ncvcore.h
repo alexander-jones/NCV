@@ -24,6 +24,20 @@ enum SelectionFlag
 	CompoundSelection = 2
 };
 
+
+struct NeuronConnection
+{
+    NeuronConnection(){}
+    NeuronConnection(GLuint in,GLuint out)
+    {
+        inNeuron = in;
+        outNeuron = out;
+    }
+
+    GLuint inNeuron,outNeuron;
+};
+
+
 struct Range
 {
     int start;

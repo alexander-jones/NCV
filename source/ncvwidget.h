@@ -1,6 +1,7 @@
 #ifndef NCVWIDGET_H
 #define NCVWIDGET_H
 
+#include "ncswidgetplugin.h"
 #include <QWidget>
 #include <QTabWidget>
 #include <QTreeWidget>
@@ -10,12 +11,14 @@
 #include "ncvcanvas.h"
 #include "qwidgetvector.h"
 
-class NCVWidget : public QWidget
+class NCVWidget : public NCSWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit NCVWidget(QWidget *parent = 0);
+    explicit NCVWidget(QString projectDir,QWidget *parent = 0);
     ~NCVWidget();
+    QIcon icon();
+    QString title();
 
 public slots:
     void setNeurons(NCVNeuronSet * neurons);
@@ -35,7 +38,7 @@ private slots:
 
 	
 private:
-    QWidgetVector * m_pluginWidget;
+    QString m_projectDir;
 	QVector<Range> m_currentSelection;
 	SelectionFlag m_selectionFlags;
 	QWidgetVector * m_selectionWidget,* m_renderDeselectedWidget, *m_compoundSelectionWidget;
@@ -45,7 +48,6 @@ private:
     bool m_collapsed;
     QBoxLayout * m_layout;
     QLabel * m_framesPerSecond;
-    QTabWidget * m_ncvSidebar;
     OrientationButton * m_collapseButton;
     QString m_expandText, m_collapseText;
     QTime m_timer;

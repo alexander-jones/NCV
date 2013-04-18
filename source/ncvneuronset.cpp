@@ -34,14 +34,19 @@ NCVNeuronSet::NCVNeuronSet(QVector<QVector3D> positions)
     QVector3D size = QVector3D(highBound.x() - lowBound.x(),highBound.y() - lowBound.y(),highBound.z() - lowBound.z());
     QVector3D center = QVector3D(lowBound.x()+ size.x()/2, lowBound.y() + size.y()/2,lowBound.z()+ size.z()/2);
     m_bounds = QGLXBoundingBox(center,size);
-
-    m_scale.scale((size.length() / m_positions.count()) * 150.0f );
+    m_scale.scale( 820.5f );
 
     m_positionBuffer = QGLXBuffer();
     m_initialized = false;
     m_dirty = false;
 }
 
+void NCVNeuronSet::setScale(int scale)
+{
+    m_scale = QMatrix4x4();
+    m_scale.scale(scale);
+    m_dirty = true;
+}
 
 
 bool NCVNeuronSet::dirty()

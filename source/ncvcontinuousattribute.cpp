@@ -90,7 +90,7 @@ void NCVContinuousAttribute::bind(QGLXCamera camera)
 
     glActiveTexture(GL_TEXTURE1);
     m_colorTexture.bind();
-    m_program.setUniformValue("RangeMap",1);
+    m_program.setUniformValue("ColorMap",1);
 
     m_program.setUniformValue("WVP",camera.projection() * camera.view());
     m_program.setUniformValue("MinimumValue", m_minValue);

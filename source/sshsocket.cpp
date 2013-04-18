@@ -1,7 +1,7 @@
 #include "sshsocket.h"
 
 // if compiling in windows, add needed flags.
-#ifdef _WIN32
+/*#ifdef _WIN32
 #   include <io.h>
 
 typedef int mode_t;
@@ -38,7 +38,7 @@ static const mode_t S_IXOTH      = 0x00010000;           ///< does nothing
 static const mode_t MS_MODE_MASK = 0x0000ffff;           ///< low word
 #endif
 
-
+*/
 SSHSocket::SSHSocket()
     :QThread()
 {
@@ -370,7 +370,7 @@ void SSHSocket::pushFile(QString localPath, QString remotePath)
 
 void SSHSocket::m_emitError(SSHSocketError err)
 {
-    disconnectFromHost();
+   //disconnectFromHost();
     error((SSHSocketError)err);
 }
 

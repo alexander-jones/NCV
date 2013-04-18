@@ -1,7 +1,7 @@
 #version 330
 
 const float e = 2.71828;
-uniform sampler1D RangeMap;
+uniform sampler1D ColorMap;
 uniform vec4 DeselectionColor;
 uniform int Deselected;
 uniform float MinimumValue, MaximumValue;
@@ -17,7 +17,7 @@ void main( void )
 {
     float samplePoint = min(1.0,max(0.001,(Value - MinimumValue)/(MaximumValue - MinimumValue)));
 
-    vec3 color = texture(RangeMap,samplePoint).rgb;
+    vec3 color = texture(ColorMap,samplePoint).rgb;
     if (Deselected > 0 )
         FragData = vec4(color/3,1.0f);
     else

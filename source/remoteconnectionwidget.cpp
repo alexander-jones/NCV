@@ -1,13 +1,10 @@
-#include "connectionwidget.h"
+#include "remoteconnectionwidget.h"
 #include <QBuffer>
 
-ConnectionWidget::ConnectionWidget(QWidget *parent) :
+RemoteConnectionWidget::RemoteConnectionWidget(QWidget *parent) :
     QWidget(parent)
 {
     m_layout = new QHBoxLayout();
-
-
-
 
     m_credentialEntryWidget = new QFrame();
     m_credentialEntryWidget->setFrameShadow(QFrame::Sunken);
@@ -47,7 +44,6 @@ ConnectionWidget::ConnectionWidget(QWidget *parent) :
 
     m_credentialEntryWidget->setLayout(m_credentialEntryLayout);
     m_layout->addWidget(m_credentialEntryWidget);
-
 
     m_recentCredentialWidget = new QFrame();
     m_recentCredentialWidget->setFrameShadow(QFrame::Sunken);
@@ -105,27 +101,27 @@ ConnectionWidget::ConnectionWidget(QWidget *parent) :
 }
 
 
-void ConnectionWidget::m_loadCredentials(QListWidgetItem* item)
+void RemoteConnectionWidget::m_loadCredentials(QListWidgetItem* item)
 {
     QString fileName = item->text().mid(0,item->text().size());
     if(loadCredentials(fileName))
         m_addToRecentCredentials(fileName);
 }
 
-void ConnectionWidget::m_loadCredentials()
+void RemoteConnectionWidget::m_loadCredentials()
 {
     QString fileName = QFileDialog::getOpenFileName(this,tr("Load Credentials"));
     if(loadCredentials(fileName))
         m_addToRecentCredentials(fileName);
 }
-void ConnectionWidget::m_onError(SSHSocket::SSHSocketError err)
+void RemoteConnectionWidget::m_onError(SSHSocket::SSHSocketError err)
 {
     qDebug() << "ERROR: " << err;
     connectionFailed();
 
 }
 
-bool ConnectionWidget::loadCredentials(QString filename)
+bool RemoteConnectionWidget::loadCredentials(QString filename)
 {
 
     if (filename == "")
@@ -160,7 +156,7 @@ bool ConnectionWidget::loadCredentials(QString filename)
 
 }
 
-void ConnectionWidget::m_saveCredentials()
+void RemoteConnectionWidget::m_saveCredentials()
 {
     QString fileName = QFileDialog::getSaveFileName(this,tr("Save Credentials"));
     saveCredentials(fileName);
@@ -168,7 +164,7 @@ void ConnectionWidget::m_saveCredentials()
 
 }
 
-void ConnectionWidget::saveCredentials(QString fileName)
+void RemoteConnectionWidget::saveCredentials(QString fileName)
 {
     //setup our objects
     SimpleCrypt crypto(Q_UINT64_C(0x0c2ad4a4acb9f023)); //some random number
@@ -192,7 +188,7 @@ void ConnectionWidget::saveCredentials(QString fileName)
     }
 
 }
-void ConnectionWidget::m_addToRecentCredentials(QString fileName)
+void RemoteConnectionWidget::m_addToRecentCredentials(QString fileName)
 {
 
     for (int i = 0; i < m_recentCredentials->count(); i ++)
@@ -210,7 +206,7 @@ void ConnectionWidget::m_addToRecentCredentials(QString fileName)
     m_recentCredentials->addItem(new QListWidgetItem(fileName));
 }
 
-void ConnectionWidget::m_tryConnect()
+void RemoteConnectionWidget::m_tryConnect()
 {
     QMessageBox msgBox;
     msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
@@ -230,13 +226,13 @@ void ConnectionWidget::m_tryConnect()
 }
 
 
-void ConnectionWidget::m_onConnect()
+void RemoteConnectionWidget::m_onConnect()
 {
     m_connection->login(m_loginWidget->user(),m_loginWidget->password());
 }
 
 
-void ConnectionWidget::m_onAuthentication()
+void RemoteConnectionWidget::m_onAuthentication()
 {
     connected(m_connection);
     return;

@@ -26,7 +26,7 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_unlinkedIcon = QIcon(":/assets/unlinked.png");
 
     m_neuronVector = new QWidgetVector();
-    m_neuronVector->setDirection(QBoxLayout::TopToBottom);
+    m_neuronVector->setDirection(QWidgetVector::TopToBottom);
 
     m_renderNeuronVector = new QWidgetVector();
     m_renderNeuronVector->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
@@ -42,11 +42,17 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_neuronAttributeComboWidget->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
     m_neuronVector->addWidget(m_neuronAttributeComboWidget);
 
+    m_neuronScaleSlider = new QSlider(Qt::Horizontal);
+    m_neuronScaleSlider->setMinimum(100);
+    m_neuronScaleSlider->setMaximum(2000);
+    m_neuronScaleSlider->setValue(825);
+    m_neuronVector->addWidget(m_neuronScaleSlider);
+
     this->addTask(m_neuronVector,QIcon(":/assets/neuronIcon.png"),"Neurons");
 
 
     m_connectionVector = new QWidgetVector();
-    m_connectionVector->setDirection(QBoxLayout::TopToBottom);
+    m_connectionVector->setDirection(QWidgetVector::TopToBottom);
 
     m_renderConnectionVector = new QWidgetVector();
     m_renderConnectionVector->setAlignment(Qt::AlignCenter);
@@ -61,6 +67,12 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_connectionAttributeComboWidget->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
     m_connectionVector->addWidget(m_connectionAttributeComboWidget);
 
+    m_connectionScaleSlider = new QSlider(Qt::Horizontal);
+    m_connectionScaleSlider->setMinimum(10);
+    m_connectionScaleSlider->setMaximum(60);
+    m_connectionScaleSlider->setValue(15);
+    m_connectionVector->addWidget(m_connectionScaleSlider);
+
     this->addTask(m_connectionVector,QIcon(":/assets/connectionIcon.png"),"Connections");
 	
     //this->addTask(new QWidget(),QIcon(":/assets/groupIcon.png"),"Groupings");
@@ -74,6 +86,8 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
 void  NCVRenderTool::setNeurons(NCVNeuronSet * neurons)
 {
     m_neurons = neurons;
+    if (m_neurons != NULL)
+        disconnect(m_neuronScaleSlider,SIGNAL(valueChanged(int)),m_neurons,SLOT(setScale(int)));
     QMap<QString, NCVAttribute * > attributes = m_neurons->attributes();
 
     for (QMap<QString, NCVAttribute * >::iterator it = attributes.begin();it != attributes.end(); it++)
@@ -92,29 +106,44 @@ void  NCVRenderTool::setNeurons(NCVNeuronSet * neurons)
         }
 
     }
+    connect(m_neuronScaleSlider,SIGNAL(valueChanged(int)),m_neurons,SLOT(setScale(int)));
 
 }
 
 void NCVRenderTool::m_neuronRenderSwitched(bool on)
 {
     if (on)
+    {
+        m_neuronScaleSlider->setEnabled(true);
         m_neuronAttributeComboWidget->setEnabled(true);
+    }
     else
+    {
+        m_neuronScaleSlider->setEnabled(false);
         m_neuronAttributeComboWidget->setEnabled(false);
+    }
     neuronRenderSet(on);
 
 }
 void NCVRenderTool::m_connectionRenderSwitched(bool on)
 {
     if (on)
+    {
+        m_connectionScaleSlider->setEnabled(true);
         m_connectionAttributeComboWidget->setEnabled(true);
+    }
     else
+    {
+        m_connectionScaleSlider->setEnabled(false);
         m_connectionAttributeComboWidget->setEnabled(false);
+    }
     connectionRenderSet(on);
 }
 
 void  NCVRenderTool::setConnections(NCVConnectionSet * connections)
 {
+    if (m_connections != NULL)
+        disconnect(m_connectionScaleSlider,SIGNAL(valueChanged(int)),m_connections,SLOT(setScale(int)));
     m_connections = connections;
     QMap<QString, NCVAttribute * > attributes = m_connections->attributes();
     for (QMap<QString, NCVAttribute * >::iterator it = attributes.begin();it != attributes.end(); it++)
@@ -134,6 +163,7 @@ void  NCVRenderTool::setConnections(NCVConnectionSet * connections)
 
     }
 
+    connect(m_connectionScaleSlider,SIGNAL(valueChanged(int)),m_connections,SLOT(setScale(int)));
 }
 
 
