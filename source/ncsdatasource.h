@@ -42,7 +42,7 @@ private:
         NCVAttribute *ncvAttribute;
     };
 
-    void addAttribute(const QString& name, NCVAttribute *ncvAttribute);
+    void addAttribute(const QString& name, NCVAttribute *ncvAttribute, int elementCount);
 
     QReportClient m_client;
     NCVNeuronSet *m_neurons;

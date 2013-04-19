@@ -58,7 +58,7 @@ void NCSDataSource::replaceNeuronSet(NCVNeuronSet *neurons)
 
         for(QMap<QString, NCVAttribute*>::iterator it = attributes.begin(); it != attributes.end(); it++)
         {
-            addAttribute(it.key(), it.value());
+            addAttribute(it.key(), it.value(), neurons->count());
         }
     }
 }
@@ -91,7 +91,7 @@ void NCSDataSource::replaceConnectionSet(NCVConnectionSet *connections)
 
         for(QMap<QString, NCVAttribute*>::iterator it = attributes.begin(); it != attributes.end(); it++)
         {
-            addAttribute(it.key(), it.value());
+            addAttribute(it.key(), it.value(), connections->count());
         }
     }
 }
@@ -152,7 +152,7 @@ void NCSDataSource::updateCurrentAttributes()
 
 
 
-void NCSDataSource::addAttribute(const QString& name, NCVAttribute *ncvAttribute)
+void NCSDataSource::addAttribute(const QString& name, NCVAttribute *ncvAttribute, int elementCount)
 {
     QReportClient::ReportRequest req;
     QReportClient::Report *report;
@@ -161,8 +161,9 @@ void NCSDataSource::addAttribute(const QString& name, NCVAttribute *ncvAttribute
     req.key = name.toStdString();
     req.dataspace = "device";
     req.frequency = 1;
-    req.indices.push_back(1);
-    req.indices.push_back(0);
+
+    for(int i = 0; i < elementCount; i++)
+        req.indices.push_back(i);
 
     if(ncvAttribute->elementType() == Neuron)
         req.elementType = "neuron";
