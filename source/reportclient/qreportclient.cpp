@@ -77,7 +77,6 @@ QReportClient::QReportClient()
 bool QReportClient::connect(const std::string &server, unsigned int port, float timeout)
 {
     QMutexLocker lock(&m_mutex);
-
     m_connection = new QSocketConnection(server, port, timeout);
     return m_connection->connected();
 }

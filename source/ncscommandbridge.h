@@ -103,12 +103,14 @@ public:
 
     explicit NCSCommandBridge(QObject * parent):QObject(parent){}
     virtual void validate(QString path) = 0;
-    virtual NCSApplicationBridge * executeApplication(QString application, NCSCommandArguments arguments) = 0;
-    virtual NCSApplicationBridge * executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" ) = 0;
+    virtual void executeApplication(QString application, NCSCommandArguments arguments) = 0;
+    virtual void executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" ) = 0;
     virtual bool valid() = 0;
+    virtual QString hostname() = 0;
 
 
 signals:
+    void applicationStarted(NCSApplicationBridge * app);
     void validated();
     void validationError(NCSCommandBridge::ValidationError err);
 };

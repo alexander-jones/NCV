@@ -16,24 +16,24 @@ NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
     m_renderTool->setMaximumWidth(300);
     m_layout->addWidget(m_renderTool);
 
-	m_selectionWidget = new QWidgetVector();
+    m_selectionWidget = new QWidgetVector();
     m_selectionWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
     m_selectionWidget->setDirection(QWidgetVector::TopToBottom);
     m_deselectAllButton = new QPushButton("Deselect All");
 	connect(m_deselectAllButton,SIGNAL(clicked()),this,SLOT(m_onDeselectAll()));
 	m_selectionWidget->addWidget(m_deselectAllButton);
-	m_renderDeselectedWidget = new QWidgetVector();
-	m_renderDeselectedSwitch = new QSwitch();
+    m_renderDeselectedWidget = new QWidgetVector();
+    m_renderDeselectedSwitch = new QSwitch();
 	connect(m_renderDeselectedSwitch,SIGNAL(switched(bool)),this,SLOT(m_onRenderDeselectionSet(bool)));
     m_renderDeselectedWidget->addWidget(new QLabel("Render Deslected: "));
 	m_renderDeselectedWidget->addWidget(m_renderDeselectedSwitch);
 	m_selectionWidget->addWidget(m_renderDeselectedWidget);
 
 	
-	m_compoundSelectionWidget = new QWidgetVector();
-	m_compoundSelectionSwitch = new QSwitch();
+    m_compoundSelectionWidget = new QWidgetVector();
+    m_compoundSelectionSwitch = new QSwitch();
 	connect(m_compoundSelectionSwitch,SIGNAL(switched(bool)),this,SLOT(m_onCompoundSelectionSet(bool)));
-	m_compoundSelectionWidget->addWidget(new QLabel("Compound Selection: "));
+    m_compoundSelectionWidget->addWidget(new QLabel("Compound Selection: "));
 	m_compoundSelectionWidget->addWidget(m_compoundSelectionSwitch);
 	m_selectionWidget->addWidget(m_compoundSelectionWidget);
 	m_selectionFlags = RenderDeselected;
@@ -147,7 +147,7 @@ void  NCVWidget::setNeurons(NCVNeuronSet * neurons)
 void  NCVWidget::setConnections(NCVConnectionSet * connections)
 {
     m_connections = connections;
-	m_renderTool->setConnections(connections);
+    m_renderTool->setConnections(connections);
     m_canvas->setConnections(m_connections);
 }
 

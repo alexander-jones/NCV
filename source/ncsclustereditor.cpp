@@ -184,10 +184,8 @@ void NCSClusterEditor::m_hostfileDetectAndAppend()
     NCSCommandArguments clusterArgs;
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
-    m_currentApplication  = m_commandBridge->executeApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
-    connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError)));
-    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clusterCompilationFinished()));
-
+    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
+    m_commandBridge->executeApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
 void NCSClusterEditor::m_hostfileDetectAndLoad()
@@ -206,10 +204,8 @@ void NCSClusterEditor::m_hostfileDetectAndLoad()
     NCSCommandArguments clusterArgs;
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
-    m_currentApplication  = m_commandBridge->executeApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
-    connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError)));
-    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clusterCompilationFinished()));
-
+    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
+    m_commandBridge->executeApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
 void NCSClusterEditor::m_detectDevicesOverIPRange()
@@ -228,18 +224,28 @@ void NCSClusterEditor::m_clusterCompilationFailed(NCSApplicationBridge::Applicat
         msgBox.setText("<font color = 'red'> Error. Cluster file could not be started. Is it present in the host's build/application directory?.</font>");
     msgBox.exec();
 
+    m_destroyClusterSpecifier();
+}
+
+void NCSClusterEditor::m_clusterSpecifierStarted(NCSApplicationBridge * app)
+{
+    m_currentApplication = app;
+    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
+    connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError)));
+    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clusterCompilationFinished()));
+
+}
+void NCSClusterEditor::m_destroyClusterSpecifier()
+{
     disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError)));
     disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clusterCompilationFinished()));
-
+    delete m_currentApplication;
 }
 
 void NCSClusterEditor::m_clusterCompilationFinished()
 {
-
-
     loadClusterFile(m_projectDir + "/tmp/cluster",m_appendDetectedHosts);
-    disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError)));
-    disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clusterCompilationFinished()));
+    m_destroyClusterSpecifier();
 
 }
 

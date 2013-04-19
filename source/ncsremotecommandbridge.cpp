@@ -63,7 +63,6 @@ void NCSRemoteCommandBridge::initialize(QString projectPath, SSHSocket * socket)
     m_socket = socket;
 
     connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
-    connect(m_socket,SIGNAL(error(SSHSocket::SSHSocketError)),this,SLOT(m_onSocketError(SSHSocket::SocketError)));
     connect(m_socket,SIGNAL(pullSuccessfull(QString,QString)),this,SLOT(m_executeNextPull()));
     connect(m_socket,SIGNAL(pushSuccessfull(QString,QString)),this,SLOT(m_executeNextPush()));
 
@@ -78,10 +77,10 @@ void NCSRemoteCommandBridge::validate(QString path)
     m_socket->executeCommand("type -P mpirun &>/dev/null && echo 'exists'");
 }
 
-NCSApplicationBridge * NCSRemoteCommandBridge::executeApplication(QString application, NCSCommandArguments arguments)
+void NCSRemoteCommandBridge::executeApplication(QString application, NCSCommandArguments arguments)
 {
     if (!m_valid)
-        return NULL;
+        return ;
 
     QVector<NCSCommandFileArgument> simFileArgs = arguments.fileArguments();
     QStringList argLiterals = arguments.literals();
@@ -107,13 +106,12 @@ NCSApplicationBridge * NCSRemoteCommandBridge::executeApplication(QString applic
     m_currentApplication = new NCSRemoteApplicationBridge(m_socket);
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_executeNextPull()));
     m_executeNextPush();
-    return m_currentApplication;
 
 }
-NCSApplicationBridge * NCSRemoteCommandBridge::executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
+void NCSRemoteCommandBridge::executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
 {
     if (!m_valid)
-        return NULL;
+        return;
 
     QVector<NCSCommandFileArgument> simFileArgs = arguments.fileArguments();
     QStringList argLiterals = arguments.literals();
@@ -145,7 +143,6 @@ NCSApplicationBridge * NCSRemoteCommandBridge::executeApplication(QString applic
     m_currentApplication = new NCSRemoteApplicationBridge(m_socket);
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_executeNextPull()));
     m_executeNextPush();
-    return m_currentApplication;
 
 }
 bool NCSRemoteCommandBridge::valid()
@@ -261,5 +258,13 @@ void NCSRemoteCommandBridge::m_executeNextPush()
         m_socket->pushFile(arg.localSyncFile(),arg.argument());
     }
     else
+    {
         m_currentApplication->start(m_application,m_applicationArguments);
+        applicationStarted(m_currentApplication);
+    }
+}
+
+QString NCSRemoteCommandBridge::hostname()
+{
+    return m_socket->host();
 }

@@ -26,6 +26,13 @@ private slots:
     void m_readStandardOutput();
     void m_readStandardError();
 
+
+    void m_distributionStarted(NCSApplicationBridge * app);
+    void m_destroyDistribution();
+
+    void m_simulationStarted(NCSApplicationBridge * app);
+    void m_destroySimulation();
+
     void m_distributionFailed(NCSApplicationBridge::ApplicationError);
     void m_distributionFinished();
 

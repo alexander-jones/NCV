@@ -7,12 +7,12 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
 
     m_projectPath = projectPath;
     m_socket = NULL;
-    m_localCommandBridge = new NCSLocalCommandBridge();
+    m_localCommandBridge = new NCSLocalCommandBridge(this);
     m_localCommandBridge->initialize(m_projectPath);
     connect(m_localCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
     connect(m_localCommandBridge,SIGNAL(validated()),this,SLOT(m_localConnectionValidated()));
 
-    m_remoteCommandBridge = new NCSRemoteCommandBridge();
+    m_remoteCommandBridge = new NCSRemoteCommandBridge(this);
     connect(m_remoteCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
     connect(m_remoteCommandBridge,SIGNAL(validated()),this,SLOT(m_remoteConnectionValidated()));
 
@@ -20,6 +20,7 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     m_layout->setAlignment(Qt::AlignCenter);
 
     m_connectionGroupVector = new QGroupVector();
+    connect(m_connectionGroupVector,SIGNAL(groupChecked(QString,bool)),this,SLOT(m_connectionGroupChecked(QString,bool)));
     m_connectionGroupVector->setEnableOnlyChecked(true);
     m_connectionGroupVector->setDirection(QGroupVector::TopToBottom);
     m_connectionGroupVector->setCheckState(QGroupVector::CheckSingle);
@@ -50,6 +51,7 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     m_connectionGroupVector->addToGroup("Use Remote Machine as Host",m_remoteConnectionWidget);
 
     m_remoteNCSDirectoryVector = new QWidgetVector();
+    m_remoteNCSDirectoryVector->setEnabled(false);
     m_remoteNCSDirectoryLabel = new QLabel("NCS 6 Directory:");
     m_remoteNCSDirectoryVector->addWidget(m_remoteNCSDirectoryLabel);
     m_remoteNCSDirectoryEdit = new QLineEdit();
@@ -73,6 +75,18 @@ void NCSConnectionWidget::m_localNCSDirectoryChanged(QString newText)
     else
         m_localValidateButton->setEnabled(false);
 }
+
+void NCSConnectionWidget::m_connectionGroupChecked(QString groupName,bool checked)
+{
+    if (groupName == "Use Remote Machine as Host" && checked)
+    {
+        if(m_socket == NULL)
+            m_remoteNCSDirectoryVector->setEnabled(false);
+        else
+            m_remoteNCSDirectoryVector->setEnabled(true);
+    }
+}
+
 
 void NCSConnectionWidget::m_browseForNCS()
 {
@@ -105,7 +119,7 @@ void NCSConnectionWidget::m_remoteConnectionEstablished(SSHSocket * socket)
 {
     m_socket = socket;
     m_remoteCommandBridge->initialize(m_projectPath,socket);
-    m_remoteValidateButton->setEnabled(true);
+    m_remoteNCSDirectoryVector->setEnabled(true);
 }
 void NCSConnectionWidget::m_validateRemoteConnection()
 {
@@ -117,6 +131,7 @@ void NCSConnectionWidget::m_validateRemoteConnection()
 }
 void NCSConnectionWidget::m_remoteConnectionValidated()
 {
+    m_statusLabel->setText("<font color='green'> NCS Installation Validated</font>");
     validNCSBridgeEstablished(m_remoteCommandBridge);
 }
 void NCSConnectionWidget::m_validateLocalConnection()

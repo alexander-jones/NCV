@@ -7,7 +7,7 @@ class NCSLocalApplicationBridge:public NCSApplicationBridge
 {
     Q_OBJECT
 public:
-    explicit NCSLocalApplicationBridge(QString workingDirectory = "",QObject *parent = 0);
+    explicit NCSLocalApplicationBridge(QString name,QString workingDirectory = "",QObject *parent = 0);
     ~NCSLocalApplicationBridge();
     void start(QString application,QStringList arguments);
     QString readAllStandardError();
@@ -19,6 +19,7 @@ private slots:
 
 private:
     QProcess * m_process;
+    QString m_name;
 };
 
 class NCSLocalCommandBridge : public NCSCommandBridge
@@ -28,9 +29,10 @@ public:
     explicit NCSLocalCommandBridge(QObject *parent = 0);
     void initialize(QString projectSubDir);
     void validate(QString path);
-    NCSApplicationBridge * executeApplication(QString application, NCSCommandArguments arguments);
-    NCSApplicationBridge * executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
+    void executeApplication(QString application, NCSCommandArguments arguments);
+    void executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
     bool valid();
+    QString hostname();
 
 
 private:

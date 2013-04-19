@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 #include <QMenuBar>
 #include <QFileDialog>
 bool removeDir(const QString & dirName)
@@ -26,12 +25,10 @@ bool removeDir(const QString & dirName)
 }
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    QMainWindow(parent)
 {
     m_neurons = NULL;
     m_connections = NULL;
-    ui->setupUi(this);
 
     this->setWindowTitle("NCV");
     m_rootPath = QDir::homePath() + "/NCV";
@@ -44,9 +41,8 @@ MainWindow::MainWindow(QWidget *parent) :
     if (!QDir("./tmp").exists())
         QDir(".").mkdir("./tmp");
 
-
-    m_menuBar = new QMenuBar();
-    m_fileMenu = new QMenu(tr("File"));
+    m_menuBar = new QMenuBar(this);
+    m_fileMenu = new QMenu(tr("File"),this);
     QAction * openProjAction  = m_fileMenu->addAction("Open Project");
     connect(openProjAction,SIGNAL(triggered()),this,SLOT(m_openProjectPressed()));
     QAction * newProjAction  = m_fileMenu->addAction("New Project");
@@ -54,19 +50,23 @@ MainWindow::MainWindow(QWidget *parent) :
     m_fileMenu->addAction("Quit");
     m_menuBar->addMenu(m_fileMenu);
 
-    m_editMenu = new QMenu(tr("Edit"));
+    m_editMenu = new QMenu(tr("Edit"),this);
    // m_menuBar->addMenu(m_editMenu);
 
-    m_toolsMenu = new QMenu(tr("Tools"));
+    m_toolsMenu = new QMenu(tr("Tools"),this);
    // m_menuBar->addMenu(m_toolsMenu);
     setMenuBar(m_menuBar);
 
+    m_updateTimer = new QTimer(this);
     m_tabWidget = NULL;
+    m_commandBridge = NULL;
+    m_dataSource = NULL;
 
 }
 
 void MainWindow::m_openProjectPressed()
 {
+
     QString projDir = QFileDialog::getExistingDirectory(this,"Open Project File",m_rootPath);
     if (projDir != "")
         m_loadProject(projDir);
@@ -106,7 +106,7 @@ void MainWindow::m_loadProject(QString projectDirectory)
     if (m_tabWidget != NULL)
         delete m_tabWidget;
 
-    m_tabWidget = new QwwConfigWidget();
+    m_tabWidget = new QwwConfigWidget(this);
     m_tabWidget->setIconSize(QSize(64,64));
 
     this->setCentralWidget(m_tabWidget);
@@ -116,6 +116,7 @@ void MainWindow::m_loadProject(QString projectDirectory)
 
     m_connectionWidget = new NCSConnectionWidget(projectDirectory,m_tabWidget);
     addWidget(m_connectionWidget);
+    connect(m_connectionWidget,SIGNAL(validNCSBridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
 
     NCSClusterEditor * clusterEditor = new NCSClusterEditor(projectDirectory,m_tabWidget);
     addWidget(clusterEditor);
@@ -124,6 +125,12 @@ void MainWindow::m_loadProject(QString projectDirectory)
     connect(modelWidget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
     connect(modelWidget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
     addWidget(modelWidget);
+
+    IzhModelDistributionWidget * izhModelWidget= new IzhModelDistributionWidget(projectDirectory,m_tabWidget);
+    connect(izhModelWidget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
+    connect(izhModelWidget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
+    addWidget(izhModelWidget);
+
 
     m_visualizationWidget = new NCVWidget(projectDirectory,m_tabWidget);
     addWidget(m_visualizationWidget);
@@ -159,6 +166,11 @@ void MainWindow::m_updateTimeScale(int value)
 
 }
 
+void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
+{
+    m_commandBridge = bridge;
+}
+
 void MainWindow::m_createNetwork(QString topologyFilename)
 {
     QFile topologyFile(topologyFilename);
@@ -175,12 +187,10 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     firingStates.append("Off");
     firingStates.append("On");
 
-    QVector<QString> typeStates;
-    typeStates.append("Ovoid");
-    typeStates.append("Izekivich");
-    typeStates.append("Pyramidal");
-    typeStates.append("Granule");
-    typeStates.append("Double Pyramidal");
+
+    QMap<QString,QColor >firingColors;
+    firingColors["Off"] =QColor(0,255,0);
+    firingColors["On"] = QColor(255,0,0);
 
     // establish attribute  colorations
     ContinuousColorSelector * voltageRange = new ContinuousColorSelector();
@@ -191,25 +201,8 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     voltageRange->addMarker(40,QColor(255,0,0));
 
 
-    QMap<QString,QColor >firingColors;
-    firingColors["Off"] =QColor(0,255,0);
-    firingColors["On"] = QColor(255,0,0);
-
-    QMap<QString,QColor >typeColors;
-    typeColors["Ovoid"] = QColor(125,125,0);
-    typeColors["Izekivich"] = QColor(255,0,125);
-    typeColors["Pyramidal"] = QColor(0,125,125);
-    typeColors["Granule"] = QColor(75,255,125);
-    typeColors["Double Pyramidal"] = QColor(255,255,0);
-
     // create stub neuron data source
     QVector<QVector3D> neuronPositions;
-    QVector<GLfloat> neuronVoltages;
-    QVector<GLubyte> neuronFirings;
-    QVector<GLubyte> neuronTypes;
-
-    int fireVal;
-    float threshold = 25.0f;
 
     int numNeurons;
     dataStream >> numNeurons;
@@ -220,39 +213,21 @@ void MainWindow::m_createNetwork(QString topologyFilename)
         int y = (abs(rand() * rand() * rand() ) % (int)worldSize.y()) - (worldSize.y()/2);
         int z = (abs(rand() * rand() * rand() ) % (int)worldSize.z()) - (worldSize.z()/2);
         neuronPositions.append(QVector3D(x, y, z));
-        neuronVoltages.append((float)(abs(rand() % 120)) -80.0);
-
-        if (neuronVoltages[i] >= threshold)
-            fireVal = 1;
-        else
-            fireVal = 0;
-
-        if(i %8 == 0)
-            neuronFirings.append(0);
-
-        neuronFirings[i/8] += fireVal<<(i % 8);
-
-        neuronTypes.append(rand() % 5);
     }
+
+    // create stub voltage so that attribute data array is at least present before simulation updates.
+    QVector<GLfloat> stubVoltage;
+    stubVoltage.resize(numNeurons);
 
 
     // create neurons and related attributes
     m_neurons= new NCVNeuronSet(neuronPositions);
 
     m_continuousNeuronAttributes["voltage"] = new NCVContinuousAttribute(Neuron,voltageRange->lowThreshold(), voltageRange->highThreshold());
-    m_continuousNeuronAttributes["voltage"]->attachData(neuronVoltages);
+    m_continuousNeuronAttributes["voltage"]->attachData(stubVoltage);
     m_continuousNeuronAttributes["voltage"]->attachColoration(voltageRange->getData());
-    m_neurons->addAttribute("voltage (mV)",m_continuousNeuronAttributes["voltage"]);
+    m_neurons->addAttribute("neuronVoltage",m_continuousNeuronAttributes["voltage"]);
 
-    m_discreteNeuronAttributes["firing"] = new NCVDiscreteAttribute(Neuron, firingStates);
-    m_discreteNeuronAttributes["firing"]->attachData(neuronFirings,1);
-    m_discreteNeuronAttributes["firing"]->attachColoration(firingColors);
-    m_neurons->addAttribute("firing",m_discreteNeuronAttributes["firing"]);
-
-    m_discreteNeuronAttributes["type"] = new NCVDiscreteAttribute(Neuron,typeStates);
-    m_discreteNeuronAttributes["type"]->attachData(neuronTypes);
-    m_discreteNeuronAttributes["type"]->attachColoration(typeColors);
-    m_neurons->addAttribute("type",m_discreteNeuronAttributes["type"]);
 
     int numConnections;
     dataStream >> numConnections;
@@ -265,50 +240,37 @@ void MainWindow::m_createNetwork(QString topologyFilename)
         dataStream >> inNeuron >> outNeuron;
         connections.append(NeuronConnection(inNeuron,outNeuron));
     }
-
-    QVector<GLfloat> connectionVoltages;
-    QVector<GLubyte> connectionFirings;
-
-    for (int i = 0; i <numConnections; i ++)
-    {
-        GLfloat inVoltage = neuronVoltages[connections[i].inNeuron];
-        GLfloat outVoltage = neuronVoltages[connections[i].outNeuron];
-
-        connectionVoltages.append((outVoltage + inVoltage)/2);
-        if (connectionVoltages[i] >= threshold)
-            fireVal = 1;
-        else
-            fireVal = 0;
-
-        if(i %8 == 0)
-            connectionFirings.append(0);
-        connectionFirings[i/8] += fireVal<<(i % 8);
-    }
+    // create stub firings so that attribute data array is at least present before simulation updates.
+    QVector<GLubyte> stubFirings;
+    if (numConnections % 8 == 0)
+        stubFirings.resize(numConnections / 8);
+    else
+        stubFirings.resize((numConnections / 8) + 1);
 
     //create connections and related attributes
     m_connections = new NCVConnectionSet(m_neurons, connections);
 
-    m_continuousConnectionAttributes["voltage"] = new NCVContinuousAttribute(Connection, voltageRange->lowThreshold(), voltageRange->highThreshold());
-    m_continuousConnectionAttributes["voltage"]->attachData(connectionVoltages);
-    m_continuousConnectionAttributes["voltage"]->attachColoration(voltageRange->getData());
-    m_connections->addAttribute("voltage (mV)", m_continuousConnectionAttributes["voltage"]);
-
     m_discreteConnectionAttributes["firing"] = new NCVDiscreteAttribute(Connection, firingStates);
-    m_discreteConnectionAttributes["firing"]->attachData(connectionFirings, 1);
+    m_discreteConnectionAttributes["firing"]->attachData(stubFirings,1);
     m_discreteConnectionAttributes["firing"]->attachColoration(firingColors);
-    m_connections->addAttribute("firing", m_discreteConnectionAttributes["firing"]);
+    m_connections->addAttribute("synapseFire", m_discreteConnectionAttributes["firing"]);
 
-    m_publishNetwork();
 }
 
 void MainWindow::m_publishNetwork()
 {
+    if (m_dataSource != NULL)
+        delete m_dataSource;
+    m_dataSource = new NCSDataSource();
+    m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
+    m_dataSource->replaceNeuronSet(m_neurons);
+    m_dataSource->replaceConnectionSet(m_connections);
+    connect(m_updateTimer,SIGNAL(timeout()),m_dataSource,SLOT(updateCurrentAttributes()));
     m_visualizationWidget->setNeurons(m_neurons);
     m_visualizationWidget->setConnections(m_connections);
+    m_updateTimer->start(50);
 }
 
 MainWindow::~MainWindow()
 {
-
-    delete ui;
 }

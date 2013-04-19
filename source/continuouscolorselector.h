@@ -20,12 +20,15 @@
 class ImageContainer: public QLabel
 {
     Q_OBJECT
+public:
+    explicit ImageContainer(QWidget * parent = 0):QLabel(parent){}
+
 signals:
     void doubleClicked(Qt::MouseButton button, QPoint pos);
     void exited();
 
 
-public:
+protected:
 
     void mouseDoubleClickEvent ( QMouseEvent * event )
     {

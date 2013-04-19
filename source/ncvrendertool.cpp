@@ -3,6 +3,9 @@
 NCVRenderTool::NCVRenderTool(QWidget *parent) :
     QwwTaskPanel(parent)
 {
+    m_connections = NULL;
+    m_neurons = NULL;
+
 	this->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
     m_discreteNeuronMapper = new QSignalMapper(this);
     m_discreteConnectionMapper = new QSignalMapper(this);

@@ -31,8 +31,9 @@ public:
         ShellCreationError
     };
 
-    SSHSocket();
+    explicit SSHSocket(QObject * parent = 0);
 
+    ~SSHSocket();
 
     void connectToHost(QString host, int port =22);
 
@@ -63,6 +64,7 @@ signals:
     void pushSuccessfull(QString localFile, QString remoteFile);
 
 private:
+
     enum FileTransferType
     {
         Pull,
@@ -83,7 +85,7 @@ private:
     QVector<QString> m_commandsToExecute;
     QVector<TransferOperation> m_transfersToExecute;
     ssh_session m_session;
-    bool m_connected;
+    bool m_connected,m_run;
 };
 
 

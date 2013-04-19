@@ -39,8 +39,8 @@ static const mode_t MS_MODE_MASK = 0x0000ffff;           ///< low word
 #endif
 
 */
-SSHSocket::SSHSocket()
-    :QThread()
+SSHSocket::SSHSocket(QObject * parent )
+    :QThread(parent)
 {
     m_host = "";
     m_user = "";
@@ -52,13 +52,19 @@ SSHSocket::SSHSocket()
     qRegisterMetaType<SSHSocket::SSHSocketError>("SSHSocket::SSHSocketError");
 
     start();
+    m_run = true;
 }
 
+SSHSocket::~SSHSocket()
+{
+    m_run = false;
+    this->wait();
+}
 
 void SSHSocket::run()
 {
 
-    while(true)
+    while(m_run)
     {
         if (m_session == NULL)
         {

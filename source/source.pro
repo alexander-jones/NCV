@@ -69,7 +69,8 @@ SOURCES += \
     networkupdatethread.cpp \
     networkupdatemanager.cpp \
     qglxcanvas.cpp \
-    qgroupvector.cpp
+    qgroupvector.cpp \
+    izhmodeldistributionwidget.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -120,7 +121,8 @@ HEADERS  += \
     networkupdatethread.h \
     networkupdatemanager.h \
     qglxcanvas.h \
-    qgroupvector.h
+    qgroupvector.h \
+    izhmodeldistributionwidget.h
 
 FORMS    += \
     mainwindow.ui

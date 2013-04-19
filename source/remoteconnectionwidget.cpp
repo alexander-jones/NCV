@@ -92,7 +92,7 @@ RemoteConnectionWidget::RemoteConnectionWidget(QWidget *parent) :
     m_layout->addWidget(m_recentCredentialWidget);
 
     this->setLayout(m_layout);
-    m_connection = new SSHSocket();
+    m_connection = new SSHSocket(this);
     connect(m_connection,SIGNAL(connected()),this,SLOT(m_onConnect()));
     connect(m_connection,SIGNAL(authenticated()),this,SLOT(m_onAuthentication()));
     connect(m_connection,SIGNAL(error(SSHSocket::SSHSocketError)),this,SLOT(m_onError(SSHSocket::SSHSocketError)));

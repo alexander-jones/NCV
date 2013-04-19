@@ -55,7 +55,6 @@ NCSModelDistributionWidget::NCSModelDistributionWidget(QString projectDir,QWidge
     m_clusterWidgetVector->addWidget(m_browseClusterButton);
     m_layout->addWidget(m_clusterWidgetVector);
 
-
     m_timeWidgetVector = new QWidgetVector();
     m_timeLabel = new QLabel("Simulation Runtime: ");
     m_timeWidgetVector->addWidget(m_timeLabel);
@@ -142,6 +141,45 @@ void NCSModelDistributionWidget::m_browseClusterPressed()
     if (clusterPath != "")
         m_clusterFileEdit->setText(clusterPath);
 }
+
+
+
+void NCSModelDistributionWidget::m_distributionStarted(NCSApplicationBridge * app)
+{
+    m_currentApplication = app;
+    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
+    connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
+    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
+}
+
+void NCSModelDistributionWidget::m_destroyDistribution()
+{
+    disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
+    disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
+    delete m_currentApplication;
+    m_currentApplication = NULL;
+}
+
+void NCSModelDistributionWidget::m_simulationStarted(NCSApplicationBridge * app)
+{
+    m_currentApplication = app;
+    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
+    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
+    connect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readStandardOutput()));
+    connect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readStandardError()));
+}
+void NCSModelDistributionWidget::m_destroySimulation()
+{
+    disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
+    disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
+    disconnect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readStandardOutput()));
+    disconnect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readStandardError()));
+    delete m_currentApplication;
+    m_currentApplication = NULL;
+}
+
+
 void NCSModelDistributionWidget::m_launchSimulationPressed()
 {
     if (m_launching)
@@ -180,9 +218,8 @@ void NCSModelDistributionWidget::m_launchSimulationPressed()
     distArgs << NCSCommandFileArgument(modelFile,m_modelFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution,modelFileDependencies);
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
     distArgs << NCSCommandFileArgument(m_distributionOutputDir) << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
-    m_currentApplication = m_commandBridge->executeApplication("ncsDistributor",distArgs);
-    connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
-    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
+    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
+    m_commandBridge->executeApplication("ncsDistributor",distArgs);
 
 }
 
@@ -193,11 +230,7 @@ void NCSModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::Appl
     msgBox.setText("Distribution Failed." );
     msgBox.exec();
     m_launching = false;
-    disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
-    disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
-
-    delete m_currentApplication;
-    m_currentApplication= NULL;
+    m_destroyDistribution();
 
 }
 
@@ -212,13 +245,9 @@ void NCSModelDistributionWidget::m_timeUnitSelected(QString unit)
 void NCSModelDistributionWidget::m_distributionFinished()
 {
     distributed(m_topologyFilename );
-    disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
-    disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
-
     m_readStandardOutput();
     m_readStandardError();
-    delete m_currentApplication;
-    m_currentApplication= NULL;
+    m_destroyDistribution();
 
     QString timeArg;
     if (m_timeUnitsComboBox->currentText() == "Milliseconds")
@@ -237,11 +266,9 @@ void NCSModelDistributionWidget::m_distributionFinished()
 
     NCSCommandArguments simArgs;
     simArgs << NCSCommandFileArgument(m_distributionOutputDir) << timeArg;
-    m_currentApplication = m_commandBridge->executeApplication("simulator",simArgs);
-    connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
-    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
-    connect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readStandardOutput()));
-    connect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readStandardError()));
+
+    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    m_commandBridge->executeApplication("simulator",simArgs);
 
 }
 
@@ -252,11 +279,7 @@ void NCSModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::Applic
     msgBox.setText("Simulation Launching Failed." );
     msgBox.exec();
     m_launching = false;
-    disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
-    disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
-    delete m_currentApplication;
-    m_currentApplication= NULL;
-
+    m_destroySimulation();
 }
 
 void NCSModelDistributionWidget::m_readStandardError()
@@ -265,17 +288,18 @@ void NCSModelDistributionWidget::m_readStandardError()
 }
 void NCSModelDistributionWidget::m_readStandardOutput()
 {
-    qDebug() << m_currentApplication->readAllStandardOutput();
+    QString out = m_currentApplication->readAllStandardOutput();
+    if (out.contains("Running simulation..."))
+        launched();
+    qDebug() << out;
 }
 
 void NCSModelDistributionWidget::m_simulationFinished()
 {
+    qDebug() << "finished";
     launched();
     m_launching = false;
-    m_currentApplication->disconnect();
-    delete m_currentApplication;
-    m_currentApplication= NULL;
-
+    m_destroySimulation();
 }
 
 QIcon NCSModelDistributionWidget::icon()

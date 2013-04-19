@@ -9,7 +9,7 @@ int main( int argc, char* argv[] )
 {
     QApplication a( argc, argv );
     MainWindow * w = new MainWindow();
-    a.setWindowIcon(QIcon(":/assets/ncs.png"));
+    a.setWindowIcon(QIcon(":/assets/ncv.png"));
     a.setActiveWindow(w);
 
     w->show();

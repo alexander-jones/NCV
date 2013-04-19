@@ -28,9 +28,11 @@ public:
     explicit NCSRemoteCommandBridge( QObject *parent = 0);
     void initialize(QString projectSubDir, SSHSocket * socket);
     void validate(QString path);
-    NCSApplicationBridge * executeApplication(QString application, NCSCommandArguments arguments);
-    NCSApplicationBridge * executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
+    void executeApplication(QString application, NCSCommandArguments arguments);
+    void executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
     bool valid();
+    QString hostname();
+
 
 private slots:
     void m_onCommandExecuted(QString command,QString response);

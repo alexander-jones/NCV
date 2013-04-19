@@ -1,5 +1,4 @@
 #include "discretecolorselector.h"
-#include <QPainter>
 
 DiscreteColorSelector::DiscreteColorSelector(QWidget *parent) :
     QScrollArea(parent)

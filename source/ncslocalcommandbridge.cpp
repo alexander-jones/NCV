@@ -1,7 +1,9 @@
 #include "ncslocalcommandbridge.h"
+#include <QMessageBox>
 
-NCSLocalApplicationBridge::NCSLocalApplicationBridge(QString workingDirectory, QObject *parent):NCSApplicationBridge(parent)
+NCSLocalApplicationBridge::NCSLocalApplicationBridge(QString name,QString workingDirectory, QObject *parent):NCSApplicationBridge(parent)
 {
+    m_name = name;
     m_process = new QProcess(this);
     if (workingDirectory != "")
         m_process->setWorkingDirectory(workingDirectory);
@@ -13,13 +15,13 @@ NCSLocalApplicationBridge::NCSLocalApplicationBridge(QString workingDirectory, Q
 NCSLocalApplicationBridge::~NCSLocalApplicationBridge()
 {
     m_process->disconnect();
-    m_process = NULL;
+    m_process->kill();
+    m_process->waitForFinished();
 }
 
-
-void NCSLocalApplicationBridge::start(QString application,QStringList arguments)
+void NCSLocalApplicationBridge::start(QString applicationPath,QStringList arguments)
 {
-    m_process->start(application,arguments);
+    m_process->start(applicationPath,arguments);
 }
 
 QString NCSLocalApplicationBridge::readAllStandardError()
@@ -94,11 +96,11 @@ bool NCSLocalCommandBridge::valid()
 }
 
 
-NCSApplicationBridge * NCSLocalCommandBridge::executeApplication(QString application, NCSCommandArguments arguments)
+void NCSLocalCommandBridge::executeApplication(QString application, NCSCommandArguments arguments)
 {
     if (!m_valid)
     {
-        return NULL;
+        return;
     }
 
     QVector<NCSCommandFileArgument> simFileArgs = arguments.fileArguments();
@@ -115,9 +117,9 @@ NCSApplicationBridge * NCSLocalCommandBridge::executeApplication(QString applica
         }
     }
 
-    m_applicationBridge = new NCSLocalApplicationBridge(m_buildPath);
+    m_applicationBridge = new NCSLocalApplicationBridge(application,m_buildPath,this);
     m_applicationBridge->start("applications/" + application  + "/" + application,argLiterals);
-    return m_applicationBridge;
+    applicationStarted(m_applicationBridge);
 }
 
 bool NCSLocalCommandBridge::m_transfer(QString sourcePath, QString destPath)
@@ -139,12 +141,12 @@ bool NCSLocalCommandBridge::m_transfer(QString sourcePath, QString destPath)
         return false;
 }
 
-NCSApplicationBridge * NCSLocalCommandBridge::executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
+void NCSLocalCommandBridge::executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
 {
 
     if (!m_valid)
     {
-        return NULL;
+        return ;
     }
 
     QVector<NCSCommandFileArgument> simFileArgs = arguments.fileArguments();
@@ -167,12 +169,15 @@ NCSApplicationBridge * NCSLocalCommandBridge::executeApplication(QString applica
         completeArgs <<"--hostfile" << hostFile ;
     completeArgs << ("applications/" + application  + "/" + application)<< argLiterals;
 
-    m_applicationBridge = new NCSLocalApplicationBridge(m_buildPath);
+    m_applicationBridge = new NCSLocalApplicationBridge(application,m_buildPath,this);
     m_applicationBridge->start("mpirun",completeArgs);
-    return m_applicationBridge;
+    applicationStarted(m_applicationBridge);
 }
 
-
+QString NCSLocalCommandBridge::hostname()
+{
+    return "localhost";
+}
 
 void NCSLocalCommandBridge::m_invalidate(NCSCommandBridge::ValidationError err)
 {

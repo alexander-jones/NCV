@@ -12,6 +12,7 @@
 #include <QProgressBar>
 #include <QLineEdit>
 #include <QGroupBox>
+#include "ncsdatasource.h"
 
 class NCSConnectionWidget : public NCSWidgetPlugin
 {
@@ -39,6 +40,7 @@ private slots:
     void m_remoteConnectionError(SSHSocket::SSHSocketError err);
     void m_remoteConnectionFailed();
     void m_remoteConnectionValidated();
+    void m_connectionGroupChecked(QString groupName,bool checked);
 
 private:
     QLabel * m_statusLabel;

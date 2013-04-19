@@ -5,14 +5,12 @@
 #include "ncsconnectionwidget.h"
 #include "ncsclustereditor.h"
 #include "ncsmodeldistributionwidget.h"
+#include "izhmodeldistributionwidget.h"
+#include "ncsdatasource.h"
 #include "ncvwidget.h"
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QwwConfigWidget>
-
-namespace Ui {
-class MainWindow;
-}
 
 class MainWindow : public QMainWindow
 {
@@ -27,6 +25,7 @@ public:
     ~MainWindow();
 
 private slots:
+    void m_setCommandBridge(NCSCommandBridge * bridge);
     void m_createNetwork(QString topologyFilename);
     void m_publishNetwork();
     void m_loadProject(QString projectDirectory);
@@ -36,10 +35,11 @@ private slots:
     void m_newProjectPressed();
 
 private:
-
+    QTimer * m_updateTimer;
+    NCSCommandBridge * m_commandBridge;
+    NCSDataSource * m_dataSource;
     NCVWidget * m_visualizationWidget;
     QString m_rootPath;
-    Ui::MainWindow *ui;
     QVBoxLayout * m_layout;
     QwwConfigWidget * m_tabWidget;
     NCSConnectionWidget * m_connectionWidget;

@@ -34,6 +34,8 @@ private slots:
     void m_saveClusterFilePressed();
     void m_appendClusterFilePressed();
 
+    void m_clusterSpecifierStarted(NCSApplicationBridge * app);
+    void m_destroyClusterSpecifier();
     void m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError err);
     void m_clusterCompilationFinished();
     void m_detectDevicesOverIPRange();
@@ -68,7 +70,6 @@ private:
                 for (int i = 0; i < devices.count(); i ++)
                     if (rhs.devices.count(devices[i]) == 0)
                     {
-                        qDebug() << "here";
                         allDevicesSame = false;
                         break;
                     }

@@ -46,5 +46,6 @@
         <file>shaders/neuronSilhouette.vert</file>
         <file>shaders/silhouette.frag</file>
         <file>assets/ncv.png</file>
+        <file>assets/izhDistributor.png</file>
     </qresource>
 </RCC>
