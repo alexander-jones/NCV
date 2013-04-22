@@ -74,9 +74,10 @@ QReportClient::QReportClient()
 
 
 
-bool QReportClient::connect(const std::string &server, unsigned int port, float timeout)
+bool QReportClient::connectToSimulator(const std::string &server, unsigned int port, float timeout)
 {
     QMutexLocker lock(&m_mutex);
+    Q_UNUSED(lock);
     m_connection = new QSocketConnection(server, port, timeout);
     return m_connection->connected();
 }
@@ -86,15 +87,17 @@ bool QReportClient::connect(const std::string &server, unsigned int port, float 
 bool QReportClient::connected() const
 {
     QMutexLocker lock(&m_mutex);
+    Q_UNUSED(lock);
     return m_connection != 0;
 }
 
 
 
-bool QReportClient::disconnect()
+bool QReportClient::disconnectFromSimulator()
 {
     QMutexLocker lock(&m_mutex);
     ClientMessage message;
+    Q_UNUSED(lock);
 
     message.type = ClientMessage::Terminate;
     m_connection->send(&message, sizeof(ClientMessage));
@@ -110,6 +113,7 @@ QReportClient::Report* QReportClient::report(const ReportRequest &request)
 {
     QMutexLocker lock(&m_mutex);
     ClientMessage message;
+    Q_UNUSED(lock);
 
     message.type = ClientMessage::Report;
     m_connection->send(&message, sizeof(ClientMessage));

@@ -221,12 +221,12 @@ void MainWindow::m_createNetwork(QString topologyFilename)
 
 
     // create neurons and related attributes
-    m_neurons= new NCVNeuronSet(neuronPositions);
+    m_neurons = new NCVNeuronSet(neuronPositions);
 
-    m_continuousNeuronAttributes["voltage"] = new NCVContinuousAttribute(Neuron,voltageRange->lowThreshold(), voltageRange->highThreshold());
+    m_continuousNeuronAttributes["voltage"] = new NCVContinuousAttribute(Neuron, voltageRange->lowThreshold(), voltageRange->highThreshold());
     m_continuousNeuronAttributes["voltage"]->attachData(stubVoltage);
     m_continuousNeuronAttributes["voltage"]->attachColoration(voltageRange->getData());
-    m_neurons->addAttribute("neuronVoltage",m_continuousNeuronAttributes["voltage"]);
+    m_neurons->addAttribute("neuronVoltage", m_continuousNeuronAttributes["voltage"]);
 
 
     int numConnections;
@@ -253,6 +253,7 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     m_discreteConnectionAttributes["firing"] = new NCVDiscreteAttribute(Connection, firingStates);
     m_discreteConnectionAttributes["firing"]->attachData(stubFirings,1);
     m_discreteConnectionAttributes["firing"]->attachColoration(firingColors);
+    m_discreteConnectionAttributes["firing"]->setReportable(false);
     m_connections->addAttribute("synapseFire", m_discreteConnectionAttributes["firing"]);
 
 }
@@ -262,7 +263,7 @@ void MainWindow::m_publishNetwork()
     if (m_dataSource != NULL)
         delete m_dataSource;
     m_dataSource = new NCSDataSource();
-    m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
+    qDebug() << "Establish connection: " << m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
     m_dataSource->replaceNeuronSet(m_neurons);
     m_dataSource->replaceConnectionSet(m_connections);
     connect(m_updateTimer,SIGNAL(timeout()),m_dataSource,SLOT(updateCurrentAttributes()));

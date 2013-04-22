@@ -122,7 +122,8 @@ HEADERS  += \
     networkupdatemanager.h \
     qglxcanvas.h \
     qgroupvector.h \
-    izhmodeldistributionwidget.h
+    izhmodeldistributionwidget.h \
+    sleeper.h
 
 FORMS    += \
     mainwindow.ui

@@ -13,8 +13,8 @@ class QSocketConnection : public QObject
 
     public:
         QSocketConnection(QTcpSocket *socket);
-        QSocketConnection(const std::string& server, int port, float timeout = 1.0f);
-        QSocketConnection(const QHostAddress& addr, int port, float timeout = 1.0f);
+        QSocketConnection(const std::string& server, int port, float timeout = 1.0f, int attempts = 10);
+        QSocketConnection(const QHostAddress& addr, int port, float timeout = 1.0f, int attempts = 10);
         virtual ~QSocketConnection();
 
         template<typename T> bool send(const T* data, unsigned int count);

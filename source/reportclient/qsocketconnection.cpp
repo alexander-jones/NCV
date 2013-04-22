@@ -1,6 +1,8 @@
 #include "qsocketconnection.h"
+#include "sleeper.h"
 #include <QMutexLocker>
 #include <QTcpServer>
+#include <QThread>
 
 
 
@@ -11,20 +13,52 @@ QSocketConnection::QSocketConnection(QTcpSocket *socket)
 
 
 
-QSocketConnection::QSocketConnection(const std::string &server, int port, float timeout)
+QSocketConnection::QSocketConnection(const std::string &server, int port, float timeout, int attempts)
 {
+    if(attempts <= 0)
+        attempts = 1;
+
+    int delayPerAttempt = int(timeout * 1000) / attempts;
+    bool done = false;
+
     m_socket = new QTcpSocket(this);
-    m_socket->connectToHost(QString::fromStdString(server), port);
-    m_socket->waitForConnected(int(timeout * 1000));
+
+    while(attempts > 0 && !done)
+    {
+        m_socket->connectToHost(QString::fromStdString(server), port);
+        if(m_socket->waitForConnected(delayPerAttempt))
+            done = true;
+        else
+            Sleeper::msleep(delayPerAttempt);
+
+        qDebug() << "Attempt completed, done = " << done << " and error = " << m_socket->errorString();
+        attempts--;
+    }
 }
 
 
 
-QSocketConnection::QSocketConnection(const QHostAddress &addr, int port, float timeout)
+QSocketConnection::QSocketConnection(const QHostAddress &addr, int port, float timeout, int attempts)
 {
+    if(attempts <= 0)
+        attempts = 1;
+
+    int delayPerAttempt = int(timeout * 1000) / attempts;
+    bool done = false;
+
     m_socket = new QTcpSocket(this);
-    m_socket->connectToHost(addr, port);
-    m_socket->waitForConnected(int(timeout * 1000));
+
+    while(attempts > 0 && !done)
+    {
+        m_socket->connectToHost(addr, port);
+        if(m_socket->waitForConnected(delayPerAttempt))
+            done = true;
+        else
+            Sleeper::msleep(delayPerAttempt);
+
+        qDebug() << "Attempt completed, done = " << done << " and error = " << m_socket->errorString();
+        attempts--;
+    }
 }
 
 
@@ -107,7 +141,7 @@ bool QSocketConnection::disconnect()
 
 bool QSocketConnection::connected() const
 {
-    return m_socket != 0 && m_socket->isValid();
+    return m_socket != 0 && m_socket->isValid() && m_socket->state() == QAbstractSocket::ConnectedState;
 }
 
 
@@ -141,6 +175,7 @@ QSocketConnection *QSocketConnection::clone(bool master)
     {
         int port = -1;
 
+        m_socket->waitForReadyRead();
         recv<int>(&port, 1);
         return new QSocketConnection(peer, port, 10);
     }
@@ -155,13 +190,19 @@ bool QSocketConnection::_send(const void *data, unsigned int count)
     while (totalSent < count)
     {
         if (!connected())
+        {
+            qDebug() << "Not connected: " << m_socket->errorString();
             return false;
+        }
 
         bytesSent = m_socket->write((const char*)data + totalSent, count - totalSent);
         totalSent += bytesSent;
 
-        if(bytesSent == 0 && !m_socket->waitForBytesWritten())
+        if(bytesSent <= 0 && !m_socket->waitForBytesWritten())
+        {
+            qDebug() << "Error writing data: " << m_socket->errorString();
             break;
+        }
     }
 
     return totalSent == count;
@@ -176,13 +217,19 @@ bool QSocketConnection::_recv(void *data, unsigned int count)
     while (totalRead < count)
     {
         if (!connected())
+        {
+            qDebug() << "Not connected: " << m_socket->errorString() << " host = " << m_socket->peerName();
             return false;
+        }
 
         bytesRead = m_socket->read((char*)data + totalRead, count - totalRead);
         totalRead += bytesRead;
 
-        if(bytesRead == 0 && !m_socket->waitForReadyRead())
+        if(bytesRead <= 0 && !m_socket->waitForReadyRead())
+        {
+            qDebug() << "Error reading data: " << m_socket->errorString();
             break;
+        }
     }
 
     return totalRead == count;

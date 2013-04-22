@@ -66,8 +66,8 @@ class QReportClient : public QObject
 
 
         QReportClient();
-        bool connect(const std::string& server, unsigned int port, float timeout);
-        bool disconnect();
+        bool connectToSimulator(const std::string& server, unsigned int port, float timeout);
+        bool disconnectFromSimulator();
         bool connected() const;
         Report* report(const ReportRequest& request);
 

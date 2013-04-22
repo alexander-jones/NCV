@@ -20,14 +20,14 @@ NCSDataSource::~NCSDataSource()
 
 bool NCSDataSource::establishConnection(const std::string &host, int port)
 {
-    return m_client.connect(host, port, 3);
+    return m_client.connectToSimulator(host, port, 3);
 }
 
 
 
 void NCSDataSource::closeConnection()
 {
-    m_client.disconnect();
+    m_client.disconnectFromSimulator();
 }
 
 
@@ -58,7 +58,8 @@ void NCSDataSource::replaceNeuronSet(NCVNeuronSet *neurons)
 
         for(QMap<QString, NCVAttribute*>::iterator it = attributes.begin(); it != attributes.end(); it++)
         {
-            addAttribute(it.key(), it.value(), neurons->count());
+            if(it.value()->reportable())
+                addAttribute(it.key(), it.value(), neurons->count());
         }
     }
 }
@@ -91,7 +92,8 @@ void NCSDataSource::replaceConnectionSet(NCVConnectionSet *connections)
 
         for(QMap<QString, NCVAttribute*>::iterator it = attributes.begin(); it != attributes.end(); it++)
         {
-            addAttribute(it.key(), it.value(), connections->count());
+            if(it.value()->reportable())
+                addAttribute(it.key(), it.value(), connections->count());
         }
     }
 }
