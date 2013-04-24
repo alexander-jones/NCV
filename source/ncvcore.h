@@ -50,20 +50,20 @@ struct Range
 
 class NCVAttribute
 {
-private:
-    bool m_reportable;
-
 public:
-    NCVAttribute() : m_reportable(true) {}
-    virtual QGLShaderProgram * program() { return NULL; }
-    virtual void bind(QGLXCamera camera) { Q_UNUSED(camera) }
-    virtual void release() {}
-    virtual bool dirty() { return false; }
-    virtual NCVElementType elementType() { return Neuron; }
-    virtual NCVAttributeType type() { return Continuous; }
-    virtual void resolve() {}
+    NCVAttribute(): m_reportable(true) {}
+    virtual QGLShaderProgram * program(){return NULL;}
+    virtual void bind(QGLXCamera camera){Q_UNUSED(camera)}
+    virtual void release(){}
+	virtual bool dirty(){return false;}
+    virtual NCVElementType elementType(){return Neuron;}
+    virtual NCVAttributeType type(){return Continuous;}
+    virtual void resolve(){}
+    virtual void destroy() = 0;
     virtual bool reportable() const { return m_reportable; }
     virtual void setReportable(bool value) { m_reportable = value; }
+private:
+    bool m_reportable;
 };
 
 struct NCVConvexHull

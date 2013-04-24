@@ -88,11 +88,37 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
 
 void  NCVRenderTool::setNeurons(NCVNeuronSet * neurons)
 {
-    m_neurons = neurons;
-    if (m_neurons != NULL)
-        disconnect(m_neuronScaleSlider,SIGNAL(valueChanged(int)),m_neurons,SLOT(setScale(int)));
-    QMap<QString, NCVAttribute * > attributes = m_neurons->attributes();
 
+    if (m_neurons != NULL)
+    {
+        QMap<QString, NCVAttribute * > attributes = m_neurons->attributes();
+        disconnect(m_neuronScaleSlider,SIGNAL(valueChanged(int)),m_neurons,SLOT(setScale(int)));
+        while (attributes.count() > 0)
+        {
+            QMap<QString, NCVAttribute * >::iterator it = attributes.begin();
+            NCVAttribute * attribute = it.value();
+            m_neuronAttributeComboWidget->removeWidget(it.key());
+            if (attribute->type() == Continuous)
+            {
+                ContinuousColorSelector * widget = m_neuronContinuousWidgets[it.key()];
+                m_neuronContinuousWidgets.remove(it.key());
+                delete widget;
+            }
+            else
+            {
+                DiscreteColorSelector * widget = m_neuronDiscreteWidgets[it.key()];
+                m_neuronDiscreteWidgets.remove(it.key());
+                delete widget;
+            }
+            attributes.remove(it.key());
+        }
+    }
+    m_neurons = neurons;
+    if (m_neurons == NULL)
+        return;
+
+    m_neurons = neurons;
+    QMap<QString, NCVAttribute * > attributes = m_neurons->attributes();
     for (QMap<QString, NCVAttribute * >::iterator it = attributes.begin();it != attributes.end(); it++)
     {
         QString name = it.key();
@@ -110,6 +136,7 @@ void  NCVRenderTool::setNeurons(NCVNeuronSet * neurons)
 
     }
     connect(m_neuronScaleSlider,SIGNAL(valueChanged(int)),m_neurons,SLOT(setScale(int)));
+
 
 }
 
@@ -146,8 +173,34 @@ void NCVRenderTool::m_connectionRenderSwitched(bool on)
 void  NCVRenderTool::setConnections(NCVConnectionSet * connections)
 {
     if (m_connections != NULL)
+    {
+        QMap<QString, NCVAttribute * > attributes = m_connections->attributes();
         disconnect(m_connectionScaleSlider,SIGNAL(valueChanged(int)),m_connections,SLOT(setScale(int)));
+        while (attributes.count() > 0)
+        {
+            QMap<QString, NCVAttribute * >::iterator it = attributes.begin();
+            NCVAttribute * attribute = it.value();
+            m_connectionAttributeComboWidget->removeWidget(it.key());
+            if (attribute->type() == Continuous)
+            {
+                ContinuousColorSelector * widget = m_connectionContinuousWidgets[it.key()];
+                m_connectionContinuousWidgets.remove(it.key());
+                delete widget;
+            }
+            else
+            {
+                DiscreteColorSelector * widget = m_connectionDiscreteWidgets[it.key()];
+                m_connectionDiscreteWidgets.remove(it.key());
+                delete widget;
+            }
+            attributes.remove(it.key());
+        }
+    }
+
     m_connections = connections;
+    if (m_connections == NULL)
+        return;
+
     QMap<QString, NCVAttribute * > attributes = m_connections->attributes();
     for (QMap<QString, NCVAttribute * >::iterator it = attributes.begin();it != attributes.end(); it++)
     {

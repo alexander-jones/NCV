@@ -1,6 +1,7 @@
 #include "ncsmodeldistributionwidget.h"
 #include <QMessageBox>
 #include <QFileDialog>
+#include "ncscluster.h"
 
 NCSModelDistributionWidget::NCSModelDistributionWidget(QString projectDir,QWidget *parent) :
     NCSDistributionWidgetPlugin(projectDir,parent)
@@ -80,6 +81,7 @@ NCSModelDistributionWidget::NCSModelDistributionWidget(QString projectDir,QWidge
     this->setLayout(m_layout);
     this->setEnabled(false);
     m_currentApplication = NULL;
+    m_launched = false;
 }
 
 void NCSModelDistributionWidget::initialize(NCSCommandBridge * bridge)
@@ -226,6 +228,8 @@ void NCSModelDistributionWidget::m_launchSimulationPressed()
 void NCSModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::ApplicationError err)
 {
     QMessageBox msgBox;
+    m_readStandardOutput();
+    m_readStandardError();
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.setText("Distribution Failed." );
     msgBox.exec();
@@ -267,13 +271,19 @@ void NCSModelDistributionWidget::m_distributionFinished()
     NCSCommandArguments simArgs;
     simArgs << NCSCommandFileArgument(m_distributionOutputDir) << timeArg;
 
+    NCSCluster cluster;
+    cluster.read(m_clusterFileEdit->text());
+    QString hostFilePath =  m_projectDir + "/tmp/hostfile";
+    cluster.writeHostfile(hostFilePath);
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
-    m_commandBridge->executeApplication("simulator",simArgs);
+    m_commandBridge->executeApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
 
 void NCSModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::ApplicationError err)
 {
+    m_readStandardOutput();
+    m_readStandardError();
     QMessageBox msgBox;
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.setText("Simulation Launching Failed." );
@@ -289,15 +299,19 @@ void NCSModelDistributionWidget::m_readStandardError()
 void NCSModelDistributionWidget::m_readStandardOutput()
 {
     QString out = m_currentApplication->readAllStandardOutput();
+
+    if (!m_launched)
+        qDebug() << out;
+
     if (out.contains("Running simulation..."))
+    {
+        m_launched = true;
         launched();
-    qDebug() << out;
+    }
 }
 
 void NCSModelDistributionWidget::m_simulationFinished()
 {
-    qDebug() << "finished";
-    launched();
     m_launching = false;
     m_destroySimulation();
 }

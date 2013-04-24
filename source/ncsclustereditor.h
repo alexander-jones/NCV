@@ -1,6 +1,7 @@
 #include <QtGui>
 #include "ncsapplicationwidgetplugin.h"
 #include "qwidgetvector.h"
+#include "ncscluster.h"
 
 class NCSClusterEditor : public NCSApplicationWidgetPlugin
 {
@@ -44,46 +45,6 @@ private slots:
     void m_hostfileDetectAndLoad();
     void m_hostfileDetectAndAppend();
 private:
-    struct Device
-    {
-        QString type;
-        float power;
-        bool enabled;
-        int number;
-        bool operator==(const Device &rhs)
-        {
-            return (type == rhs.type) && (power == rhs.power) && (number = rhs.number);
-        }
-    };
-
-    struct Machine
-    {
-        QString name;
-        QVector<Device> devices;
-        bool enabled, hasCPU,hasCUDA;
-        int listIndex;
-
-        bool operator==(const Machine &rhs)
-        {
-            bool allDevicesSame = rhs.devices.count() == devices.count();
-            if (allDevicesSame)
-                for (int i = 0; i < devices.count(); i ++)
-                    if (rhs.devices.count(devices[i]) == 0)
-                    {
-                        allDevicesSame = false;
-                        break;
-                    }
-
-            return  allDevicesSame && (name == rhs.name);
-        }
-    };
-
-    struct Cluster
-    {
-        QVector<Machine> machines;
-    };
-
-
 
 	typedef std::pair<QLabel*, QLabel*> LabelSet;
     LabelSet m_infoParam(const QString & key, const QString & value);
@@ -104,7 +65,7 @@ private:
     QListWidget* m_deviceList;
     QGroupBox* m_deviceListBox;
     QGroupBox* m_deviceBox;
-    Cluster m_cluster;
+    NCSCluster m_cluster;
     int m_machineSelectionIndex;
 
     QLineEdit * m_startIP, * m_endIP,*m_hostFileEdit;

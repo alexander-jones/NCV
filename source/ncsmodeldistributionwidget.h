@@ -67,6 +67,7 @@ private:
     QPushButton * m_launchSimulationButton;
     NCSCommandBridge * m_commandBridge;
     NCSApplicationBridge * m_currentApplication;
+    bool m_launched;
     
 };
 

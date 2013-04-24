@@ -24,6 +24,9 @@ public:
     void addWidget(NCSDistributionWidgetPlugin *widget);
     ~MainWindow();
 
+protected:
+    void closeEvent(QCloseEvent *);
+
 private slots:
     void m_setCommandBridge(NCSCommandBridge * bridge);
     void m_createNetwork(QString topologyFilename);
@@ -33,8 +36,20 @@ private slots:
     void m_distributionFinalized();
     void m_openProjectPressed();
     void m_newProjectPressed();
+    void m_ncsApplicationLaunched(NCSApplicationBridge * );
+    void m_ncsApplicationFinished(QObject * );
+
+    void m_runSimulation();
+    void m_pauseSimulation();
+    void m_stopSimulation();
 
 private:
+    int m_simulationApplicationIndex;
+    QToolBar * m_simulationToolbar;
+    QSlider * m_simulationTimeSlider;
+    QAction *m_runSimulationButton, * m_pauseSimulationButton, * m_stopSimulationButton;
+    QSignalMapper * m_applicationMapper;
+    QVector<NCSApplicationBridge *> m_activeApplications;
     QTimer * m_updateTimer;
     NCSCommandBridge * m_commandBridge;
     NCSDataSource * m_dataSource;
@@ -52,7 +67,6 @@ private:
     NCVConnectionSet * m_connections;
     QMap<QString,NCVDiscreteAttribute *> m_discreteNeuronAttributes,m_discreteConnectionAttributes;
     QMap<QString,NCVContinuousAttribute *> m_continuousNeuronAttributes,m_continuousConnectionAttributes;
-
 
 };
 

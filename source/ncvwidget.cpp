@@ -140,7 +140,7 @@ void NCVWidget::m_onCompoundSelectionSet(bool on)
 void  NCVWidget::setNeurons(NCVNeuronSet * neurons)
 {
     m_neurons = neurons;
-	m_renderTool->setNeurons(neurons);
+    m_renderTool->setNeurons(neurons);
     m_canvas->setNeurons(m_neurons);
 }
 

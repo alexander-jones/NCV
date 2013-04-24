@@ -4,7 +4,7 @@ NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(SSHSocket *socket, QStrin
     :NCSApplicationBridge(parent)
 {
     m_socket = socket;
-
+    m_destroyProcess = true;
     connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
     connect(m_socket,SIGNAL(error(SSHSocket::SSHSocketError)),this,SLOT(m_onSocketError(SSHSocket::SocketError)));
 }
@@ -14,6 +14,16 @@ NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
     disconnect(m_socket,SIGNAL(error(SSHSocket::SSHSocketError)),this,SLOT(m_onSocketError(SSHSocket::SocketError)));
 }
 
+void NCSRemoteApplicationBridge::scheduleDestruction(bool destroy)
+{
+    m_destroyProcess = destroy;
+    executionFinished();
+}
+
+QString NCSRemoteApplicationBridge::applicationName()
+{
+    return "";
+}
 void NCSRemoteApplicationBridge::start(QString application, QStringList arguments)
 {
     for (int i=0; i < arguments.size();i++)

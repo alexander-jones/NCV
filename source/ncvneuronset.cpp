@@ -49,6 +49,21 @@ void NCVNeuronSet::setScale(int scale)
 }
 
 
+void NCVNeuronSet::destroy()
+{
+    if (!m_initialized)
+        return;
+
+    m_positionBuffer.destroy();
+    m_idBuffer.destroy();
+    m_indexBuffer.destroy();
+    m_vertexBuffer.destroy();
+
+    for(QMap<QString,NCVAttribute *>::iterator it = m_attributes.begin(); it != m_attributes.end(); it++)
+        it.value()->destroy();
+    m_initialized = false;
+}
+
 bool NCVNeuronSet::dirty()
 {
     if(m_dirty)
@@ -73,6 +88,7 @@ QGLXBuffer NCVNeuronSet::positionBuffer()
 
 void NCVNeuronSet::bind(QGLXCamera camera, bool deselected)
 {
+
     if (m_currentAttribute != NULL)
     {
         m_currentAttribute->bind(camera);

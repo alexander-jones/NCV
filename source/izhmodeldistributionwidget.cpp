@@ -1,6 +1,7 @@
 #include "izhmodeldistributionwidget.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include "ncscluster.h"
 
 IzhModelDistributionWidget::IzhModelDistributionWidget(QString projectDir,QWidget *parent) :
     NCSDistributionWidgetPlugin(projectDir,parent)
@@ -169,7 +170,6 @@ void IzhModelDistributionWidget::m_launchSimulationPressed()
     QString synapseFile = m_getFilename(m_synapseFileEdit->text());
     QString currentFile = m_getFilename(m_currentFileEdit->text());
     QString clusterFile = m_getFilename(m_clusterFileEdit->text());
-    qDebug() << neuronFile<< synapseFile<< currentFile<< clusterFile;
 
 
     NCSCommandArguments distArgs;
@@ -179,7 +179,7 @@ void IzhModelDistributionWidget::m_launchSimulationPressed()
     distArgs << QString::number(m_neuronCountSpinBox->value());
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
     distArgs << NCSCommandFileArgument(m_distributionOutputDir) << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     m_commandBridge->executeApplication("izhDistributor",distArgs);
 
 }
@@ -230,8 +230,14 @@ void IzhModelDistributionWidget::m_distributionFinished()
 
     NCSCommandArguments simArgs;
     simArgs << NCSCommandFileArgument(m_distributionOutputDir) << timeArg;
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
-    m_commandBridge->executeApplication("simulator",simArgs);
+
+    NCSCluster cluster;
+    cluster.read(m_clusterFileEdit->text());
+    QString hostFilePath =  m_projectDir + "/tmp/hostfile";
+    cluster.writeHostfile(hostFilePath);
+
+    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    m_commandBridge->executeApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
 
@@ -246,7 +252,6 @@ void IzhModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::Applic
 }
 void IzhModelDistributionWidget::m_simulationFinished()
 {
-    launched();
     m_launching = false;
     m_destroySimulation();
 }
@@ -258,9 +263,9 @@ void IzhModelDistributionWidget::m_readStandardError()
 void IzhModelDistributionWidget::m_readStandardOutput()
 {
     QString out = m_currentApplication->readAllStandardOutput();
+    qDebug() << out;
     if (out.contains("Running simulation..."))
         launched();
-    qDebug() << out;
 }
 
 void IzhModelDistributionWidget::m_browseClusterFilePressed()

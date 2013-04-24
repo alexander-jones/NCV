@@ -22,6 +22,7 @@ public:
 	QMap<QString,NCVAttribute *> attributes();
 	bool dirty();
     void resolve();
+    void destroy();
 
 private:
     NCVElementType m_type;

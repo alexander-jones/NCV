@@ -13,6 +13,7 @@ public:
     void bind(QGLXCamera camera,bool deselected = false);
     void bindSilhouettes(QGLXCamera camera, QColor color = QColor(0,0,0));
     int count();
+    void destroy();
 	void draw();
 	bool dirty();
     void drawSubset(int startElement, int count);

@@ -50,17 +50,94 @@ MainWindow::MainWindow(QWidget *parent) :
     m_fileMenu->addAction("Quit");
     m_menuBar->addMenu(m_fileMenu);
 
-    m_editMenu = new QMenu(tr("Edit"),this);
-   // m_menuBar->addMenu(m_editMenu);
-
-    m_toolsMenu = new QMenu(tr("Tools"),this);
-   // m_menuBar->addMenu(m_toolsMenu);
     setMenuBar(m_menuBar);
 
     m_updateTimer = new QTimer(this);
+
+
+    m_simulationToolbar = this->addToolBar("Simulation");
+    m_runSimulationButton = m_simulationToolbar->addAction(QIcon(":/assets/playIcon.png"), "Run Simulation");
+    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
+    m_stopSimulationButton = m_simulationToolbar->addAction(QIcon(":/assets/stopIcon.png"), "Stop Simulation");
+    connect(m_stopSimulationButton,SIGNAL(triggered()),this,SLOT(m_stopSimulation()));
+    m_simulationTimeSlider = new QSlider(this);
+    m_simulationTimeSlider->setOrientation(Qt::Horizontal);
+    m_simulationTimeSlider->setMinimum(1);
+    m_simulationTimeSlider->setValue(100);
+    m_simulationTimeSlider->setMaximum(5000);
+    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_updateTimer,SLOT(start(int)));
+    m_simulationToolbar->addWidget(m_simulationTimeSlider);
+    m_simulationToolbar->setEnabled(false);
+
+
+    m_applicationMapper = new QSignalMapper(this);
+    connect(m_applicationMapper,SIGNAL(mapped(QObject*)),this,SLOT(m_ncsApplicationFinished(QObject*)));
     m_tabWidget = NULL;
     m_commandBridge = NULL;
     m_dataSource = NULL;
+    m_simulationApplicationIndex = -1;
+
+}
+
+void MainWindow::m_runSimulation()
+{
+    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
+    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulation()));
+    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_updateTimer,SLOT(start(int)));
+    m_runSimulationButton->setIcon(QIcon(":/assets/pauseIcon.png"));
+    m_runSimulationButton->setText("Pause Simulation");
+    if (!m_updateTimer->isActive())
+        m_updateTimer->start(m_simulationTimeSlider->value());
+    m_stopSimulationButton->setEnabled(true);
+}
+
+void MainWindow::m_pauseSimulation()
+{
+    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulation()));
+    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
+    disconnect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_updateTimer,SLOT(start(int)));
+    m_runSimulationButton->setIcon(QIcon(":/assets/playIcon.png"));
+    m_runSimulationButton->setText("Run Simulation");
+    m_updateTimer->stop();
+    m_stopSimulationButton->setEnabled(true);
+}
+
+void  MainWindow::m_stopSimulation()
+{
+    m_pauseSimulation();
+
+    QMessageBox msgBox;
+    msgBox.setText("Stop the simulation?" );
+    msgBox.addButton("Continue", QMessageBox::ActionRole);
+    QPushButton * cancelButton= msgBox.addButton("Cancel", QMessageBox::ActionRole);
+    msgBox.exec();
+    if (msgBox.clickedButton() == cancelButton)
+        return;
+
+    delete m_dataSource;
+    m_visualizationWidget->setNeurons(NULL);
+    m_neurons->destroy();
+    delete m_neurons;
+
+    if (m_connections != NULL)
+    {
+        m_visualizationWidget->setConnections(NULL);
+        m_connections->destroy();
+        delete m_connections;
+    }
+    m_activeApplications[m_simulationApplicationIndex]->setParent(0);
+    NCSApplicationBridge * app = m_activeApplications[m_simulationApplicationIndex];
+    m_activeApplications.remove(m_activeApplications.indexOf(app));
+    app->scheduleDestruction(true);
+    m_simulationToolbar->setEnabled(false);
+
+    if (m_runSimulationButton->text() == "Pause Simulation")
+    {
+        disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulation()));
+        connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
+        m_runSimulationButton->setIcon(QIcon(":/assets/playIcon.png"));
+        m_runSimulationButton->setText("Run Simulation");
+    }
 
 }
 
@@ -166,9 +243,50 @@ void MainWindow::m_updateTimeScale(int value)
 
 }
 
+void MainWindow::closeEvent(QCloseEvent * event)
+{
+    while (m_activeApplications.count() > 0)
+    {
+        QVector<NCSApplicationBridge*>::iterator it = m_activeApplications.begin();
+        NCSApplicationBridge* app = *it;
+        QMessageBox msgBox;
+        msgBox.setText("The NCS application '" + app->applicationName() + "' is still running.\n Should this application be closed or left running?"  );
+        QPushButton * leaveOpenButton =  msgBox.addButton("Leave Running", QMessageBox::ActionRole);
+        msgBox.addButton("Close", QMessageBox::ActionRole);
+        msgBox.exec();
+        m_activeApplications.remove(m_activeApplications.indexOf(app));
+
+        if (msgBox.clickedButton() == leaveOpenButton)
+            app->scheduleDestruction(false);
+        else
+            app->scheduleDestruction(true);
+    }
+}
+
 void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
 {
     m_commandBridge = bridge;
+    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_ncsApplicationLaunched(NCSApplicationBridge*)));
+}
+
+void MainWindow::m_ncsApplicationLaunched(NCSApplicationBridge * app)
+{
+
+    m_activeApplications.append(app);
+    if (app->applicationName() == "simulator")
+        m_simulationApplicationIndex = m_activeApplications.count() -1;
+
+    m_applicationMapper->setMapping(app,app);
+    connect(app,SIGNAL(executionFinished()), m_applicationMapper,SLOT(map()));
+}
+
+void MainWindow::m_ncsApplicationFinished(QObject * app)
+{
+    NCSApplicationBridge * application = dynamic_cast<NCSApplicationBridge *> (app);
+    disconnect(application,SIGNAL(executionFinished()), m_applicationMapper,SLOT(map()));
+    int index = m_activeApplications.indexOf(application);
+    if (index != -1)
+        m_activeApplications.remove(index);
 }
 
 void MainWindow::m_createNetwork(QString topologyFilename)
@@ -219,19 +337,33 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     QVector<GLfloat> stubVoltage;
     stubVoltage.resize(numNeurons);
 
-
     // create neurons and related attributes
-    m_neurons = new NCVNeuronSet(neuronPositions);
+    m_neurons= new NCVNeuronSet(neuronPositions);
 
-    m_continuousNeuronAttributes["voltage"] = new NCVContinuousAttribute(Neuron, voltageRange->lowThreshold(), voltageRange->highThreshold());
+    m_continuousNeuronAttributes["voltage"] = new NCVContinuousAttribute(Neuron,voltageRange->lowThreshold(), voltageRange->highThreshold());
     m_continuousNeuronAttributes["voltage"]->attachData(stubVoltage);
     m_continuousNeuronAttributes["voltage"]->attachColoration(voltageRange->getData());
-    m_neurons->addAttribute("neuronVoltage", m_continuousNeuronAttributes["voltage"]);
+    m_neurons->addAttribute("neuronVoltage",m_continuousNeuronAttributes["voltage"]);
+
+
+    // create stub voltage so that attribute data array is at least present before simulation updates.
+    QVector<GLfloat> stubCurrent;
+    stubCurrent.resize(numNeurons);
+
+    m_continuousNeuronAttributes["current"] = new NCVContinuousAttribute(Neuron,voltageRange->lowThreshold(), voltageRange->highThreshold());
+    m_continuousNeuronAttributes["current"]->attachData(stubCurrent);
+    m_continuousNeuronAttributes["current"]->attachColoration(voltageRange->getData());
+    m_neurons->addAttribute("inputCurrent",m_continuousNeuronAttributes["current"]);
 
 
     int numConnections;
     dataStream >> numConnections;
     qDebug() <<  "Connections Created:" << numConnections;
+    if (numConnections ==0)
+    {
+        topologyFile.close();
+        return;
+    }
     // create stub connection data
     QVector<NeuronConnection> connections;
     GLuint inNeuron, outNeuron;
@@ -255,21 +387,22 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     m_discreteConnectionAttributes["firing"]->attachColoration(firingColors);
     m_discreteConnectionAttributes["firing"]->setReportable(false);
     m_connections->addAttribute("synapseFire", m_discreteConnectionAttributes["firing"]);
-
+    topologyFile.close();
 }
 
 void MainWindow::m_publishNetwork()
 {
-    if (m_dataSource != NULL)
-        delete m_dataSource;
+
     m_dataSource = new NCSDataSource();
-    qDebug() << "Establish connection: " << m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
+    qDebug() << "NCSDataSource connected:" << m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
     m_dataSource->replaceNeuronSet(m_neurons);
-    m_dataSource->replaceConnectionSet(m_connections);
+    if (m_connections != NULL)
+        m_dataSource->replaceConnectionSet(m_connections);
     connect(m_updateTimer,SIGNAL(timeout()),m_dataSource,SLOT(updateCurrentAttributes()));
     m_visualizationWidget->setNeurons(m_neurons);
-    m_visualizationWidget->setConnections(m_connections);
-    m_updateTimer->start(50);
+    if (m_connections != NULL)
+        m_visualizationWidget->setConnections(m_connections);
+    m_simulationToolbar->setEnabled(true);
 }
 
 MainWindow::~MainWindow()

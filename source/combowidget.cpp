@@ -57,6 +57,7 @@ void ComboWidget::removeWidget(QString name)
     if (m_widgets.count() == 0)
         m_layout->addWidget(m_voidWidget);
 
+    m_currentWidget = m_voidWidget;
     m_widgetSelector->removeItem(m_widgetSelector->findText(name));
 }
 

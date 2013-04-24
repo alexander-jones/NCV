@@ -73,6 +73,8 @@ public:
     explicit NCSApplicationBridge(QObject * parent):QObject(parent){}
     virtual QString readAllStandardError() = 0;
     virtual QString readAllStandardOutput() = 0;
+    virtual void scheduleDestruction(bool destroy) = 0;
+    virtual QString applicationName() = 0;
 signals:
     void executionError(NCSApplicationBridge::ApplicationError err);
     void executionFinished();

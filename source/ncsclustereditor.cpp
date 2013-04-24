@@ -244,6 +244,8 @@ void NCSClusterEditor::m_destroyClusterSpecifier()
 
 void NCSClusterEditor::m_clusterCompilationFinished()
 {
+    qDebug() << m_currentApplication->readAllStandardOutput();
+    qDebug() << m_currentApplication->readAllStandardError();
     loadClusterFile(m_projectDir + "/tmp/cluster",m_appendDetectedHosts);
     m_destroyClusterSpecifier();
 
@@ -288,7 +290,7 @@ void NCSClusterEditor::machineSelected(QListWidgetItem* current, QListWidgetItem
         return;
 
     m_machineSelectionIndex = current->data(Qt::UserRole).toInt();
-    Machine machine = m_cluster.machines[m_machineSelectionIndex];
+    NCSMachine machine = m_cluster.machines[m_machineSelectionIndex];
     m_machineBox->setTitle(machine.name);
     if (m_machineBox->layout())
 	{
@@ -311,7 +313,7 @@ void NCSClusterEditor::machineSelected(QListWidgetItem* current, QListWidgetItem
     int id = 0;
     for (int i = 0; i < machine.devices.count(); i ++)
     {
-        Device device = machine.devices[i];
+        NCSDevice device = machine.devices[i];
         QListWidgetItem * item = new QListWidgetItem(device.type);
 		item->setData(Qt::UserRole, id);
 		item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
@@ -508,7 +510,7 @@ void NCSClusterEditor::deviceSelected(QListWidgetItem* current, QListWidgetItem*
 {
     if (current == NULL)
         return;
-    Device device = m_cluster.machines[m_machineSelectionIndex].devices[current->data(Qt::UserRole).toInt()];
+    NCSDevice device = m_cluster.machines[m_machineSelectionIndex].devices[current->data(Qt::UserRole).toInt()];
     m_deviceBox->setTitle(device.type);
     if (m_deviceBox->layout())
 	{
@@ -609,7 +611,7 @@ void NCSClusterEditor::saveHostFile( QString filename)
 
     for (int i = 0; i < m_cluster.machines.count(); i ++)
     {
-        Machine machine = m_cluster.machines[i];
+        NCSMachine machine = m_cluster.machines[i];
         if (machine.enabled)
             file.write((machine.name  + " slots=1 \n").toAscii());
     }
@@ -629,93 +631,49 @@ void NCSClusterEditor::loadClusterFile(QString filename, bool append)
 
     if (!append)
         clear();
-    int numMachines,numDevices;
 
-    QFile file(filename);
-    file.open(QIODevice::ReadOnly);
-    QDataStream dataStream(&file);
-    dataStream.setByteOrder(QDataStream::LittleEndian);
-    dataStream >> numMachines;
+    m_cluster.read(filename,append);
 
-    bool duplicateMachineDetected = false;
     int id = 0;
-    for (int i = 0;i < numMachines; i ++)
+    for (int i = 0;i < m_cluster.machines.count(); i ++)
     {
-        Machine machine;
-        QByteArray utfString;
-        dataStream >>  utfString;
-        machine.name = QString::fromUtf8(utfString.data());
-        dataStream >> machine.enabled;
-        dataStream >> numDevices;
-        machine.hasCPU = false;
-        machine.hasCUDA = false;
         bool anyDeviceEnabled = false;
 
-        for (int j = 0; j < numDevices; j ++)
+        for (int j = 0; j < m_cluster.machines[i].devices.count(); j ++)
         {
-            Device device;
 
-            QByteArray typeUtfString;
-            dataStream >> typeUtfString;
-            device.type = QString::fromUtf8(typeUtfString.data());
-
-            if (device.type == "CUDA")
-                dataStream >> device.number;
-            dataStream >> device.power;
-            dataStream >> device.enabled;
-
-            if (device.type == "CUDA")
+            if (m_cluster.machines[i].devices[j].type == "CUDA")
             {
                 if (m_allGPUCheckBox->checkState() == Qt::Checked)
-                    device.enabled = true;
+                    m_cluster.machines[i].devices[j].enabled = true;
                 else if (m_onlyCPUCheckBox->checkState() == Qt::Checked)
-                    device.enabled = false;
-
-                machine.hasCUDA = true;
-
+                    m_cluster.machines[i].devices[j].enabled = false;
             }
-            if (device.type == "CPU")
+            if (m_cluster.machines[i].devices[j].type == "CPU")
             {
                 if (m_allCPUCheckBox->checkState() == Qt::Checked)
-                    device.enabled = true;
+                    m_cluster.machines[i].devices[j].enabled = true;
                 else if (m_onlyGPUCheckBox->checkState() == Qt::Checked)
-                    device.enabled = false;
+                    m_cluster.machines[i].devices[j].enabled = false;
 
-                machine.hasCPU = true;
             }
-            if (device.enabled)
+            if (m_cluster.machines[i].devices[j].enabled)
                 anyDeviceEnabled = true;
 
-            machine.devices.append(device);
-
         }
 
-        machine.enabled = anyDeviceEnabled;
+        m_cluster.machines[i].enabled = anyDeviceEnabled;
 
-        if (m_cluster.machines.count(machine) == 0)
-        {
-            m_cluster.machines.append(machine);
-            QListWidgetItem * item = new QListWidgetItem(machine.name);
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(machine.enabled? Qt::Checked : Qt::Unchecked);
-            item->setData(Qt::UserRole, id);
-            m_machineList->addItem(item);
-            m_cluster.machines[i].listIndex = m_machineList->count() -1;
-            ++id;
-        }
-        else
-            duplicateMachineDetected = true;
+        QListWidgetItem * item = new QListWidgetItem(m_cluster.machines[i].name);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(m_cluster.machines[i].enabled? Qt::Checked : Qt::Unchecked);
+        item->setData(Qt::UserRole, id);
+        m_machineList->addItem(item);
+        m_cluster.machines[i].listIndex = m_machineList->count() -1;
+        ++id;
+
     }
 
-
-    file.close();
-    if (duplicateMachineDetected)
-    {
-        QMessageBox msgBox;
-        msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
-        msgBox.setText("Duplicate machine declaration(s) were detected. The duplicates have been removed.");
-        msgBox.exec();
-    }
 
 }
 
@@ -724,7 +682,7 @@ int  NCSClusterEditor::enabledMachines()
     int count = 0;
     for (int i = 0; i < m_cluster.machines.count(); i ++)
     {
-        Machine machine = m_cluster.machines[i];
+        NCSMachine machine = m_cluster.machines[i];
         if (machine.enabled)
             count++;
     }
@@ -734,45 +692,6 @@ int  NCSClusterEditor::enabledMachines()
 
 void NCSClusterEditor::saveClusterFile(QString filename)
 {
-
-    // open file to house binary distribution file
-    QFile file(filename);
-    file.open(QIODevice::WriteOnly);
-
-    // setup data streaming object
-    QDataStream dataStream(&file);
-    dataStream.setByteOrder(QDataStream::LittleEndian);
-
-    dataStream << m_cluster.machines.count();
-    for (int i = 0; i < m_cluster.machines.count(); i ++)
-    {
-        // for each machine write name, machine, and type and number of devices
-        Machine machine = m_cluster.machines[i];
-        QByteArray utfString = machine.name.toUtf8();
-        dataStream << utfString;
-        dataStream << machine.enabled;
-        dataStream << machine.devices.count();
-
-
-        for (int j = 0; j < machine.devices.count(); j ++)
-        {
-            // for each device write type
-            Device device = machine.devices[j];
-
-            QByteArray typeUtfString = device.type.toUtf8();
-            dataStream <<  typeUtfString ;
-
-            // for each device write number of devices
-            if (device.type == "CUDA")
-                dataStream << device.number;
-
-            // for each device write power, whether it's enabled
-            dataStream << device.power;
-            dataStream << device.enabled;
-
-        }
-    }
-    // close file
-    file.close();
+    m_cluster.write(filename);
 }
 

@@ -3,8 +3,10 @@
 
 NCSLocalApplicationBridge::NCSLocalApplicationBridge(QString name,QString workingDirectory, QObject *parent):NCSApplicationBridge(parent)
 {
+    m_destroyProcess = true;
     m_name = name;
-    m_process = new QProcess(this);
+    m_process = new QProcess();
+    m_runProcessName = "";
     if (workingDirectory != "")
         m_process->setWorkingDirectory(workingDirectory);
     connect(m_process,SIGNAL(readyReadStandardOutput()),this,SIGNAL(readyReadStandardOutput()));
@@ -12,15 +14,52 @@ NCSLocalApplicationBridge::NCSLocalApplicationBridge(QString name,QString workin
     connect(m_process,SIGNAL(error(QProcess::ProcessError)),this,SLOT(m_processErrorOccured(QProcess::ProcessError)));
     connect(m_process,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(m_processFinished()));
 }
+
+void NCSLocalApplicationBridge::scheduleDestruction(bool destroy)
+{
+    m_destroyProcess = destroy;
+    executionFinished();
+}
+
+QString NCSLocalApplicationBridge::applicationName()
+{
+   return m_name;
+}
+
 NCSLocalApplicationBridge::~NCSLocalApplicationBridge()
 {
+    executionFinished();
     m_process->disconnect();
-    m_process->kill();
-    m_process->waitForFinished();
+    if (m_destroyProcess)
+    {
+        m_process->kill();
+        m_process->waitForFinished();
+
+        if (m_runProcessName == "mpirun")
+        {
+            #ifdef Q_OS_LINUX
+                QProcess killer;
+                QStringList params;
+                params << m_name;
+                killer.start("killall",params,QIODevice::ReadOnly);
+                killer.waitForFinished(-1);
+
+            #elif Q_OS_WINDOWS
+                QProcess killer;
+                QStringList params;
+                params << "-f";
+                params << m_name;
+                killer.start("taskkill",params,QIODevice::ReadOnly);
+                killer.waitForFinished(-1);
+            #endif
+
+        }
+    }
 }
 
 void NCSLocalApplicationBridge::start(QString applicationPath,QStringList arguments)
 {
+    m_runProcessName = applicationPath;
     m_process->start(applicationPath,arguments);
 }
 

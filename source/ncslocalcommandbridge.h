@@ -13,6 +13,8 @@ public:
     QString readAllStandardError();
     QString readAllStandardOutput();
 
+    void scheduleDestruction(bool destroy);
+    QString applicationName();
 private slots:
     void m_processErrorOccured(QProcess::ProcessError);
     void m_processFinished();
@@ -20,6 +22,8 @@ private slots:
 private:
     QProcess * m_process;
     QString m_name;
+    QString m_runProcessName;
+    bool m_destroyProcess;
 };
 
 class NCSLocalCommandBridge : public NCSCommandBridge

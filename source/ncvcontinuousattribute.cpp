@@ -107,6 +107,13 @@ void NCVContinuousAttribute::release()
     m_program.release();
 }
 
+void NCVContinuousAttribute::destroy()
+{
+    if (m_buffer.isCreated())
+        m_buffer.destroy();
+    if (m_colorTexture.isCreated())
+        m_colorTexture.destroy();
+}
 
 void NCVContinuousAttribute::resolve()
 {
@@ -135,7 +142,8 @@ void NCVContinuousAttribute::resolve()
         if (!m_buffer.isCreated())
             m_buffer.create();
         m_buffer.bind(QGLXBuffer::TextureBuffer);
-        m_buffer.allocate(&m_data[0],componentSize * m_data.count(),textureFormat);
+        if (m_data.count() > 0)
+            m_buffer.allocate(&m_data[0],componentSize * m_data.count(),textureFormat);
         m_buffer.release();
         m_dataDirty = false;
         m_renderedNewData = false;
@@ -145,7 +153,8 @@ void NCVContinuousAttribute::resolve()
 
         if (!m_colorTexture.isCreated())
             m_colorTexture.create();
-        m_colorTexture.allocate(m_colorationData.count()  ,GL_RGB32F,&m_colorationData[0]);
+        if (m_colorationData.count() > 0)
+            m_colorTexture.allocate(m_colorationData.count()  ,GL_RGB32F,&m_colorationData[0]);
 
         m_colorTexture.bind();
         m_colorTexture.setMinFilter(QGLXTexture1D::Linear);

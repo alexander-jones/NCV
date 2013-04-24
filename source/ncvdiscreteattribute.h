@@ -21,6 +21,7 @@ public:
     QMap<QString,QColor> coloration();
     NCVAttributeType type(){return Discrete;}
     void resolve();
+    void destroy();
 
 private:
 

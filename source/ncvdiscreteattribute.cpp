@@ -132,6 +132,14 @@ void NCVDiscreteAttribute::release()
 
 }
 
+void NCVDiscreteAttribute::destroy()
+{
+    if (m_buffer.isCreated())
+        m_buffer.destroy();
+    if (m_colorBuffer.isCreated())
+        m_colorBuffer.destroy();
+}
+
 void NCVDiscreteAttribute::resolve()
 {
     if (m_shaderDirty)
@@ -161,7 +169,8 @@ void NCVDiscreteAttribute::resolve()
         if (!m_buffer.isCreated())
             m_buffer.create();
         m_buffer.bind(QGLXBuffer::TextureBuffer);
-        m_buffer.allocate(&m_data[0],componentSize * m_data.count(),textureFormat);
+        if (m_data.count() > 0)
+            m_buffer.allocate(&m_data[0],componentSize * m_data.count(),textureFormat);
         m_buffer.release();
         m_dataDirty = false;
         m_renderedNewData = false;
@@ -175,7 +184,8 @@ void NCVDiscreteAttribute::resolve()
             m_colorBuffer.create();
 
         m_colorBuffer.bind(QGLXBuffer::TextureBuffer);
-        m_colorBuffer.allocate(&m_colorationData[0],componentSize * 3 * m_colorationData.count(),textureFormat);
+        if (m_colorationData.count() > 0)
+            m_colorBuffer.allocate(&m_colorationData[0],componentSize * 3 * m_colorationData.count(),textureFormat);
         m_colorBuffer.release();
         m_colorationDirty = false;
         m_renderedNewData = false;

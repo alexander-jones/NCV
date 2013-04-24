@@ -11,12 +11,15 @@ public:
     void start(QString application,QStringList arguments);
     QString readAllStandardError();
     QString readAllStandardOutput();
+    void scheduleDestruction(bool destroy);
+    QString applicationName();
 
 private slots:
     void m_onCommandExecuted(QString command,QString response);
     void m_onSocketError(SSHSocket::SSHSocketError err);
 
 private:
+    bool m_destroyProcess;
     SSHSocket * m_socket;
     QString stdOut, stdErr;
 };

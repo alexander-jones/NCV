@@ -15,6 +15,19 @@ NCVConnectionSet::NCVConnectionSet(NCVNeuronSet *neurons,QVector<NeuronConnectio
 }
 
 
+void NCVConnectionSet::destroy()
+{
+    if (!m_initialized)
+        return;
+
+    m_neuronIdBuffer.destroy();
+    m_idBuffer.destroy();
+
+    for(QMap<QString,NCVAttribute *>::iterator it = m_attributes.begin(); it != m_attributes.end(); it++)
+        it.value()->destroy();
+    m_initialized = false;
+}
+
 void NCVConnectionSet::setScale(int scale)
 {
     m_scale = QMatrix4x4();
