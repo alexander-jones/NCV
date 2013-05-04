@@ -1,5 +1,6 @@
 #include "ncvwidget.h"
 
+
 NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
     NCSWidgetPlugin(projectDir,parent)
 {

@@ -177,7 +177,7 @@ void NCVCanvas::initializeGL()
     m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D));
     m_screenCoords.release();
 
-    m_skySphere.create(m_camera.farPlane() * 10000 ,QImage(":/assets/ncv.png"),QVector2D(10,10));
+    m_skySphere.create(m_camera.farPlane() * 10000 ,QImage(":/assets/gray.jpg"),QVector2D(10,10));
 
     this->startTimer(1);
     m_initialized = true;

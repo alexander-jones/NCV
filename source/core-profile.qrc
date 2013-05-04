@@ -30,7 +30,6 @@
         <file>assets/neuronIcon.png</file>
         <file>assets/switchHandle.png</file>
         <file>assets/gray.jpg</file>
-        <file>assets/ncsDistributor.png</file>
         <file>assets/projectIcon.png</file>
         <file>assets/connectIcon.png</file>
         <file>shaders/connectionContinuous.geom</file>
@@ -47,5 +46,6 @@
         <file>shaders/silhouette.frag</file>
         <file>assets/ncv.png</file>
         <file>assets/izhDistributor.png</file>
+        <file>assets/lifDistributor.png</file>
     </qresource>
 </RCC>

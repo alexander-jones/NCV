@@ -59,7 +59,6 @@ SOURCES += \
     skysphere.cpp \
     remoteconnectionwidget.cpp \
     ncslocalcommandbridge.cpp \
-    ncsmodeldistributionwidget.cpp \
     ncscommandfileargument.cpp \
     ncsconnectionwidget.cpp \
     ncsremotecommandbridge.cpp \
@@ -71,7 +70,8 @@ SOURCES += \
     qglxcanvas.cpp \
     qgroupvector.cpp \
     izhmodeldistributionwidget.cpp \
-    ncscluster.cpp
+    ncscluster.cpp \
+    lifmodeldistributionwidget.cpp
 
 HEADERS  += \
     qglxcore.h \
@@ -109,7 +109,6 @@ HEADERS  += \
     remoteconnectionwidget.h \
     ncscommandbridge.h \
     ncslocalcommandbridge.h \
-    ncsmodeldistributionwidget.h \
     ncswidgetplugin.h \
     ncsapplicationwidgetplugin.h \
     ncsdistributionwidgetplugin.h \
@@ -125,7 +124,8 @@ HEADERS  += \
     qgroupvector.h \
     izhmodeldistributionwidget.h \
     ncscluster.h \
-    sleeper.h
+    sleeper.h \
+    lifmodeldistributionwidge.h
 
 FORMS    += \
     mainwindow.ui

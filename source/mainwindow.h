@@ -4,7 +4,7 @@
 #include "qwidgetvector.h"
 #include "ncsconnectionwidget.h"
 #include "ncsclustereditor.h"
-#include "ncsmodeldistributionwidget.h"
+#include "lifmodeldistributionwidge.h"
 #include "izhmodeldistributionwidget.h"
 #include "ncsdatasource.h"
 #include "ncvwidget.h"

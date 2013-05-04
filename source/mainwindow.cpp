@@ -198,7 +198,7 @@ void MainWindow::m_loadProject(QString projectDirectory)
     NCSClusterEditor * clusterEditor = new NCSClusterEditor(projectDirectory,m_tabWidget);
     addWidget(clusterEditor);
 
-    NCSModelDistributionWidget * modelWidget = new NCSModelDistributionWidget(projectDirectory,m_tabWidget);
+    LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(projectDirectory,m_tabWidget);
     connect(modelWidget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
     connect(modelWidget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
     addWidget(modelWidget);
