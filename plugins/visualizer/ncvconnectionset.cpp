@@ -16,6 +16,7 @@ NCVConnectionSet::NCVConnectionSet(NCSConnectionSet * ncsParent, NCVNeuronSet * 
     m_initialized = false;
 	m_dirty = false;
     m_scale.scale(15.0f);
+    m_depthBias = 0.000001f;
 }
 
 
@@ -139,12 +140,14 @@ void NCVConnectionSet::bind(QGLXCamera camera, bool deselected)
             program->setUniformValue("MaximumValue", attrib->maxValue());
         }
 
-
         program->setUniformValue("Deselected", (int)deselected);
         program->setUniformValue("ConnectionIDStart",m_neurons->count());
         program->setUniformValue("Scale",m_scale);
         program->setUniformValue("WVP",camera.projection() * camera.view());
-
+        program->setUniformValue("DepthBias",m_depthBias);
+        program->setUniformValue("FarBias",1.0f/(float)log(camera.farPlane()*m_depthBias + 1));
+        program->setUniformValue("NearPlane",camera.nearPlane());
+        program->setUniformValue("FarPlane",camera.farPlane());
 
     }
 }
@@ -178,11 +181,14 @@ void NCVConnectionSet::bindSilhouettes(QGLXCamera camera, QColor color)
     m_silhouetteProgram.setUniformValue("Scale",m_scale);
 	m_silhouetteProgram.setUniformValue("SilhouetteColor",QVector3D(color.redF(),color.greenF(),color.blueF()));
     m_silhouetteProgram.setUniformValue("CameraDirection",camera.forward());
-    m_silhouetteProgram.setUniformValue("ZFar",camera.farPlane());
-    m_silhouetteProgram.setUniformValue("ZNear",camera.nearPlane());
     m_silhouetteProgram.setUniformValue("ZStop",camera.farPlane());
-    m_silhouetteProgram.setUniformValue("DepthExponent",0.15f);
-    m_silhouetteProgram.setUniformValue("MaxAlpha",1.0f);
+    m_silhouetteProgram.setUniformValue("DepthBias",m_depthBias);
+    m_silhouetteProgram.setUniformValue("FarBias",1.0f/(float)log(camera.farPlane()*m_depthBias + 1));
+
+    m_silhouetteProgram.setUniformValue("NearPlane",camera.nearPlane());
+    m_silhouetteProgram.setUniformValue("FarPlane",camera.farPlane());
+    m_silhouetteProgram.setUniformValue("DepthExponent",0.3f);
+    m_silhouetteProgram.setUniformValue("MaxAlpha",0.25f);
 }
 
 

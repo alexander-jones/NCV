@@ -41,6 +41,7 @@ private:
     NCVNeuronSet * m_neurons;
     QMatrix4x4 m_scale;
     bool m_initialized,m_dirty;
+    float m_depthBias;
     QMap<QString,NCVAttribute *> m_attributes;
     NCVAttribute * m_currentAttribute;
     QGLShaderProgram m_silhouetteProgram, m_continuousProgram, m_discreteProgram, m_expansionProgram;

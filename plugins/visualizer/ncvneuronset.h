@@ -43,6 +43,7 @@ private:
     QGLXBuffer m_indexBuffer, m_vertexBuffer, m_idBuffer;
     QMatrix4x4 m_scale;
     bool m_initialized,m_dirty;
+    float m_depthBias;
     QMap<QString,NCVAttribute *> m_attributes;
     NCVAttribute * m_currentAttribute;
     QGLXBoundingBox m_bounds;

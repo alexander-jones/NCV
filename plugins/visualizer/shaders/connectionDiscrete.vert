@@ -5,6 +5,7 @@ uniform samplerBuffer Inst_Attribute;
 uniform int ConnectionIDStart;
 uniform int BitsPerValue, States, BitMask;
 
+
 in uint Neuron_ID;
 in uint Inst_ID;
 

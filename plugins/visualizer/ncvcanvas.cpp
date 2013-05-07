@@ -23,7 +23,7 @@ NCVCanvas::NCVCanvas(  const QGLFormat& format, QWidget* parent )
     m_worldSize = QVector3D(5000,5000,5000);
     m_worldCenter  =QVector3D(0,0,0);
     m_camera.setView(QVector3D(-m_worldSize.x(),m_worldSize.y(),-m_worldSize.z()), QVector3D(0,0,1),QVector3D(0,1,0));
-    m_camera.setProjection(35.0, 4.0/3.0, 0.1f, m_worldSize.length()*2.0f );
+    m_camera.setProjection(35.0, 4.0/3.0, 0.01f, m_worldSize.length()*2.0f );
 
     m_renderNeurons= true;
     m_renderConnections= true;
@@ -137,7 +137,7 @@ void NCVCanvas::initializeGL()
     glEnable(GL_DITHER);
     glDisable(GL_MULTISAMPLE);
     glLineWidth(2);
-    glDepthFunc(GL_LEQUAL);
+    glDepthFunc(GL_LESS);
 
 
     // initialize target bufferm_neuronsToCreate

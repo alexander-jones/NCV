@@ -1,7 +1,7 @@
 #include "sshsocket.h"
 #include <QFileInfo>
 // if compiling in windows, add needed flags.
-/*#ifdef _WIN32
+#ifdef _WIN32
 #   include <io.h>
 
 typedef int mode_t;
@@ -38,7 +38,7 @@ static const mode_t S_IXOTH      = 0x00010000;           ///< does nothing
 static const mode_t MS_MODE_MASK = 0x0000ffff;           ///< low word
 #endif
 
-*/
+
 SSHSocket::SSHSocket(QObject * parent )
     :QThread(parent)
 {
@@ -71,7 +71,6 @@ void SSHSocket::run()
         {
             if (m_host != "")
             {
-
                 m_session = ssh_new();
 
                 //set logging to verbose so all errors can be debugged if crash happens
@@ -85,12 +84,20 @@ void SSHSocket::run()
 
                 // try to connect given host, user, port
                 int connectionResponse = ssh_connect(m_session);
+				qDebug() << m_host;
 
                 // if connection is successfull keep track of connection info.
                 if (connectionResponse == SSH_OK)
+				{
                     connected();
+					
+					qDebug() << m_host << " connected";
+				}
+
                 else
+				{
                     m_emitError(SessionCreationError);
+				}
             }
 
         }
@@ -112,6 +119,7 @@ void SSHSocket::run()
                 // if successful, store user password.
                 if (worked == SSH_OK)
                 {
+					qDebug() << m_host << " authenticated";
                     authenticated();
                     m_authenticated = true;
                 }
@@ -133,7 +141,8 @@ void SSHSocket::run()
 
             if (operation.type == Command || operation.type == WorkingDirectoryTest)
             {
-
+				
+				qDebug() << operation.adminCommand;
                 // attempt to open ssh shell channel
                 ssh_channel channel = ssh_channel_new(m_session);
 

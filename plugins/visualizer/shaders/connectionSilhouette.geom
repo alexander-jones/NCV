@@ -2,6 +2,10 @@
 
 uniform mat4 WVP,Scale;
 uniform vec3 CameraDirection;
+uniform float FarPlane,NearPlane;
+uniform float DepthBias,FarBias;
+
+out float logz;
 
 layout (lines) in;
 layout (line_strip,max_vertices =6) out;
@@ -9,9 +13,13 @@ layout (line_strip,max_vertices =6) out;
 void emitLine(vec3 start, vec3 end)
 {
     gl_Position = WVP *vec4(start,1.0f);
+    logz = log(gl_Position.w*DepthBias + 1)*FarBias;
+    gl_Position.z = (2*logz - 1)*gl_Position.w;
     EmitVertex();
 
     gl_Position = WVP *vec4(end,1.0f);
+    logz = log(gl_Position.w*DepthBias + 1)*FarBias;
+    gl_Position.z = (2*logz - 1)*gl_Position.w;
     EmitVertex();
     EndPrimitive();
 }

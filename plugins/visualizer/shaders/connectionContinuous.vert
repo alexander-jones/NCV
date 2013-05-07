@@ -3,6 +3,7 @@
 uniform samplerBuffer Inst_Translation;
 uniform samplerBuffer Inst_Attribute;
 uniform int ConnectionIDStart;
+
 in uint Neuron_ID;
 in uint Inst_ID;
 

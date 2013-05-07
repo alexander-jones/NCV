@@ -37,7 +37,7 @@ public:
     virtual NCSAttributeType type(){return m_parent->type();}
     virtual void resolve(){}
     virtual void destroy() = 0;
-    virtual bool reportable() const { m_parent->reportable(); }
+    virtual bool reportable() const { return m_parent->reportable(); }
 
 private:
     NCSAttribute * m_parent;

@@ -1,15 +1,27 @@
 #version 330
 
 uniform mat4 WVP,Scale;
+uniform float FarPlane,NearPlane;
+uniform float DepthBias,FarBias;
 
 flat in uint Vert_ID[2];
 in float Vert_Value[2];
 
 flat out uint ID;
 out float Value;
+out float logz;
 
 layout (lines) in;
 layout (triangle_strip,max_vertices =8) out;
+
+
+void emitVertex(vec3 pos )
+{
+    gl_Position = WVP * vec4(pos,1.0f);
+    logz = log(gl_Position.w*DepthBias + 1)*FarBias;
+    gl_Position.z = (2*logz - 1)*gl_Position.w;
+    EmitVertex();
+}
 
 void main( void )
 {
@@ -50,35 +62,26 @@ void main( void )
 
     //////////////////////////// Left-Up Face ////////////////////////////
 
-    gl_Position = WVP *vec4(inUpPos,1.0f);
-    EmitVertex();
+    emitVertex(inUpPos);
 
-    gl_Position = WVP *vec4(outUpPos,1.0f);
-    EmitVertex();
+    emitVertex(outUpPos);
 
-    gl_Position = WVP *vec4(inDownLeftPos,1.0f);
-    EmitVertex();
+    emitVertex(inDownLeftPos);
 
-
-    gl_Position = WVP *vec4(outDownLeftPos,1.0f);
-    EmitVertex();
+    emitVertex(outDownLeftPos);
 
 
     //////////////////////////// Down Face ////////////////////////////
 
-    gl_Position = WVP *vec4(inDownRightPos,1.0f);
-    EmitVertex();
+    emitVertex(inDownRightPos);
 
-    gl_Position = WVP *vec4(outDownRightPos,1.0f);
-    EmitVertex();
+    emitVertex(outDownRightPos);
 
     //////////////////////////// Right-Up Face ////////////////////////////
 
-    gl_Position = WVP *vec4(inUpPos,1.0f);
-    EmitVertex();
+    emitVertex(inUpPos);
 
-    gl_Position = WVP *vec4(outUpPos,1.0f);
-    EmitVertex();
+    emitVertex(outUpPos);
 
     EndPrimitive();
 }
