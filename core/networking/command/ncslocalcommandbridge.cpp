@@ -35,25 +35,46 @@ NCSLocalApplicationBridge::~NCSLocalApplicationBridge()
         m_process->kill();
         m_process->waitForFinished();
 
-        if (m_runProcessName == "mpirun")
+        QProcess checker;
+        QStringList checkParams;
+        checkParams << m_name;
+        #ifdef Q_OS_LINUX
+            checker.start("pidof",checkParams,QIODevice::ReadOnly);
+            checker.waitForFinished(-1);
+
+        #elif Q_OS_WINDOWS
+            params.insert(0,"/v");
+            params.insert(1,"/fo");
+            params.insert(2,"csv");
+            params.insert(3,"|");
+            params.insert(4,"findstr");
+            params.insert(5,"/i");
+            checker.start("tasklist",checkParams,QIODevice::ReadOnly);
+            checker.waitForFinished(-1);
+        #endif
+
+        QStringList pids = QString(checker.readAllStandardOutput()).split( " ");
+        QString pidString = pids.first();
+        pidString.replace("\r\n","");
+        pidString.replace('\n',"");
+        if (pidString != "")
         {
+            QProcess killer;
+            QStringList killParams;
+            killParams << pidString;
             #ifdef Q_OS_LINUX
-                QProcess killer;
-                QStringList params;
-                params << m_name;
-                killer.start("killall",params,QIODevice::ReadOnly);
+                killer.start("kill",killParams,QIODevice::ReadOnly);
                 killer.waitForFinished(-1);
 
             #elif Q_OS_WINDOWS
-                QProcess killer;
-                QStringList params;
-                params << "-f";
-                params << m_name;
-                killer.start("taskkill",params,QIODevice::ReadOnly);
+                killParams.insert(0,"-f");
+                killParams.insert(1,"/PID");
+                killer.start("taskkill",killParams,QIODevice::ReadOnly);
                 killer.waitForFinished(-1);
             #endif
-
         }
+
+
     }
 }
 

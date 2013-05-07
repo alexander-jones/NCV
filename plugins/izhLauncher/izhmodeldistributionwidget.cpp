@@ -236,6 +236,7 @@ void IzhModelDistributionWidget::m_distributionFinished()
     QString hostFilePath =  m_projectDir + "/tmp/hostfile";
     cluster.writeHostfile(hostFilePath);
 
+    launchTriggered();
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
     m_commandBridge->executeApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 

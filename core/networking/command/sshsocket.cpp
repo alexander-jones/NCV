@@ -1,5 +1,5 @@
 #include "sshsocket.h"
-
+#include <QFileInfo>
 // if compiling in windows, add needed flags.
 /*#ifdef _WIN32
 #   include <io.h>
@@ -48,6 +48,7 @@ SSHSocket::SSHSocket(QObject * parent )
     m_port = 22;
     m_authenticated = false;
     m_session  = NULL;
+    m_workingDirectory = ".";
 
     qRegisterMetaType<SSHSocket::SSHSocketError>("SSHSocket::SSHSocketError");
 
@@ -125,61 +126,71 @@ void SSHSocket::run()
             }
         }
         // if all ssh setup has been completed, check to see if we have any commands to execute
-        else if (m_commandsToExecute.count() > 0)
+        else if (m_operationsToExecute.count() > 0)
         {
-            // attempt to open ssh shell channel
-            ssh_channel channel = ssh_channel_new(m_session);
+            SSHOperation operation = m_operationsToExecute[0];
+            m_operationsToExecute.pop_front();
 
-            // if attempt fails,return
-            if (ssh_channel_open_session(channel) != SSH_OK)
+            if (operation.type == Command || operation.type == WorkingDirectoryTest)
             {
-                m_emitError(ChannelCreationError);
+
+                // attempt to open ssh shell channel
+                ssh_channel channel = ssh_channel_new(m_session);
+
+                // if attempt fails,return
+                if (ssh_channel_open_session(channel) != SSH_OK)
+                {
+                    m_emitError(ChannelCreationError);
+                }
+
+
+                int requestResponse = SSH_AGAIN;
+
+                // attempt to execute shell command
+                while (requestResponse == SSH_AGAIN)
+                    requestResponse = ssh_channel_request_exec(channel, operation.adminCommand.toAscii().data());
+
+                // if attempt not executed, close connection then return
+                if (requestResponse != SSH_OK)
+                {
+                    m_emitError(ChannelCreationError);
+                }
+
+
+                QByteArray buffer;
+                buffer.resize(1000);
+
+                // read in command result
+                int totalBytes = 0, newBytes = 0;
+                do
+                {
+                    newBytes = ssh_channel_read(channel, &(buffer.data()[totalBytes]), buffer.size() - totalBytes, 0);
+                    if (newBytes > 0)
+                        totalBytes += newBytes;
+                }while (newBytes > 0);
+
+                // close channel
+                ssh_channel_send_eof(channel);
+                ssh_channel_close(channel);
+                ssh_channel_free(channel);
+
+                QString response = QString(buffer).mid(0,totalBytes);
+                response.replace("\n","");
+                if (operation.type == WorkingDirectoryTest)
+                {
+                    if (response == "exists")
+                        m_workingDirectory = m_nextWorkingDir;
+                    m_nextWorkingDir = ".";
+                    workingDirectorySet(m_workingDirectory);
+                }
+                else
+                    commandExecuted( operation.command, response) ;
+
             }
-
-
-            int requestResponse = SSH_AGAIN;
-
-            // attempt to execute shell command
-            while (requestResponse == SSH_AGAIN)
-                requestResponse = ssh_channel_request_exec(channel, m_commandsToExecute[0].toAscii().data());
-
-            // if attempt not executed, close connection then return
-            if (requestResponse != SSH_OK)
+            // if all ssh setup has been completed, check to see if we have any file transfers to execute
+            else if (operation.type == Pull)
             {
-                m_emitError(ChannelCreationError);
-            }
-
-
-            QByteArray buffer;
-            buffer.resize(1000);
-
-            // read in command result
-            int totalBytes = 0, newBytes = 0;
-            do
-            {
-                newBytes = ssh_channel_read(channel, &(buffer.data()[totalBytes]), buffer.size() - totalBytes, 0);
-                if (newBytes > 0)
-                    totalBytes += newBytes;
-            }while (newBytes > 0);
-
-            // close channel
-            ssh_channel_send_eof(channel);
-            ssh_channel_close(channel);
-            ssh_channel_free(channel);
-
-            QString response = QString(buffer).mid(0,totalBytes);
-            response.replace("\n","");
-            commandExecuted( m_commandsToExecute[0], response) ;
-            m_commandsToExecute.pop_front();
-
-        }
-        // if all ssh setup has been completed, check to see if we have any file transfers to execute
-        else if (m_transfersToExecute.count() > 0)
-        {
-
-            if (m_transfersToExecute[0].type == Pull)
-            {
-                ssh_scp scpSession = ssh_scp_new(m_session,SSH_SCP_READ, m_transfersToExecute[0].remotePath.toAscii().data());
+                ssh_scp scpSession = ssh_scp_new(m_session,SSH_SCP_READ, operation.remotePath.toAscii().data());
                 if (scpSession == NULL)
                     m_emitError(SCPChannelCreationError);
 
@@ -233,19 +244,18 @@ void SSHSocket::run()
                 ssh_scp_free(scpSession);
 
                 // open up local file and write contents of buffer to it.
-                QFile file(m_transfersToExecute[0].localPath);
+                QFile file(operation.localPath);
                 file.open(QIODevice::WriteOnly);
                 file.write(buffer);
                 file.close();
 
-                pullSuccessfull(m_transfersToExecute[0].localPath,m_transfersToExecute[0].remotePath);
-                m_transfersToExecute.pop_front();
+                pullSuccessfull(operation.localPath,operation.remotePath);
 
             }
-            else
+            else if (operation.type == Push)
             {
                 // attempt to create new scp from ssh session.
-                ssh_scp scpSession = ssh_scp_new(m_session,SSH_SCP_WRITE, m_transfersToExecute[0].remotePath.toAscii().data());
+                ssh_scp scpSession = ssh_scp_new(m_session,SSH_SCP_WRITE, operation.remotePath.toAscii().data());
 
                 // if creation failed, return
                 if (scpSession == NULL)
@@ -267,7 +277,7 @@ void SSHSocket::run()
 
                 // open the local file and check to make sure it exists
                 // if not, close scp session and return.
-                QFile file(m_transfersToExecute[0].localPath);
+                QFile file(operation.localPath);
                 if (!file.exists())
                 {
                     ssh_scp_close(scpSession);
@@ -282,7 +292,7 @@ void SSHSocket::run()
 
                 // attempt to authorize pushing bytes over scp socket
                 // if this fails, close scp session and return.
-                if (ssh_scp_push_file(scpSession, m_transfersToExecute[0].remotePath.toAscii().data(), buffer.size(), S_IRUSR | S_IWUSR) != SSH_OK)
+                if (ssh_scp_push_file(scpSession, operation.remotePath.toAscii().data(), buffer.size(), S_IRUSR | S_IWUSR) != SSH_OK)
                 {
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
@@ -305,11 +315,9 @@ void SSHSocket::run()
                 ssh_scp_close(scpSession);
                 ssh_scp_free(scpSession);
 
-                pushSuccessfull(m_transfersToExecute[0].localPath,m_transfersToExecute[0].remotePath);
-                m_transfersToExecute.pop_front();
+                pushSuccessfull(operation.localPath,operation.remotePath);
 
             }
-
 
 
         }
@@ -328,8 +336,7 @@ void SSHSocket::disconnectFromHost()
     m_password = "";
     m_port = -1;
     m_authenticated = false;
-    m_commandsToExecute.clear();
-    m_transfersToExecute.clear();
+    m_operationsToExecute.clear();
     if (m_session != NULL)
     {
         // disconnect from current session
@@ -353,25 +360,49 @@ void SSHSocket::login(QString user, QString password)
 }
 void SSHSocket::executeCommand(QString command)
 {
-    m_commandsToExecute.append(command);
+    SSHOperation commandOp;
+    commandOp.type = Command;
+    if (m_workingDirectory != ".")
+        commandOp.adminCommand = "cd " + m_workingDirectory + "; "  + command;
+    else
+        commandOp.adminCommand = command ;
+
+    commandOp.command =command;
+    m_operationsToExecute.append(commandOp);
 }
 
 void SSHSocket::pullFile(QString localPath, QString remotePath)
 {
-    TransferOperation transferOp;
+    SSHOperation transferOp;
     transferOp.localPath = localPath;
-    transferOp.remotePath = remotePath;
+    if (QFileInfo(remotePath).isAbsolute())
+        transferOp.remotePath = remotePath;
+    else
+        transferOp.remotePath = m_workingDirectory + "/" + remotePath;
     transferOp.type = Pull;
-    m_transfersToExecute.append(transferOp);
+    m_operationsToExecute.append(transferOp);
 }
 
 void SSHSocket::pushFile(QString localPath, QString remotePath)
 {
-    TransferOperation transferOp;
+
+    SSHOperation transferOp;
     transferOp.localPath = localPath;
-    transferOp.remotePath = remotePath;
+    if (QFileInfo(remotePath).isAbsolute())
+        transferOp.remotePath = remotePath;
+    else
+        transferOp.remotePath = m_workingDirectory + "/" + remotePath;
     transferOp.type = Push;
-    m_transfersToExecute.append(transferOp);
+    m_operationsToExecute.append(transferOp);
+}
+
+void SSHSocket::setWorkingDirectory(QString path)
+{
+    m_nextWorkingDir = path;
+    SSHOperation commandOp;
+    commandOp.type = WorkingDirectoryTest;
+    commandOp.adminCommand = "[ -d " + m_nextWorkingDir +" ] && echo 'exists'";
+    m_operationsToExecute.append(commandOp);
 }
 
 void SSHSocket::m_emitError(SSHSocketError err)

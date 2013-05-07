@@ -9,6 +9,7 @@ public:
     explicit NCSDistributionWidgetPlugin( QString projectDir,QWidget *parent = 0):NCSApplicationWidgetPlugin(projectDir,parent){}
 
 signals:
+    void launchTriggered();
     void distributed(QString topologyFile);
     void launched();
 };

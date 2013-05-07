@@ -47,11 +47,14 @@ public:
 
     void pushFile(QString localPath, QString remotePath);
 
+    void setWorkingDirectory(QString path);
+
     QString user();
+
     QString host();
+
     int port();
 
-    void run();
     bool isConnected();
 
 signals:
@@ -62,28 +65,31 @@ signals:
     void commandExecuted(QString command,QString response);
     void pullSuccessfull(QString localFile, QString remoteFile);
     void pushSuccessfull(QString localFile, QString remoteFile);
+    void workingDirectorySet(QString cwd);
 
 private:
+    void run();
 
-    enum FileTransferType
+    enum SSHOperationType
     {
+        Command,
+        WorkingDirectoryTest,
         Pull,
         Push
     };
-    struct TransferOperation
+
+    struct SSHOperation
     {
-        FileTransferType type;
-        QString localPath;
-        QString remotePath;
+        SSHOperationType type;
+        QString adminCommand,command, localPath, remotePath;
     };
 
     void m_emitError(SSHSocketError err);
 
     int m_port;
     bool m_authenticated ;
-    QString m_user, m_host,m_password;
-    QVector<QString> m_commandsToExecute;
-    QVector<TransferOperation> m_transfersToExecute;
+    QString m_workingDirectory,m_nextWorkingDir,m_user, m_host,m_password;
+    QVector<SSHOperation> m_operationsToExecute;
     ssh_session m_session;
     bool m_connected,m_run;
 };

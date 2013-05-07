@@ -6,9 +6,9 @@ class NCSRemoteApplicationBridge:public NCSApplicationBridge
 {
     Q_OBJECT
 public:
-    explicit NCSRemoteApplicationBridge(SSHSocket * socket,QString workingDirectory = "",QObject *parent = 0);
+    explicit NCSRemoteApplicationBridge(QString name,SSHSocket * socket,QObject *parent = 0);
     ~NCSRemoteApplicationBridge();
-    void start(QString application,QStringList arguments);
+    void start(QString application,QStringList arguments,QVector<NCSCommandFileArgument> downloadArgs);
     QString readAllStandardError();
     QString readAllStandardOutput();
     void scheduleDestruction(bool destroy);
@@ -17,11 +17,15 @@ public:
 private slots:
     void m_onCommandExecuted(QString command,QString response);
     void m_onSocketError(SSHSocket::SSHSocketError err);
+    void m_executeNextPull();
+    void m_checkIfAlive();
 
 private:
-    bool m_destroyProcess;
+    QVector<NCSCommandFileArgument> m_downloadArguments;
+    bool m_destroyProcess,m_alive;
     SSHSocket * m_socket;
-    QString stdOut, stdErr;
+    QString m_stdOut, m_stdErr,m_name, m_pidString;
+    QTimer * m_timer;
 };
 
 class NCSRemoteCommandBridge : public NCSCommandBridge
@@ -40,12 +44,12 @@ public:
 private slots:
     void m_onCommandExecuted(QString command,QString response);
     void m_onSocketError(SSHSocket::SSHSocketError err);
-    void m_executeNextPull();
     void m_executeNextPush();
-
-private:
+    void m_socketDirectorySet(QString);
     void m_clearApplicationContext();
     void m_clearProjectContext();
+
+private:
 
     SSHSocket * m_socket;
     NCSRemoteApplicationBridge * m_currentApplication;

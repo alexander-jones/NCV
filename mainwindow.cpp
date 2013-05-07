@@ -67,7 +67,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_simulationTimeSlider->setMaximum(5000);
     connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_updateTimer,SLOT(start(int)));
     m_simulationToolbar->addWidget(m_simulationTimeSlider);
-    m_simulationToolbar->setEnabled(false);
+    m_simulationLoadingLabel = new QLabel();
+    m_simulationLoadingMovie = new QMovie(":/media/loading.gif");
+    m_simulationToolbar->addWidget(m_simulationLoadingLabel);
+
+    m_setSimulationToolbar(false);
 
 
     m_applicationMapper = new QSignalMapper(this);
@@ -121,20 +125,15 @@ void  MainWindow::m_stopSimulation()
 
     m_visualizationWidget->setNeurons(NULL);
 
-
     m_activeApplications[m_simulationApplicationIndex]->setParent(0);
     NCSApplicationBridge * app = m_activeApplications[m_simulationApplicationIndex];
     m_activeApplications.remove(m_activeApplications.indexOf(app));
     app->scheduleDestruction(true);
-    m_simulationToolbar->setEnabled(false);
 
-    if (m_runSimulationButton->text() == "Pause Simulation")
-    {
-        disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulation()));
-        connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
-        m_runSimulationButton->setIcon(QIcon(":/media/playIcon.png"));
-        m_runSimulationButton->setText("Run Simulation");
-    }
+    m_simulationApplicationIndex = -1;
+    m_setSimulationToolbar(false);
+
+
 
 }
 
@@ -196,11 +195,13 @@ void MainWindow::m_loadProject(QString projectDirectory)
     addWidget(clusterEditor);
 
     LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(projectDirectory,m_tabWidget);
+    connect(modelWidget,SIGNAL(launchTriggered()),this,SLOT(m_showLoadingSimulation()));
     connect(modelWidget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
     connect(modelWidget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
     addWidget(modelWidget);
 
     IzhModelDistributionWidget * izhModelWidget= new IzhModelDistributionWidget(projectDirectory,m_tabWidget);
+    connect(izhModelWidget,SIGNAL(launchTriggered()),this,SLOT(m_showLoadingSimulation()));
     connect(izhModelWidget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
     connect(izhModelWidget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
     addWidget(izhModelWidget);
@@ -209,6 +210,12 @@ void MainWindow::m_loadProject(QString projectDirectory)
     m_visualizationWidget = new NCVWidget(projectDirectory,m_tabWidget);
     addWidget(m_visualizationWidget);
 
+}
+
+void MainWindow::m_showLoadingSimulation()
+{
+    m_simulationLoadingLabel->setMovie(m_simulationLoadingMovie);
+    m_simulationLoadingMovie->start();
 }
 
 void MainWindow::addWidget(NCSWidgetPlugin *widget)
@@ -387,6 +394,7 @@ void MainWindow::m_publishNetwork()
 {
 
     m_dataSource = new NCSDataSource();
+    qDebug() << m_commandBridge->hostname();
     qDebug() << "NCSDataSource connected:" << m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
     m_dataSource->replaceNeuronSet(m_neurons);
     if (m_connections != NULL)
@@ -396,7 +404,17 @@ void MainWindow::m_publishNetwork()
     m_visualizationWidget->setNeurons(m_neurons);
     if (m_connections != NULL)
         m_visualizationWidget->setConnections(m_connections);
-    m_simulationToolbar->setEnabled(true);
+    m_simulationLoadingMovie->stop();
+    m_simulationLoadingLabel->clear();
+    m_setSimulationToolbar(true);
+}
+
+void MainWindow::m_setSimulationToolbar(bool on)
+{
+    m_runSimulationButton->setEnabled(on);
+    m_simulationTimeSlider->setEnabled(on);
+    m_stopSimulationButton->setEnabled(on);
+    m_simulationLoadingLabel->setEnabled(!on);
 }
 
 MainWindow::~MainWindow()

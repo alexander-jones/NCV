@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QwwConfigWidget>
 
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -42,6 +43,8 @@ private slots:
     void m_runSimulation();
     void m_pauseSimulation();
     void m_stopSimulation();
+    void m_setSimulationToolbar(bool on);
+    void m_showLoadingSimulation();
 
 private:
     int m_simulationApplicationIndex;
@@ -60,7 +63,8 @@ private:
     NCSConnectionWidget * m_connectionWidget;
     QToolBar * m_toolbar;
     QSlider * m_timeScaleSlider;
-    QLabel * m_timeScale;
+    QLabel * m_timeScale, * m_simulationLoadingLabel;
+    QMovie * m_simulationLoadingMovie;
     QMenu * m_fileMenu, * m_editMenu, *m_toolsMenu;
 	QMenuBar * m_menuBar;
     NCSNeuronSet * m_neurons;

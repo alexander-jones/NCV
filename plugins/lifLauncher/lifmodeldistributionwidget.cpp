@@ -220,8 +220,8 @@ void LIFModelDistributionWidget::m_launchSimulationPressed()
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
     distArgs << NCSCommandFileArgument(m_distributionOutputDir) << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
+    launchTriggered();
     m_commandBridge->executeApplication("ncsDistributor",distArgs);
-
 }
 
 void LIFModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::ApplicationError err)
