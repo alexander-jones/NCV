@@ -6,8 +6,9 @@ class NCSRemoteApplicationBridge:public NCSApplicationBridge
 {
     Q_OBJECT
 public:
-    explicit NCSRemoteApplicationBridge(QString name,QSshSocket * socket,QObject *parent = 0);
+    explicit NCSRemoteApplicationBridge(QString name,QObject *parent = 0);
     ~NCSRemoteApplicationBridge();
+    void setSocket(QSshSocket * socket,bool own = false);
     void start(QString application,QStringList arguments,QVector<NCSCommandFileArgument> downloadArgs);
     QString readAllStandardError();
     QString readAllStandardOutput();
@@ -42,6 +43,7 @@ public:
 
 
 private slots:
+    void m_onSocketCloned(QSshSocket * applicationSocket);
     void m_onCommandExecuted(QString command,QString response);
     void m_onSocketError(QSshSocket::SshError err);
     void m_executeNextPush();

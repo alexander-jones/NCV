@@ -36,7 +36,9 @@ public:
         /*! \brief There was an error writing to a remote file. This could possibly be due to user permissions.*/
         ScpWriteError,
         /*! \brief The credentials of a user on the remote host could not be authenticated.*/
-        PasswordAuthenticationFailedError
+        PasswordAuthenticationFailedError,
+        /*! \brief This socket could not be cloned. This could be due to system constraints which do not allow for SSH multiplexing.*/
+        CloneError
     };
 
     /*!
@@ -57,6 +59,11 @@ public:
         \brief This function connects this socket to the specified host over the specified port. On success, the signal connected is emitted while error is emmited on failure.
     */
     void connectToHost(QString host, int port =22);
+
+    /*!
+        \brief This function attempts to clone the current state of this socket using SSH multiplexing."
+    */
+    void clone();
 
     /*!
         \brief This function disconnects the socket from the current host (if there is one. On success, the signal disconnected is emitted while error is emmited on failure.
@@ -139,6 +146,11 @@ signals:
     void connected();
 
     /*!
+        \brief This signal is emitted when this socket has been properly cloned."
+    */
+    void cloned(QSshSocket * newSock);
+
+    /*!
         \brief This signal is emitted when this class has been properly disconnected from a remote host.
     */
     void disconnected();
@@ -183,8 +195,13 @@ signals:
 
 private slots:
     void run();
+    void m_onCloneConnect();
+    void m_onCloneLoggedIn();
+    void m_onCloneCWDSet(QString cwd);
+    void m_onCloneError(QSshSocket::SshError);
 
 private:
+    void m_releaseClone();
 
     enum SSHOperationType
     {
@@ -207,6 +224,7 @@ private:
     QString m_workingDirectory,m_nextWorkingDir,m_user, m_host,m_password;
     SSHOperation m_currentOperation;
     ssh_session m_session;
+    QSshSocket * m_clone;
     bool m_connected,m_run;
 };
 

@@ -1,17 +1,15 @@
 #include "ncsremotecommandbridge.h"
 
-NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name,QSshSocket *socket, QObject *parent)
+NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name, QObject *parent)
     :NCSApplicationBridge(parent)
 {
     m_name = name;
     m_alive = false;
     m_pidString = -1;
-    m_socket = socket;
     m_destroyProcess = true;
+    m_socket = NULL;
     m_timer = new QTimer(this);
     connect(m_timer,SIGNAL(timeout()),this,SLOT(m_checkIfAlive()));
-    connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
-    connect(m_socket,SIGNAL(error(QSshSocket::QSshSocketError)),this,SLOT(m_onSocketError(QSshSocket::QSshSocketError)));
 }
 NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
 {
@@ -23,6 +21,13 @@ NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
     if (m_alive)
         if (m_destroyProcess)
             m_socket->executeCommand("kill " + m_pidString);
+}
+void NCSRemoteApplicationBridge::setSocket(QSshSocket * socket, bool own)
+{
+    m_socket = socket;
+    connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
+    connect(m_socket,SIGNAL(error(QSshSocket::QSshSocketError)),this,SLOT(m_onSocketError(QSshSocket::QSshSocketError)));
+    connect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
 }
 
 void NCSRemoteApplicationBridge::scheduleDestruction(bool destroy)
@@ -80,7 +85,6 @@ void NCSRemoteApplicationBridge::m_onCommandExecuted(QString command,QString res
     {
         m_stdOut = response;
         m_stdErr = "";
-        connect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
         m_executeNextPull();
     }
 }
@@ -130,6 +134,7 @@ void NCSRemoteCommandBridge::initialize(QString projectPath, QSshSocket * socket
     connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
     connect(m_socket,SIGNAL(workingDirectorySet(QString)),this,SLOT(m_socketDirectorySet(QString)));
     connect(m_socket,SIGNAL(pushSuccessful(QString,QString)),this,SLOT(m_executeNextPush()));
+    connect(m_socket,SIGNAL(cloned(QSshSocket*)),this,SLOT(m_onSocketCloned(QSshSocket*)));
 
 }
 
@@ -168,7 +173,7 @@ void NCSRemoteCommandBridge::executeApplication(QString application, NCSCommandA
 
     m_applicationArguments = argLiterals;
 
-    m_currentApplication = new NCSRemoteApplicationBridge(application,m_socket);
+    m_currentApplication = new NCSRemoteApplicationBridge(application);
     m_executeNextPush();
 
 }
@@ -206,7 +211,7 @@ void NCSRemoteCommandBridge::executeApplication(QString application, NCSCommandA
     for (int i=0; i < argLiterals.size();i++)
         m_applicationArguments.append(argLiterals[i]);
 
-    m_currentApplication = new NCSRemoteApplicationBridge(application,m_socket);
+    m_currentApplication = new NCSRemoteApplicationBridge(application);
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clearApplicationContext()));
     m_executeNextPush();
 
@@ -216,6 +221,13 @@ bool NCSRemoteCommandBridge::valid()
     return m_valid;
 }
 
+
+void NCSRemoteCommandBridge::m_onSocketCloned(QSshSocket * applicationSocket)
+{
+    qDebug() << "cloned!!!";
+    m_currentApplication->setSocket(applicationSocket);
+    applicationStarted(m_currentApplication);
+}
 
 void NCSRemoteCommandBridge::m_onCommandExecuted(QString command,QString response)
 {
@@ -301,7 +313,14 @@ void NCSRemoteCommandBridge::m_clearProjectContext()
 
 void NCSRemoteCommandBridge::m_onSocketError(QSshSocket::SshError err)
 {
-    m_clearProjectContext();
+    if (err == QSshSocket::CloneError)
+    {
+        qDebug() << "not cloned!!!";
+        m_currentApplication->setSocket(m_socket);
+        applicationStarted(m_currentApplication);
+    }
+    else
+        m_clearProjectContext();
 
 }
 void NCSRemoteCommandBridge::m_executeNextPush()
@@ -315,7 +334,7 @@ void NCSRemoteCommandBridge::m_executeNextPush()
     else
     {
         m_currentApplication->start(m_application,m_applicationArguments,m_downloadArguments);
-        applicationStarted(m_currentApplication);
+        m_socket->clone();
     }
 }
 

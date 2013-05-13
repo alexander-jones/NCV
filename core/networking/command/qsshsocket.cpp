@@ -48,6 +48,7 @@ QSshSocket::QSshSocket(QObject * parent )
     m_port = -1;
     m_loggedIn = false;
     m_session  = NULL;
+    m_clone = NULL;
     m_workingDirectory = ".";
 
     qRegisterMetaType<QSshSocket::SshError>("QSshSocket::SshError");
@@ -329,6 +330,70 @@ void QSshSocket::run()
     }
 
 }
+
+void QSshSocket::clone()
+{
+    m_clone = new QSshSocket(this->parent());
+    connect(m_clone,SIGNAL(connected()),this,SLOT(m_onCloneConnect()));
+    connect(m_clone,SIGNAL(loginSuccessful()),this,SLOT(m_onCloneLoggedIn()));
+    connect(m_clone,SIGNAL(workingDirectorySet(QString)),this,SLOT(m_onCloneCWDSet(QString)));
+    connect(m_clone,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onCloneError(QSshSocket::SshError)));
+
+    if (m_connected)
+        m_clone->connectToHost(m_host,m_port);
+    else
+    {
+        m_releaseClone();
+        cloned(m_clone);
+        m_clone = NULL;
+    }
+}
+void QSshSocket::m_releaseClone()
+{
+    disconnect(m_clone,SIGNAL(connected()),this,SLOT(m_onCloneConnect()));
+    disconnect(m_clone,SIGNAL(loginSuccessful()),this,SLOT(m_onCloneLoggedIn()));
+    disconnect(m_clone,SIGNAL(workingDirectorySet(QString)),this,SLOT(m_onCloneCWDSet(QString)));
+    disconnect(m_clone,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onCloneError(QSshSocket::SshError)));
+}
+
+void QSshSocket::m_onCloneConnect()
+{
+    if (m_loggedIn)
+        m_clone->login(m_user,m_password);
+    else
+    {
+        m_releaseClone();
+        cloned(m_clone);
+        m_clone = NULL;
+    }
+}
+
+void QSshSocket::m_onCloneLoggedIn()
+{
+    if (m_workingDirectory != ".")
+        m_clone->setWorkingDirectory(m_workingDirectory);
+    else
+    {
+        m_releaseClone();
+        cloned(m_clone);
+        m_clone = NULL;
+    }
+}
+
+void QSshSocket::m_onCloneCWDSet(QString cwd)
+{
+    m_releaseClone();
+    cloned(m_clone);
+    m_clone = NULL;
+}
+
+void QSshSocket::m_onCloneError(QSshSocket::SshError)
+{
+    m_releaseClone();
+    error(QSshSocket::CloneError);
+    m_clone = NULL;
+}
+
 void QSshSocket::disconnectFromHost()
 {
     m_host = "";
@@ -336,6 +401,7 @@ void QSshSocket::disconnectFromHost()
     m_password = "";
     m_port = -1;
     m_loggedIn = false;
+    m_clone = NULL;
     if (m_session != NULL)
     {
         ssh_disconnect(m_session);

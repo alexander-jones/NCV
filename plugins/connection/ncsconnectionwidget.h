@@ -21,10 +21,7 @@ public:
     explicit NCSConnectionWidget(QString projectPath,QWidget *parent = 0);
     QIcon icon();
     QString title();
-    
-signals:
-    void bridgeEstablished(NCSCommandBridge * bridge);
-    
+
 public slots:
 
 private slots:

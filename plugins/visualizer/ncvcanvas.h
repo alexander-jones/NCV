@@ -5,7 +5,6 @@
 #include "qglx/qglxtexture1d.h"
 #include "qglx/qglxcamera.h"
 #include "qglx/qglxpainter.h"
-#include "qglx/qglxcanvas.h"
 #include "core/gui/utilities/discretecolorselector.h"
 #include "ncvneuronset.h"
 #include "ncvconnectionset.h"
