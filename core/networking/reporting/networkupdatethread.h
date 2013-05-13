@@ -17,13 +17,18 @@ class NetworkUpdateThread : public QThread
     Q_OBJECT
 public:
     explicit NetworkUpdateThread(QObject *parent = 0);
-    
+
 signals:
     void updateRequested();
 
 public slots:
+    ///Sets the update interval in milliseconds.
     void setInterval(int msec);
+
+    ///Starts the update timer.
     void startUpdates();
+
+    ///Stops the update timer.
     void stopUpdates();
 
 protected:

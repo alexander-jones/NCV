@@ -7,6 +7,12 @@
 #include <string>
 
 
+/**
+  \class QSocketConnection
+  \author Justin Cardoza
+  \brief This class wraps the standard Qt TCP socket connection for interoperability with
+         NCS's internal report server.
+  */
 class QSocketConnection : public QObject
 {
     Q_OBJECT
@@ -36,14 +42,17 @@ class QSocketConnection : public QObject
 
 
 
+///A specialized implementation of send() that writes a string to the socket.
 template<>
 bool QSocketConnection::send(const std::string& data);
 
+///A specialized implementation of recv() that reads a string from the connection.
 template<>
 bool QSocketConnection::recv(std::string& data);
 
 
 
+///Sends a data buffer of some arbitrary type over the connection.
 template<typename T>
 bool QSocketConnection::send(const T* data, unsigned int count)
 {
@@ -52,6 +61,7 @@ bool QSocketConnection::send(const T* data, unsigned int count)
 
 
 
+///Receives data over the connection into a data buffer of some arbitrary type.
 template<typename T>
 bool QSocketConnection::recv(T* data, unsigned int count)
 {
@@ -60,6 +70,7 @@ bool QSocketConnection::recv(T* data, unsigned int count)
 
 
 
+///Sends a single value of an arbitrary type.
 template<typename T>
 bool QSocketConnection::send(const T& data)
 {
@@ -68,6 +79,7 @@ bool QSocketConnection::send(const T& data)
 
 
 
+///Receives a single value of an arbitrary type.
 template<typename T>
 bool QSocketConnection::recv(T& data)
 {

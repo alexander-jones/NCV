@@ -21,16 +21,28 @@ class NCSDataSource : public QObject
 public:
     NCSDataSource(QObject *parent = 0);
     virtual ~NCSDataSource();
-    
+
 signals:
 
 
 public slots:
+    ///Establishes a connection to a simulation using a network socket.
+    ///Takes a network host name and port to connect to.
     bool establishConnection(const std::string& host, int port);
+
+    ///Closes a previously opened connection to a simulator.
     void closeConnection();
+
+    ///Sets the neuron set used for storing neuron data, replacing whatever neuron set was used previously.
     void replaceNeuronSet(NCSNeuronSet *neurons);
+
+    ///Sets the connection set used for storing connection data, replacing whatever connection set was used previously.
     void replaceConnectionSet(NCSConnectionSet *connections);
+
+    ///Updates a specific attribute by pulling data from the report client.
     void updateAttribute(NCSAttribute *attribute);
+
+    ///Updates all reportable attributes that are currently active.
     void updateAttributes();
 
 private:
