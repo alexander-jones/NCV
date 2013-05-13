@@ -1,7 +1,8 @@
 #ifndef NCVCONTINUOUSATTRIBUTE_H
 #define NCVCONTINUOUSATTRIBUTE_H
-#include "ncvcore.h"
 #include "qglx/qglxtexture1d.h"
+#include "qglx/qglxbuffertexture.h"
+#include "ncvattribute.h"
 #include "core/ncscontinuousattribute.h"
 #include "core/gui/utilities/continuouscolorselector.h"
 
@@ -13,13 +14,15 @@ public:
     void attachColoration(QVector< QRgb> data);
     void attachColoration(QVector< QColor> data);
     QVector<float> data();
-    QGLXBuffer attributeBuffer();
+    QGLXBufferTexture attributeTexture();
     QGLXTexture1D colorationTexture();
     float minValue();
     float maxValue();
     QVector<QColor> coloration();
     void destroy();
     bool dirty();
+
+    void resolve();
 
 private slots:
     void m_parentChanged();
@@ -31,6 +34,7 @@ private:
     QVector<QVector3D > m_colorationData;
     QGLXBuffer m_buffer;
     QGLXTexture1D m_colorTexture;
+    QGLXBufferTexture m_bufferTexture;
 };
 
 #endif // NCVCONTINUOUSATTRIBUTE_H

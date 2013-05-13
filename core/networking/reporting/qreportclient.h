@@ -7,13 +7,6 @@
 
 
 
-/**
-  \class QReportClient
-  \author Justin Cardoza
-  \brief A rewrite of the NCS ReportClient class which is platform-independent. It uses
-         only Qt and STL libraries and provides identical functionality, namely the ability
-         to connect to an instance of NCS, create reports, and pull data from those reports.
-  */
 class QReportClient : public QObject
 {
     Q_OBJECT
@@ -85,8 +78,6 @@ class QReportClient : public QObject
 
 
 
-///Rearranges a previously received data buffer to produce a vector of elements of the
-///correct type in the order they were originally requested.
 template<typename T>
 bool QReportClient::Report::permute(const std::vector<char>& data, std::vector<T>& result)
 {

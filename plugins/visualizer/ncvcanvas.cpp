@@ -2,7 +2,7 @@
 
 
 NCVCanvas::NCVCanvas(  const QGLFormat& format, QWidget* parent )
-    : QGLXCanvas( format,parent )
+    : QGLWidget( format,parent )
 {
     m_versionCapable = QGLFormat::openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3);
 
@@ -32,7 +32,7 @@ NCVCanvas::NCVCanvas(  const QGLFormat& format, QWidget* parent )
     srand(time(NULL));
     m_idleTimer.start();
 	m_renderDirty= true;
-	m_selectionFlags = RenderDeselected;
+    m_NCVSelectionFlags = RenderDeselected;
 	this->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     m_connections = NULL;
     m_neurons = NULL;
@@ -49,7 +49,6 @@ void NCVCanvas::m_drawLegend()
         return;
 
     const int Padding = 6;
-
     QTextDocument textDocument;
     textDocument.setDefaultStyleSheet("* { color: #FFEFEF }");
     QString html = "";
@@ -58,17 +57,26 @@ void NCVCanvas::m_drawLegend()
 
     if (objectID  < (GLuint)m_neurons->count())
     {
-        html += "<h4 align=\"center\">Neuron (" + QString::number(objectID) + ") </h4>";
-        offset = objectID - 1;
-        attributes = m_neurons->attributes();
+        if (m_neurons != NULL )
+        {
+            html += "<h4 align=\"center\">Neuron (" + QString::number(objectID) + ") </h4>";
+            offset = objectID - 1;
+            attributes = m_neurons->attributes();
+        }
 
     }
     else
     {
-        html += "<h4 align=\"center\">Connection (" + QString::number(objectID) + ")</h4>";
-        offset = objectID - m_neurons->count() ;
-        attributes = m_connections->attributes();
+        if (m_neurons != NULL && m_connections != NULL)
+        {
+            html += "<h4 align=\"center\">Connection (" + QString::number(objectID) + ")</h4>";
+            offset = objectID - m_neurons->count() ;
+            attributes = m_connections->attributes();
+        }
     }
+
+    if (attributes.count() < 0)
+        return;
 
     for (QMap<QString, NCVAttribute *>::iterator it = attributes.begin(); it !=attributes.end(); it++)
     {
@@ -194,7 +202,7 @@ void NCVCanvas::timerEvent(QTimerEvent * e)
     update();
     GLuint err = glGetError();
     if (err != 0)
-        qDebug() <<QGLXCore::getErrorString(err);
+        qDebug() << (char *)gluErrorString(err);
 
 }
 
@@ -240,19 +248,19 @@ void NCVCanvas::m_performRegularRender()
     // bind fbo and related targets
     m_frameBufferObject.bind();
     m_frameBufferObject.enableColorAttachments(1);
-    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
     m_maps["depth"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     m_skySphere.draw(m_camera);
 
     m_frameBufferObject.enableColorAttachments(1);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
     glClear( GL_COLOR_BUFFER_BIT);
 
     m_frameBufferObject.enableColorAttachments(2);
-    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,1);
 
 
     // clear targets
@@ -272,8 +280,8 @@ void NCVCanvas::m_performRegularRender()
 
 
     m_frameBufferObject.enableColorAttachments(2);
-    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,1);
 
     if (m_renderConnections && m_connections != NULL)
     {
@@ -307,7 +315,7 @@ void NCVCanvas::m_performSelectionRender()
     // bind frame buffer and all first pass targets
     m_frameBufferObject.bind();
     m_frameBufferObject.enableColorAttachments(1);
-    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
     m_maps["depth"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Depth);
 
 
@@ -315,19 +323,19 @@ void NCVCanvas::m_performSelectionRender()
     m_skySphere.draw(m_camera);
 
     m_frameBufferObject.enableColorAttachments(1);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
     glClear( GL_COLOR_BUFFER_BIT);
 
     m_frameBufferObject.enableColorAttachments(2);
-    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color0);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
+    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,1);
 
     if (m_renderNeurons && m_neurons != NULL)
     {
         m_neurons->bind(m_camera);
-        for (QVector<Range>::iterator it = m_ranges.begin(); it != m_ranges.end() ; it++)
+        for (QVector<NCVElementRange>::iterator it = m_ranges.begin(); it != m_ranges.end() ; it++)
         {
-            Range range = *it;
+            NCVElementRange range = *it;
             if (range.start > m_neurons->count())
                 break;
             else if (range.end > m_neurons->count())
@@ -345,9 +353,9 @@ void NCVCanvas::m_performSelectionRender()
     {
 
         m_connections->bind(m_camera);
-        for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+        for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
         {
-            Range range = *it;
+            NCVElementRange range = *it;
 
             if (range.end <= m_neurons->count())
                 continue;
@@ -366,9 +374,9 @@ void NCVCanvas::m_performSelectionRender()
     if (m_renderNeurons && m_neurons != NULL)
     {
         m_neurons->bindSilhouettes(m_camera);
-        for (QVector<Range>::iterator it = m_ranges.begin(); it != m_ranges.end() ; it++)
+        for (QVector<NCVElementRange>::iterator it = m_ranges.begin(); it != m_ranges.end() ; it++)
         {
-            Range range = *it;
+            NCVElementRange range = *it;
             if (range.start > m_neurons->count())
                 break;
             else if (range.end > m_neurons->count())
@@ -386,9 +394,9 @@ void NCVCanvas::m_performSelectionRender()
     {
 
         m_connections->bindSilhouettes(m_camera);
-        for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+        for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
         {
-            Range range = *it;
+            NCVElementRange range = *it;
 
             if (range.end <= m_neurons->count())
                 continue;
@@ -402,19 +410,19 @@ void NCVCanvas::m_performSelectionRender()
 
     }
 
-    if ((int)m_selectionFlags & (int)RenderDeselected)
+    if ((int)m_NCVSelectionFlags & (int)RenderDeselected)
     {
 		
 		m_frameBufferObject.enableColorAttachments(2);
-		m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color1);
+        m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,1);
 
         if (m_renderNeurons && m_neurons != NULL)
         {
             m_neurons->bind(m_camera,true);
             int previousEnd = 1;
-            for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+            for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
             {
-                Range range = *it;
+                NCVElementRange range = *it;
                 if (range.start > m_neurons->count())
                     break;
                 else if (range.start > previousEnd)
@@ -431,9 +439,9 @@ void NCVCanvas::m_performSelectionRender()
             m_connections->bind(m_camera,true);
             int previousEnd = m_neurons->count() +1;
             int endOfItems = m_neurons->count() + m_connections->count();
-            for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+            for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
             {
-                Range range = *it;
+                NCVElementRange range = *it;
                 if (range.end <= m_neurons->count())
                     continue;
                 else if (range.start > previousEnd)
@@ -453,9 +461,9 @@ void NCVCanvas::m_performSelectionRender()
 		{
 			m_neurons->bindSilhouettes(m_camera);
             int previousEnd = 1;
-            for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+            for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
             {
-                Range range = *it;
+                NCVElementRange range = *it;
                 if (range.start > m_neurons->count())
                     break;
                 else if (range.start > previousEnd)
@@ -474,9 +482,9 @@ void NCVCanvas::m_performSelectionRender()
 			m_connections->bindSilhouettes(m_camera);
             int previousEnd = m_neurons->count() +1;
             int endOfItems = m_neurons->count() + m_connections->count();
-            for (QVector<Range>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
+            for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
             {
-                Range range = *it;
+                NCVElementRange range = *it;
                 if (range.end <= m_neurons->count())
                     continue;
                 else if (range.start > previousEnd)
@@ -525,9 +533,11 @@ void NCVCanvas::paintEvent(QPaintEvent *e)
         else
             m_performRegularRender();
         m_renderDirty = false;
-    }
-    m_frameBufferObject.blitTexture(m_maps["diffuse"],QGLXTexture::Color0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
 
+    }
+
+
+    m_frameBufferObject.blitTexture(m_maps["diffuse"],QGLXTexture::Color,0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
 
     glDisable(GL_DEPTH_TEST);
     m_painter.begin(this);
@@ -543,14 +553,14 @@ void NCVCanvas::paintEvent(QPaintEvent *e)
     if (m_leftMouseDown)
         m_painter.drawRect(m_selectionRect);
 
-    if (m_neurons != NULL && m_connections != NULL && m_idleTimer.elapsed() >= m_legendShowTime)
+    if (m_idleTimer.elapsed() >= m_legendShowTime)
         m_drawLegend();
 
     m_painter.end();
     glEnable(GL_DEPTH_TEST);
 
 
-    
+
     this->swapBuffers();
     frameRendered();
 
@@ -626,13 +636,13 @@ void NCVCanvas::mousePressEvent(QMouseEvent* e)
 
 
 
-void NCVCanvas::setSelection(QVector<Range> selection, SelectionFlag flags)
+void NCVCanvas::setSelection(QVector<NCVElementRange> selection, NCVSelectionFlag flags)
 {
-	if (selection != m_ranges || flags != m_selectionFlags)
+    if (selection != m_ranges || flags != m_NCVSelectionFlags)
 	{
 		m_ranges = selection;
-        m_selectionFlags = flags;
-		selectionChanged(m_ranges,m_selectionFlags);
+        m_NCVSelectionFlags = flags;
+        selectionChanged(m_ranges,m_NCVSelectionFlags);
 		m_renderDirty = true;
 	}
 }
@@ -669,7 +679,7 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
         m_frameBufferObject.getTextureData(m_maps["id"],m_selectionRect,objectID);
 
         // if not performing compound selection, deselect previously selected items
-        if (((int)m_selectionFlags & (int)CompoundSelection ) == 0)
+        if (((int)m_NCVSelectionFlags & (int)CompoundSelection ) == 0)
             m_selectedObjects.clear();
 
         // compile new selections into a unique set
@@ -688,7 +698,7 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
         {
             QList<GLuint> list = m_selectedObjects.toList();
             qSort(list);
-            Range r = Range();
+            NCVElementRange r;
             r.start = list[0];
             r.end = list[0]+1;
             m_ranges.push_back(r);
@@ -700,7 +710,7 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
                     m_ranges[currentRange].end = id+1;
                 else
                 {
-                    Range r = Range();
+                    NCVElementRange r;
                     r.start = id;
                     r.end = id+1;
                     m_ranges.push_back(r);
@@ -712,7 +722,7 @@ void  NCVCanvas::mouseReleaseEvent(QMouseEvent* e)
 
         }
 		
-		selectionChanged(m_ranges,m_selectionFlags);
+        selectionChanged(m_ranges,m_NCVSelectionFlags);
 
         m_leftMouseDown = false;
 
@@ -802,7 +812,7 @@ void NCVCanvas::setNeurons(NCVNeuronSet * neurons)
         m_moveSpeed = m_worldSize.x()/50;
 
         m_camera.setView(QVector3D(-m_worldSize.x(),m_worldSize.y(),-m_worldSize.z()), QVector3D(0,0,1),QVector3D(0,1,0));
-        m_camera.setProjection(35.0, 4.0/3.0, 0.1f, m_worldSize.length()*2.0f );
+        m_camera.setProjection(35.0, 4.0/3.0, 0.001f, m_worldSize.length()*3.0f );
     }
     m_renderDirty = true;
 }

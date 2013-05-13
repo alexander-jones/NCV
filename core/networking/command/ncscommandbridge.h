@@ -1,6 +1,5 @@
 #ifndef NCSCOMMANDBRIDGE_H
 #define NCSCOMMANDBRIDGE_H
-#include "sshsocket.h"
 #include "ncscommandfileargument.h"
 #include <QString>
 #include <QProcess>

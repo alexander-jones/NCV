@@ -1,8 +1,9 @@
 #ifndef NCVDISCRETEATTRIBUTE_H
 #define NCVDISCRETEATTRIBUTE_H
-#include "ncvcore.h"
 #include "qglx/qglxtexture2d.h"
+#include "qglx/qglxbuffertexture.h"
 #include "core/ncsdiscreteattribute.h"
+#include "ncvattribute.h"
 
 class NCVDiscreteAttribute:public NCVAttribute
 {
@@ -14,14 +15,16 @@ public:
     QVector<unsigned char> data();
     QVector<QString> stateValues();
     QVector<QString> stateValues(int startElement, int count);
-    QGLXBuffer attributeBuffer();
-    QGLXBuffer colorationBuffer();
+    QGLXBufferTexture attributeTexture();
+    QGLXBufferTexture colorationTexture();
 	bool dirty();
     QMap<QString,QColor> coloration();
     void destroy();
     int bitMask();
     int bitsPerValue();
     QVector<QString> states();
+
+    void resolve();
 
 
 private slots:
@@ -33,6 +36,7 @@ private:
     QMap<QString,QColor> m_coloration;
     QVector<QVector3D > m_colorationData;
     QGLXBuffer m_buffer, m_colorBuffer;
+    QGLXBufferTexture m_bufferTexture,m_colorationTexture;
 };
 
 

@@ -92,10 +92,10 @@ RemoteConnectionWidget::RemoteConnectionWidget(QWidget *parent) :
     m_layout->addWidget(m_recentCredentialWidget);
 
     this->setLayout(m_layout);
-    m_connection = new SSHSocket(this);
+    m_connection = new QSshSocket(this);
     connect(m_connection,SIGNAL(connected()),this,SLOT(m_onConnect()));
-    connect(m_connection,SIGNAL(authenticated()),this,SLOT(m_onAuthentication()));
-    connect(m_connection,SIGNAL(error(SSHSocket::SSHSocketError)),this,SLOT(m_onError(SSHSocket::SSHSocketError)));
+    connect(m_connection,SIGNAL(loginSuccessful()),this,SLOT(m_onAuthentication()));
+    connect(m_connection,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onError(QSshSocket::SshError)));
 
 
 }
@@ -114,7 +114,7 @@ void RemoteConnectionWidget::m_loadCredentials()
     if(loadCredentials(fileName))
         m_addToRecentCredentials(fileName);
 }
-void RemoteConnectionWidget::m_onError(SSHSocket::SSHSocketError err)
+void RemoteConnectionWidget::m_onError(QSshSocket::SshError err)
 {
     qDebug() << "ERROR: " << err;
     connectionFailed();
@@ -183,7 +183,6 @@ void RemoteConnectionWidget::saveCredentials(QString fileName)
             return;
         file.write(credentialsEncrypted.data());
         file.close();
-        qDebug() << fileName;
         m_addToRecentCredentials(fileName);
     }
 

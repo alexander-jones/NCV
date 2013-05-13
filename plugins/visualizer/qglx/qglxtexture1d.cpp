@@ -1,10 +1,11 @@
 #include "qglxtexture1d.h"
-const unsigned int NOT_CREATED = 99999;
+const unsigned int NOT_CREATED = 0;
+const GLuint INVALID_IMAGE_UNIT = -1;
 
 QGLXTexture1D::QGLXTexture1D()
-    :QGLXTexture()
 {
     m_id = NOT_CREATED;
+    m_imageUnit = INVALID_IMAGE_UNIT;
 }
 void QGLXTexture1D::bind()
 {
@@ -12,16 +13,18 @@ void QGLXTexture1D::bind()
 }
 
 
-void QGLXTexture1D::bind(FrameBufferTarget target, FrameBufferAttachment attachment)
+void QGLXTexture1D::bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint offset)
 {
-    glBindTexture(GL_TEXTURE_1D,m_id);
-    glFramebufferTexture1D(target, attachment, GL_TEXTURE_1D, m_id, 0);
-}
-void QGLXTexture1D::bind(QGLXTexture1D::ImageUnit unit,  QGLXTexture1D::ImageTextureAccess access,GLuint level)
-{
+    if (attachment != Color)
+        offset = 0;
 
     glBindTexture(GL_TEXTURE_1D,m_id);
+    glFramebufferTexture1D(target, attachment + offset, GL_TEXTURE_1D, m_id, 0);
+}
+void QGLXTexture1D::bind(GLuint unit,  Access access,GLuint level)
+{
     glBindImageTexture(unit, m_id, level, false, 0, access,m_internalFormat);
+    m_imageUnit = unit;
 
 }
 
@@ -43,6 +46,11 @@ bool QGLXTexture1D::isCreated()
 
 void QGLXTexture1D::setMagFilter(Filter filter)
 {
+    if (filter == NearestMipmapNearest || filter == NearestMipmapLinear)
+        filter = Nearest;
+    else if (filter == LinearMipmapNearest || filter == LinearMipmapLinear)
+        filter = Linear;
+
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, filter);
 }
 void QGLXTexture1D::setMinFilter(Filter filter)
@@ -90,7 +98,12 @@ GLenum QGLXTexture1D::pixelType()
 }
 void QGLXTexture1D::release()
 {
-    glBindTexture(GL_TEXTURE_1D,0);
+    if (m_imageUnit != INVALID_IMAGE_UNIT)
+        glBindImageTexture(m_imageUnit, 0, 0, false, 0, GL_READ_ONLY,m_internalFormat);
+    else
+        glBindTexture(GL_TEXTURE_1D,0);
+
+    m_imageUnit = INVALID_IMAGE_UNIT;
 }
 
 

@@ -3,6 +3,11 @@
 
 #include "qglxtexture.h"
 
+/*!
+    \class QGLXTexture3D
+    \author Alex Jones
+    \brief A class for manipulating three dimensional textures.
+*/
 class QGLXTexture3D : public QGLXTexture
 {
 public:
@@ -24,15 +29,14 @@ public:
     */
     void bind();
 
-
-
     /*!
         \param target The logical frame buffer target to use for this texture
         \param attachment The frame buffer attachment slot in the currently bound framebuffer.
+        \param offset The offset from the first attachment slot to use. Only applies to color attachments.
         \param layer The layer of this 3d texture to bind to the frame buffer.
         \brief This function binds the texture to the current context.
     */
-    void bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint layer);
+    void bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint offset = 0, GLuint layer = 0);
 
     /*!
         \param unit The image texture unit to bind this texture to.
@@ -41,7 +45,7 @@ public:
         \param layer If layered is true, this specifies the layer to bind to.
         \brief Constructs a QGLXTexture object of type.
     */
-    void bind(QGLXTexture3D::ImageUnit unit,  QGLXTexture3D::ImageTextureAccess access,GLuint layer,GLuint level = 0);
+    void bind(GLuint unit,  Access access,GLuint layer,GLuint level = 0);
 
 
     /*!
@@ -108,8 +112,29 @@ public:
     */
     void setSize(GLuint width,GLuint height, GLuint depth);
 
+    /*!
+        \param filter The texture filtering option to use.
+        \brief This function sets the mag filter for this texture.
+        When a surface is rendered with greater dimensions than the uv mapping of this texture, the mag filter controls how pixel values are interpolated.
+        It is assumed this texture has been allocated and is bound to the current context.
+    */
     void setMagFilter(Filter filter);
+
+    /*!
+        \param filter The texture filtering option to use.
+        \brief This function sets the mag filter for this texture.
+        When a surface is rendered with greater dimensions than the uv mapping of this texture, the mag filter controls how pixel values are interpolated.
+        It is assumed this texture has been allocated and is bound to the current context.
+    */
     void setMinFilter(Filter filter);
+
+    /*!
+        \param onWidth The wrap function for the x axis of the texture.
+        \param onHeight The wrap function for the y axis of the texture.
+        \param onDepth The wrap function for the z axis of the texture.
+        \brief This function describes how texture coordinates outside of the 0.0 -1.0 range access this texture.
+        It is assumed this texture has been allocated and is bound to the current context.
+    */
     void setWrapFunction(WrapFunction onWidth,WrapFunction onHeight, WrapFunction onDepth);
     /*!
         \brief This function returns the width of this texture.
@@ -117,6 +142,7 @@ public:
     GLuint width();
 
 private:
+    GLuint m_imageUnit;
     GLuint m_id;
     GLenum m_pixelType;
     GLenum m_pixelFormat;

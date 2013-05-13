@@ -40,7 +40,6 @@ SOURCES += \
     core/gui/utilities/discretecolorselector.cpp \
     core/gui/utilities/continuouscolorselector.cpp \
     core/gui/utilities/combowidget.cpp \
-    core/networking/command/sshsocket.cpp \
     core/networking/command/ncsremotecommandbridge.cpp \
     core/networking/command/ncslocalcommandbridge.cpp \
     core/networking/command/ncscommandfileargument.cpp \
@@ -59,7 +58,6 @@ SOURCES += \
     plugins/visualizer/ncvwidget.cpp \
     plugins/visualizer/ncvrendertool.cpp \
     plugins/visualizer/ncvneuronset.cpp \
-    plugins/visualizer/ncvgroupingset.cpp \
     plugins/visualizer/ncvdiscreteattribute.cpp \
     plugins/visualizer/ncvcontinuousattribute.cpp \
     plugins/visualizer/ncvconnectionset.cpp \
@@ -70,14 +68,15 @@ SOURCES += \
     plugins/visualizer/qglx/qglxtexture.cpp \
     plugins/visualizer/qglx/qglxpainter.cpp \
     plugins/visualizer/qglx/qglxframebufferobject.cpp \
-    plugins/visualizer/qglx/qglxcanvas.cpp \
     plugins/visualizer/qglx/qglxcamera.cpp \
     plugins/visualizer/qglx/qglxbuffer.cpp \
     plugins/visualizer/qglx/qglxboundingbox.cpp \
     main.cpp \
     core/gui/utilities/colorbutton.cpp \
     core/gui/utilities/imagecontainer.cpp \
-    plugins/lifLauncher/lifmodeldistributionwidget.cpp
+    plugins/lifLauncher/lifmodeldistributionwidget.cpp \
+    core/networking/command/qsshsocket.cpp \
+    plugins/visualizer/qglx/qglxbuffertexture.cpp
 
 HEADERS  += \
     core/ncsneuronset.h \
@@ -97,12 +96,10 @@ HEADERS  += \
     core/gui/utilities/continuouscolorselector.h \
     core/gui/utilities/combowidget.h \
     core/gui/utilities/colorbutton.h \
-    core/networking/command/sshsocket.h \
     core/networking/command/ncsremotecommandbridge.h \
     core/networking/command/ncslocalcommandbridge.h \
     core/networking/command/ncscommandfileargument.h \
     core/networking/command/ncscommandbridge.h \
-    core/networking/reporting/sleeper.h \
     core/networking/reporting/qsocketconnection.h \
     core/networking/reporting/qreportclient.h \
     core/networking/reporting/networkupdatethread.h \
@@ -117,9 +114,7 @@ HEADERS  += \
     plugins/visualizer/ncvwidget.h \
     plugins/visualizer/ncvrendertool.h \
     plugins/visualizer/ncvneuronset.h \
-    plugins/visualizer/ncvgroupingset.h \
     plugins/visualizer/ncvdiscreteattribute.h \
-    plugins/visualizer/ncvcore.h \
     plugins/visualizer/ncvcontinuousattribute.h \
     plugins/visualizer/ncvconnectionset.h \
     plugins/visualizer/ncvcanvas.h \
@@ -129,8 +124,6 @@ HEADERS  += \
     plugins/visualizer/qglx/qglxtexture.h \
     plugins/visualizer/qglx/qglxpainter.h \
     plugins/visualizer/qglx/qglxframebufferobject.h \
-    plugins/visualizer/qglx/qglxcore.h \
-    plugins/visualizer/qglx/qglxcanvas.h \
     plugins/visualizer/qglx/qglxcamera.h \
     plugins/visualizer/qglx/qglxbuffer.h \
     plugins/visualizer/qglx/qglxboundingbox.h \
@@ -138,7 +131,11 @@ HEADERS  += \
     core/gui/utilities/imagecontainer.h \
     plugins/lifLauncher/lifmodeldistributionwidget.h \
     core/gui/plugin-interfaces/ncsconnectionwidgetplugin.h \
-    core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h
+    core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h \
+    core/networking/command/qsshsocket.h \
+    core/networking/reporting/sleeper.h \
+    plugins/visualizer/qglx/qglxbuffertexture.h \
+    plugins/visualizer/ncvattribute.h
 
 FORMS    += \
     mainwindow.ui \

@@ -1,7 +1,7 @@
 #ifndef RemoteConnectionWidget_H
 #define RemoteConnectionWidget_H
 
-#include "core/networking/command/sshsocket.h"
+#include "core/networking/command/qsshsocket.h"
 #include "core/utilities/simplecrypt.h"
 #include <QWidget>
 #include <QVBoxLayout>
@@ -39,7 +39,7 @@ signals:
 		\param connection The ssh connection established through this widget.
 		\brief This signal is emitted when a connection is established. 
 	*/
-    void connected(SSHSocket *connection);
+    void connected(QSshSocket *connection);
 
 public slots:
 
@@ -57,7 +57,7 @@ public slots:
     
 private slots:
     void m_onAuthentication();
-    void m_onError(SSHSocket::SSHSocketError err);
+    void m_onError(QSshSocket::SshError err);
     void m_onConnect();
 	void m_saveCredentials();
     void m_tryConnect();
@@ -67,7 +67,7 @@ private slots:
 private:
     void m_addToRecentCredentials(QString fileName);
 
-    SSHSocket * m_connection;
+    QSshSocket * m_connection;
     QLabel * m_credentialEntryLabel,*m_recentCredentialsLabel;
     QWidget *m_buttonWidget;
     QFrame *m_credentialEntryWidget, *m_recentCredentialWidget ;

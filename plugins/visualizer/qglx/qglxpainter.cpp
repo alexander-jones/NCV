@@ -40,7 +40,14 @@ QGLXPainter::QGLXPainter()
 QGLXPainter::QGLXPainter(QPaintDevice *)
     :QPainter(){}
 
-void QGLXPainter::begin(QPaintDevice *device)
+
+QGLXPainter::~QGLXPainter()
+{
+    if (isActive())
+        end();
+}
+
+bool QGLXPainter::begin(QPaintDevice *device)
 {
     if (!m_texture.isCreated())
         m_texture.create();
@@ -71,8 +78,10 @@ void QGLXPainter::begin(QPaintDevice *device)
         m_program.link();
     }
 
+    return true;
 }
-void QGLXPainter::end()
+
+bool QGLXPainter::end()
 {
     QPainter::end();
 
@@ -109,4 +118,5 @@ void QGLXPainter::end()
     m_program.release();
     glDisable(GL_BLEND);
 
+    return true;
 }

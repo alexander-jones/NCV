@@ -36,8 +36,8 @@ private slots:
     void m_validateRemoteConnection();
     void m_validateLocalConnection();
 
-    void m_remoteConnectionEstablished(SSHSocket * connection);
-    void m_remoteConnectionError(SSHSocket::SSHSocketError err);
+    void m_remoteConnectionEstablished(QSshSocket * connection);
+    void m_remoteConnectionError(QSshSocket::SshError err);
     void m_remoteConnectionFailed();
     void m_remoteConnectionValidated();
     void m_connectionGroupChecked(QString groupName,bool checked);
@@ -50,7 +50,7 @@ private:
     QLineEdit * m_ncsDirectoryEdit, * m_remoteNCSDirectoryEdit;
     QPushButton * m_ncsBrowseButton,*m_hostfileBrowseButton;
     QLabel * m_localNCSDirectoryLabel, *m_remoteNCSDirectoryLabel;
-    SSHSocket * m_socket;
+    QSshSocket * m_socket;
     QVBoxLayout * m_layout;
     QPushButton * m_remoteValidateButton, * m_localValidateButton;
     RemoteConnectionWidget * m_remoteConnectionWidget;

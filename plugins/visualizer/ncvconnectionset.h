@@ -1,6 +1,5 @@
 #ifndef NCVCONNECTIONSET_H
 #define NCVCONNECTIONSET_H
-#include "ncvcore.h"
 #include "core/ncsconnectionset.h"
 #include "ncvcontinuousattribute.h"
 #include "ncvdiscreteattribute.h"

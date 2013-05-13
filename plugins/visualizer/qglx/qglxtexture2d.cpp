@@ -1,10 +1,11 @@
 #include "qglxtexture2d.h"
-const unsigned int NOT_CREATED = 99999;
+const unsigned int NOT_CREATED = 0;
+const GLuint INVALID_IMAGE_UNIT = -1;
 
 QGLXTexture2D::QGLXTexture2D()
-    :QGLXTexture()
 {
     m_id = NOT_CREATED;
+    m_imageUnit = INVALID_IMAGE_UNIT;
 }
 void QGLXTexture2D::bind()
 {
@@ -12,33 +13,23 @@ void QGLXTexture2D::bind()
 }
 
 
-void QGLXTexture2D::bind(FrameBufferTarget target, FrameBufferAttachment attachment)
+void QGLXTexture2D::bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint offset)
 {
+    if (attachment != Color)
+        offset = 0;
+
     bind();
-
-    glFramebufferTexture2D(target, attachment, GL_TEXTURE_2D, m_id, 0);
-    m_attachment = attachment;
-}
-
-QGLXTexture2D::FrameBufferAttachment QGLXTexture2D::attachment()
-{
-    return m_attachment;
-}
-
-GLuint QGLXTexture2D::textureUnit()
-{
-    return m_textureUnit;
+    glFramebufferTexture2D(target, (GLenum)attachment + offset, GL_TEXTURE_2D, m_id, 0);
 }
 
 GLuint QGLXTexture2D::imageUnit()
 {
     return m_imageUnit;
 }
-void QGLXTexture2D::bind(QGLXTexture2D::ImageUnit unit,  QGLXTexture2D::ImageTextureAccess access,GLuint level)
+void QGLXTexture2D::bind(GLuint unit,  Access access,GLuint level)
 {
-    glBindTexture(GL_TEXTURE_2D,m_id);
-    glBindImageTexture(unit, m_id, level, false, 0, access,m_internalFormat);
     m_imageUnit = unit;
+    glBindImageTexture(unit, m_id, level, false, 0, access,m_internalFormat);
 
 }
 
@@ -61,10 +52,16 @@ bool QGLXTexture2D::isCreated()
 
 void QGLXTexture2D::setMagFilter(Filter filter)
 {
+    if (filter == NearestMipmapNearest || filter == NearestMipmapLinear)
+        filter = Nearest;
+    else if (filter == LinearMipmapNearest || filter == LinearMipmapLinear)
+        filter = Linear;
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 }
 void QGLXTexture2D::setMinFilter(Filter filter)
 {
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 }
 
@@ -72,11 +69,6 @@ void QGLXTexture2D::setWrapFunction(WrapFunction onWidth, WrapFunction onHeight)
 {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, onWidth);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, onHeight);
-}
-
-QRect QGLXTexture2D::rect()
-{
-    return QRect(0,0,m_width,m_height);
 }
 
 void QGLXTexture2D::allocate(GLuint width, GLuint height,GLenum internalFormat,int samplesPerPixel , GLvoid * data)
@@ -129,10 +121,10 @@ GLenum QGLXTexture2D::pixelType()
 void QGLXTexture2D::release()
 {
 
-    m_attachment = Unset;
-    m_textureUnit = -1;
-    m_imageUnit = QGLXTexture2D::Zero;
-    glBindTexture(GL_TEXTURE_2D,0);
+    if (m_imageUnit != INVALID_IMAGE_UNIT)
+        glBindImageTexture(m_imageUnit, 0, 0, false, 0, GL_READ_ONLY,m_internalFormat);
+    else
+        glBindTexture(GL_TEXTURE_2D,0);
 }
 
 
@@ -170,6 +162,5 @@ GLuint QGLXTexture2D::height()
 void QGLXTexture2D::bind(GLuint textureUnit)
 {
     glActiveTexture(GL_TEXTURE0 +textureUnit);
-    m_textureUnit = textureUnit;
     bind();
 }

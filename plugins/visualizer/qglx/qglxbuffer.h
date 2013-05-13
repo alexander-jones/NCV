@@ -1,9 +1,8 @@
 #ifndef QGLXBUFFER_H
 #define QGLXBUFFER_H
-
-#include "qglxcore.h"
+#include <qmath.h>
+#include <GL/glew.h>
 #include <QGLWidget>
-#include "qglxtexture1d.h"
 /*!
     \class QGLXBuffer
     \author Alex Jones
@@ -13,23 +12,41 @@ class QGLXBuffer
 {
 public:
 
+    /*!
+        \brief This enum provides a hint to OpenGL about the usage of this buffer.
+    */
     enum UsagePattern
     {
+        /*! \brief The data will be set once and used a few times for drawing operations. */
         StreamDraw = GL_STREAM_DRAW,
+        /*! \brief The data will be set once and used a few times for reading data back from the GL server. */
         StreamRead = GL_STREAM_READ,
+        /*! \brief The data will be set once and used a few times for reading data back from the GL server for use in further drawing operations. */
         StreamCopy	= GL_STREAM_COPY,
+        /*! \brief The data will be set once and used many times for drawing operations. */
         StaticDraw	= GL_STATIC_DRAW,
+        /*! \brief The data will be set once and used many times for reading data back from the GL server. */
         StaticRead	= GL_STATIC_READ,
+        /*! \brief The data will be set once and used many times for reading data back from the GL server for use in further drawing operations. */
         StaticCopy	= GL_STATIC_COPY,
+        /*! \brief The data will be modified repeatedly and used many times for drawing operations. */
         DynamicDraw	= GL_DYNAMIC_DRAW,
+        /*! \brief The data will be modified repeatedly and used many times for reading data back from the GL server. */
         DynamicRead	= GL_DYNAMIC_READ,
+        /*! \brief The data will be modified repeatedly and used many times for reading data back from the GL server for use in further drawing operations. */
         DynamicCopy = GL_DYNAMIC_COPY
     };
 
+    /*!
+        \brief This enum defines access given to a user of an OpenGL object.
+    */
     enum Access
     {
+        /*! \brief A resource is given read only access to the underlying OpenGL object data storage. */
         ReadOnly = GL_READ_ONLY,
+        /*! \brief A resource is given write only access to the underlying OpenGL object data storage. */
         WriteOnly = GL_WRITE_ONLY,
+        /*! \brief A resource is given read and write access to the underlying OpenGL object data storage. */
         ReadWrite = GL_READ_WRITE
     };
 
@@ -47,8 +64,6 @@ public:
         PixelPackBuffer = GL_PIXEL_PACK_BUFFER,
         /*! \brief A buffer for writing pixel data to the GL server (for example, with glTexImage2D()). Not supported under OpenGL/ES. */
         PixelUnpackBuffer  = GL_PIXEL_UNPACK_BUFFER,
-        /*! \brief A one dimensional buffer used for specifing buffer data as a texture. */
-        TextureBuffer  = GL_TEXTURE_BUFFER,
         /*! \brief A buffer that can be incremented / decrimented in any shader stage by any GPU core. */
         AtomicCounterBuffer = GL_ATOMIC_COUNTER_BUFFER,
         /*! \brief A buffer used to capture an primitive output stream from a geometry shader. */
@@ -59,7 +74,6 @@ public:
         ShaderStorageBuffer = GL_SHADER_STORAGE_BUFFER,
         /*! \brief A buffer that stores parameters for indirect compute shader dispatches. */
         DispatchIndirectBuffer = GL_DISPATCH_INDIRECT_BUFFER
-
 
     };
 
@@ -79,13 +93,11 @@ public:
     */
     void allocate(const void *data, int count,UsagePattern usage = StaticDraw);
 
-
-    void allocate(const void *data, int count,GLenum textureFormat,UsagePattern usage = StaticDraw);
-
     /*!
+        \param binding The target to bind this buffer to.
         \brief This function binds this buffer to the current context.
     */
-    bool bind(TargetBinding binding);
+    bool bind(TargetBinding binding = ArrayBuffer);
 
     /*!
         \brief This function creates this buffer in OpenGL controlled memory.
@@ -98,6 +110,10 @@ public:
     void destroy();
 
 
+    /*!
+        \brief This function returns the id associated with this buffer object.
+        If this buffer has not been created, 0 will be returned.
+    */
     GLuint id();
 
     /*!
@@ -106,6 +122,7 @@ public:
     bool isCreated();
 
     /*!
+        \param binding The target to bind this buffer to.
         \param access The Read / Write permissions of this mapping.
         \brief This function maps the content of this buffer to a pointer.
     */
@@ -132,18 +149,12 @@ public:
     void write(int offset, void *data, int count);
 
     /*!
-        \brief This function returns the texture id for TextureBuffer objects. This function will return -1 if the buffer is not a Texture Buffer,
-        or is a TextureBuffer that hasn't had create() called on it.
-    */
-    GLint textureID();
-
-    /*!.
         \brief This function unmaps the content of this buffer to a pointer.
     */
     void unmap();
 
 private:
-    GLuint m_bufferID,m_textureID;
+    GLuint m_id;
     GLenum m_dataType;
     GLenum m_textureFormat;
     TargetBinding m_targetBinding;

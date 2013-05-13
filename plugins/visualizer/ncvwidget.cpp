@@ -79,12 +79,12 @@ NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
     connect(m_renderTool,SIGNAL(connectionRenderSet(bool)),m_canvas,SLOT(renderConections(bool)));
 
 	
-    connect(this,SIGNAL(selectionChanged(QVector<Range>,SelectionFlag)),m_canvas,SLOT(setSelection(QVector<Range>,SelectionFlag)));
-    connect(m_canvas,SIGNAL(selectionChanged(QVector<Range>,SelectionFlag)),this,SLOT(setSelection(QVector<Range>,SelectionFlag)));
+    connect(this,SIGNAL(selectionChanged(QVector<NCVElementRange>,NCVSelectionFlag)),m_canvas,SLOT(setSelection(QVector<NCVElementRange>,NCVSelectionFlag)));
+    connect(m_canvas,SIGNAL(selectionChanged(QVector<NCVElementRange>,NCVSelectionFlag)),this,SLOT(setSelection(QVector<NCVElementRange>,NCVSelectionFlag)));
 
 }
 	
-void  NCVWidget::setSelection(QVector<Range> selection,SelectionFlag flags)
+void  NCVWidget::setSelection(QVector<NCVElementRange> selection,NCVSelectionFlag flags)
 { 
 	m_selectionFlags = flags;
 	if ((int)m_selectionFlags & (int)RenderDeselected)
@@ -121,10 +121,10 @@ void NCVWidget::m_onDeselectAll()
 void NCVWidget::m_onRenderDeselectionSet(bool on)
 {
     if (on)
-        m_selectionFlags = (SelectionFlag)(m_selectionFlags | RenderDeselected);
+        m_selectionFlags = (NCVSelectionFlag)(m_selectionFlags | RenderDeselected);
 
     else if ((int)m_selectionFlags & (int)RenderDeselected )
-        m_selectionFlags = (SelectionFlag)((int)m_selectionFlags - (int)RenderDeselected);
+        m_selectionFlags = (NCVSelectionFlag)((int)m_selectionFlags - (int)RenderDeselected);
 
 
 	selectionChanged(m_currentSelection,m_selectionFlags);
@@ -134,9 +134,9 @@ void NCVWidget::m_onRenderDeselectionSet(bool on)
 void NCVWidget::m_onCompoundSelectionSet(bool on)
 { 
 	if (on)
-		m_selectionFlags = (SelectionFlag)(m_selectionFlags | CompoundSelection);
+        m_selectionFlags = (NCVSelectionFlag)(m_selectionFlags | CompoundSelection);
 	else if ((int)m_selectionFlags & (int)CompoundSelection )
-		m_selectionFlags = (SelectionFlag)((int)m_selectionFlags - (int)CompoundSelection);
+        m_selectionFlags = (NCVSelectionFlag)((int)m_selectionFlags - (int)CompoundSelection);
 	selectionChanged(m_currentSelection,m_selectionFlags);
 }
 void NCVWidget::setNeurons(NCSNeuronSet * neurons)

@@ -46,7 +46,7 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     m_connectionGroupVector->addGroup("Use Remote Machine as Host");
     m_remoteConnectionWidget = new RemoteConnectionWidget();
     m_remoteConnectionWidget->setEnabled(false);
-    connect(m_remoteConnectionWidget,SIGNAL(connected(SSHSocket*)),this,SLOT(m_remoteConnectionEstablished(SSHSocket*)));
+    connect(m_remoteConnectionWidget,SIGNAL(connected(QSshSocket*)),this,SLOT(m_remoteConnectionEstablished(QSshSocket*)));
     connect(m_remoteConnectionWidget,SIGNAL(connectionFailed()),this,SLOT(m_remoteConnectionFailed()));
     m_connectionGroupVector->addToGroup("Use Remote Machine as Host",m_remoteConnectionWidget);
 
@@ -106,7 +106,7 @@ void NCSConnectionWidget::m_remoteConnectionFailed()
 }
 
 
-void NCSConnectionWidget::m_remoteConnectionError(SSHSocket::SSHSocketError err)
+void NCSConnectionWidget::m_remoteConnectionError(QSshSocket::SshError err)
 {
 
     QMessageBox msgBox;
@@ -115,7 +115,7 @@ void NCSConnectionWidget::m_remoteConnectionError(SSHSocket::SSHSocketError err)
     msgBox.exec();
 }
 
-void NCSConnectionWidget::m_remoteConnectionEstablished(SSHSocket * socket)
+void NCSConnectionWidget::m_remoteConnectionEstablished(QSshSocket * socket)
 {
     m_socket = socket;
     m_remoteCommandBridge->initialize(m_projectPath,socket);

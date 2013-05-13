@@ -84,6 +84,7 @@ void NCVConnectionSet::bind(QGLXCamera camera, bool deselected)
     if (m_currentAttribute != NULL)
     {
         resolve();
+        m_currentAttribute->resolve();
         QGLShaderProgram * program;
         if (m_currentAttribute->type() == Discrete)
             program = &m_discreteProgram;
@@ -102,21 +103,17 @@ void NCVConnectionSet::bind(QGLXCamera camera, bool deselected)
         program->setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
         glVertexAttribDivisor(program->attributeLocation("Inst_ID"), 0);
 
-
-        glActiveTexture(GL_TEXTURE0);
-        m_neurons->positionBuffer().bind(QGLXBuffer::TextureBuffer);
+        m_neurons->positionBufferTexture().bind(0);
         program->setUniformValue("Inst_Translation", 0);
 
         if (m_currentAttribute->type() == Discrete)
         {
             NCVDiscreteAttribute * attrib = dynamic_cast<NCVDiscreteAttribute *>(m_currentAttribute);
 
-            glActiveTexture(GL_TEXTURE1);
-            attrib->attributeBuffer().bind(QGLXBuffer::TextureBuffer);
+            attrib->attributeTexture().bind(1);
             program->setUniformValue("Inst_Attribute", 1);
 
-            glActiveTexture(GL_TEXTURE2);
-            attrib->colorationBuffer().bind(QGLXBuffer::TextureBuffer);
+            attrib->colorationTexture().bind(2);
             program->setUniformValue("ColorMap",2);
 
             program->setUniformValue("BitsPerValue", attrib->bitsPerValue());
@@ -127,12 +124,10 @@ void NCVConnectionSet::bind(QGLXCamera camera, bool deselected)
         {
             NCVContinuousAttribute * attrib = dynamic_cast<NCVContinuousAttribute *>(m_currentAttribute);
 
-            glActiveTexture(GL_TEXTURE1);
-            attrib->attributeBuffer().bind(QGLXBuffer::TextureBuffer);
+            attrib->attributeTexture().bind(1);
             program->setUniformValue("Inst_Attribute", 1);
 
-            glActiveTexture(GL_TEXTURE2);
-            attrib->colorationTexture().bind();
+            attrib->colorationTexture().bind(2);
             program->setUniformValue("ColorMap",2);
 
 
@@ -168,29 +163,20 @@ void NCVConnectionSet::bindSilhouettes(QGLXCamera camera, QColor color)
     m_silhouetteProgram.setAttributeBuffer("Neuron_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
     glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Neuron_ID"), 0);
 
-    m_idBuffer.bind(QGLXBuffer::ArrayBuffer);
-    m_silhouetteProgram.enableAttributeArray( "Inst_ID");
-    m_silhouetteProgram.setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
-    glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Inst_ID"), 0);
-
-    glActiveTexture(GL_TEXTURE0);
-    m_neurons->positionBuffer().bind(QGLXBuffer::TextureBuffer);
+    m_neurons->positionBufferTexture().bind(0);
     m_silhouetteProgram.setUniformValue("Inst_Translation", 0);
 
     m_silhouetteProgram.setUniformValue("WVP",camera.projection() * camera.view());
     m_silhouetteProgram.setUniformValue("Scale",m_scale);
 	m_silhouetteProgram.setUniformValue("SilhouetteColor",QVector3D(color.redF(),color.greenF(),color.blueF()));
     m_silhouetteProgram.setUniformValue("CameraDirection",camera.forward());
-    m_silhouetteProgram.setUniformValue("ZStop",camera.farPlane());
     m_silhouetteProgram.setUniformValue("DepthBias",m_depthBias);
     m_silhouetteProgram.setUniformValue("FarBias",1.0f/(float)log(camera.farPlane()*m_depthBias + 1));
-
     m_silhouetteProgram.setUniformValue("NearPlane",camera.nearPlane());
     m_silhouetteProgram.setUniformValue("FarPlane",camera.farPlane());
-    m_silhouetteProgram.setUniformValue("DepthExponent",0.3f);
-    m_silhouetteProgram.setUniformValue("MaxAlpha",0.25f);
+    m_silhouetteProgram.setUniformValue("SilhouetteDepthMagnification",0.5f);
+    m_silhouetteProgram.setUniformValue("SilhouetteMaxAlpha",0.5f);
 }
-
 
 
 void NCVConnectionSet::release()
@@ -202,15 +188,15 @@ void NCVConnectionSet::release()
         {
             program = &m_discreteProgram;
             NCVDiscreteAttribute * attrib = dynamic_cast<NCVDiscreteAttribute *>(m_currentAttribute);
-            attrib->colorationBuffer().release();
-            attrib->attributeBuffer().release();
+            attrib->colorationTexture().release();
+            attrib->attributeTexture().release();
         }
         else
         {
             program = &m_continuousProgram;
             NCVContinuousAttribute * attrib = dynamic_cast<NCVContinuousAttribute *>(m_currentAttribute);
             attrib->colorationTexture().release();
-            attrib->attributeBuffer().release();
+            attrib->attributeTexture().release();
         }
 
         program->disableAttributeArray( "Neuron_ID" );
@@ -218,7 +204,7 @@ void NCVConnectionSet::release()
         program->release();
         m_neuronIdBuffer.release();
         m_idBuffer.release();
-        m_neurons->positionBuffer().release();
+        m_neurons->positionBufferTexture().release();
     }
 }
 
@@ -252,7 +238,7 @@ void NCVConnectionSet::releaseSilhouettes()
     m_silhouetteProgram.disableAttributeArray( "Inst_ID" );
     m_neuronIdBuffer.release();
     m_idBuffer.release();
-    m_neurons->positionBuffer().release();
+    m_neurons->positionBufferTexture().release();
     m_silhouetteProgram.release();
 
     glDisable(GL_BLEND);

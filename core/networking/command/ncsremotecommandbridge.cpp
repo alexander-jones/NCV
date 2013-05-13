@@ -1,6 +1,6 @@
 #include "ncsremotecommandbridge.h"
 
-NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name,SSHSocket *socket, QObject *parent)
+NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name,QSshSocket *socket, QObject *parent)
     :NCSApplicationBridge(parent)
 {
     m_name = name;
@@ -11,14 +11,14 @@ NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name,SSHSocket *s
     m_timer = new QTimer(this);
     connect(m_timer,SIGNAL(timeout()),this,SLOT(m_checkIfAlive()));
     connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
-    connect(m_socket,SIGNAL(error(SSHSocket::SSHSocketError)),this,SLOT(m_onSocketError(SSHSocket::SSHSocketError)));
+    connect(m_socket,SIGNAL(error(QSshSocket::QSshSocketError)),this,SLOT(m_onSocketError(QSshSocket::QSshSocketError)));
 }
 NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
 {
     m_timer->stop();
     disconnect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
-    disconnect(m_socket,SIGNAL(error(SSHSocket::SSHSocketError)),this,SLOT(m_onSocketError(SSHSocket::SSHSocketError)));
-    disconnect(m_socket,SIGNAL(pullSuccessfull(QString,QString)),this,SLOT(m_executeNextPull()));
+    disconnect(m_socket,SIGNAL(error(QSshSocket::QSshSocketError)),this,SLOT(m_onSocketError(QSshSocket::QSshSocketError)));
+    disconnect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
 
     if (m_alive)
         if (m_destroyProcess)
@@ -80,7 +80,7 @@ void NCSRemoteApplicationBridge::m_onCommandExecuted(QString command,QString res
     {
         m_stdOut = response;
         m_stdErr = "";
-        connect(m_socket,SIGNAL(pullSuccessfull(QString,QString)),this,SLOT(m_executeNextPull()));
+        connect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
         m_executeNextPull();
     }
 }
@@ -100,7 +100,7 @@ void NCSRemoteApplicationBridge::m_executeNextPull()
     }
     else
     {
-        disconnect(m_socket,SIGNAL(pullSuccessfull(QString,QString)),this,SLOT(m_executeNextPull()));
+        disconnect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
         readyReadStandardOutput();
         readyReadStandardError();
         m_checkIfAlive();
@@ -108,7 +108,7 @@ void NCSRemoteApplicationBridge::m_executeNextPull()
 
 
 }
-void NCSRemoteApplicationBridge::m_onSocketError(SSHSocket::SSHSocketError err)
+void NCSRemoteApplicationBridge::m_onSocketError(QSshSocket::SshError err)
 {
     executionError(NCSApplicationBridge::UnknownError);
 }
@@ -120,7 +120,7 @@ NCSRemoteCommandBridge::NCSRemoteCommandBridge( QObject *parent ):NCSCommandBrid
     m_clearProjectContext();
 }
 
-void NCSRemoteCommandBridge::initialize(QString projectPath, SSHSocket * socket)
+void NCSRemoteCommandBridge::initialize(QString projectPath, QSshSocket * socket)
 {
     m_projectPath = projectPath;
     if (m_socket != NULL)
@@ -129,7 +129,7 @@ void NCSRemoteCommandBridge::initialize(QString projectPath, SSHSocket * socket)
 
     connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
     connect(m_socket,SIGNAL(workingDirectorySet(QString)),this,SLOT(m_socketDirectorySet(QString)));
-    connect(m_socket,SIGNAL(pushSuccessfull(QString,QString)),this,SLOT(m_executeNextPush()));
+    connect(m_socket,SIGNAL(pushSuccessful(QString,QString)),this,SLOT(m_executeNextPush()));
 
 }
 
@@ -299,7 +299,7 @@ void NCSRemoteCommandBridge::m_clearProjectContext()
     m_clearApplicationContext();
 }
 
-void NCSRemoteCommandBridge::m_onSocketError(SSHSocket::SSHSocketError err)
+void NCSRemoteCommandBridge::m_onSocketError(QSshSocket::SshError err)
 {
     m_clearProjectContext();
 

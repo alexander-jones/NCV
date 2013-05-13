@@ -1,17 +1,10 @@
 #ifndef QGLXBOUNDINGBOX_H
 #define QGLXBOUNDINGBOX_H
+#define _USE_MATH_DEFINES
+#include <qmath.h>
+#include <GL/glew.h>
 #include <QVector3D>
 #include <QMatrix4x4>
-
-const int LeftTopFront= 0;
-const int LeftTopBack= 1;
-const int LeftBottomFront = 2;
-const int LeftBottomBack = 3;
-const int RightTopFront= 4;
-const int RightTopBack = 5;
-const int RightBottomFront= 6;
-const int RightBottomBack= 7;
-
 
 /*!
     \class QGLXBoundingBox
@@ -21,6 +14,18 @@ const int RightBottomBack= 7;
 class QGLXBoundingBox
 {
 public:
+    enum Corner
+    {
+        LeftTopFront= 0,
+        LeftTopBack,
+        LeftBottomFront,
+        LeftBottomBack,
+        RightTopFront,
+        RightTopBack,
+        RightBottomFront,
+        RightBottomBack
+    };
+
     /*!
         \param position The center position of the box.
         \param size The size of the box.

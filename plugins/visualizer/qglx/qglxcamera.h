@@ -1,12 +1,11 @@
 #ifndef QGLXCAMERA_H
 #define QGLXCAMERA_H
-#include "qglxcore.h"
+#define _USE_MATH_DEFINES
+#include <qmath.h>
+#include <GL/glew.h>
 #include <QVector3D>
 #include <QVector4D>
 #include <QMatrix4x4>
-#include "math.h"
-
-
 
 /*!
     \class QGLXCamera

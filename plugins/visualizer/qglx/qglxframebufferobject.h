@@ -1,7 +1,5 @@
 #ifndef QGLXFRAMEBUFFEROBJECT_H
 #define QGLXFRAMEBUFFEROBJECT_H
-
-#include "qglxcore.h"
 #include "qglxtexture2d.h"
 #include <QGLWidget>
 #include <QImage>
@@ -23,9 +21,6 @@ public:
     QGLXFrameBufferObject();
 
     /*!
-        \param num The number of targets to bind
-        \param names A pointer to an array of target names;
-
         \brief This function binds up to 16 color targets in addition to one depth target.
     */
     bool bind();
@@ -45,20 +40,20 @@ public:
 
     /*!
         \param source The name of the target to blit from.
+        \param attachment The frame buffer attachment slot to use in the currently bound framebuffer.
+        \param offset The offset from the first attachment slot to use. Only applies to color attachments.
         \param from The area on the source to sample from.
         \param to The area on the screen the target will blit onto.
         \param destMode The screen buffer to draw to. i.e. GL_FRONT, GL_BACK, GL_LEFT, etc...
-
         \brief This function blits a target onto another target.
     */    
-    void blitTexture( QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,QRect from,QRect to, GLenum destMode = GL_BACK );
+    void blitTexture( QGLXTexture2D& source,QGLXTexture2D::FrameBufferAttachment sourceAttachment,GLuint offset, QRect from,QRect to, GLenum destMode = GL_BACK );
 
     /*!
         \param source The name of the target to blit from.
         \param from The area on the source to sample from.
         \param dest The name of the target to blit to.
         \param to The area on the destination the target will blit onto.
-
         \brief This function blits a target onto the screen
     */
     void blitTexture( QGLXTexture2D& source,QRect from,  QGLXTexture2D& dest,QRect to );
@@ -78,7 +73,6 @@ public:
     void getTextureData(QGLXTexture2D tex,QRect area, void * data);
 
 private:
-
     GLuint  m_fbo;
 
 };

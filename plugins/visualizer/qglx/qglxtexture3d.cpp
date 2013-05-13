@@ -1,26 +1,30 @@
 #include "qglxtexture3d.h"
-const unsigned int NOT_CREATED = 99999;
+const unsigned int NOT_CREATED = 0;
+const GLuint INVALID_IMAGE_UNIT = -1;
 
 QGLXTexture3D::QGLXTexture3D()
-    :QGLXTexture()
 {
     m_id = NOT_CREATED;
+    m_imageUnit = INVALID_IMAGE_UNIT;
 }
 void QGLXTexture3D::bind()
 {
     glBindTexture(GL_TEXTURE_3D,m_id);
 }
 
-void QGLXTexture3D::bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint layer)
+void QGLXTexture3D::bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint offset, GLuint layer)
 {
+    if (attachment != Color)
+        offset = 0;
+
     glBindTexture(GL_TEXTURE_3D,m_id);
-    glFramebufferTexture3D(target, attachment, GL_TEXTURE_3D, m_id, 0,layer);
+    glFramebufferTexture3D(target, attachment + offset, GL_TEXTURE_3D, m_id, 0,layer);
 }
 
 
-void QGLXTexture3D::bind(QGLXTexture3D::ImageUnit unit,  QGLXTexture3D::ImageTextureAccess access,GLuint layer,GLuint level)
+void QGLXTexture3D::bind(GLuint unit,  Access access,GLuint layer,GLuint level)
 {
-    glBindTexture(GL_TEXTURE_3D,m_id);
+    m_imageUnit = unit;
     glBindImageTexture(unit, m_id, level, true, layer, access,m_internalFormat);
 
 }
@@ -45,6 +49,11 @@ bool QGLXTexture3D::isCreated()
 
 void QGLXTexture3D::setMagFilter(Filter filter)
 {
+    if (filter == NearestMipmapNearest || filter == NearestMipmapLinear)
+        filter = Nearest;
+    else if (filter == LinearMipmapNearest || filter == LinearMipmapLinear)
+        filter = Linear;
+
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, filter);
 }
 void QGLXTexture3D::setMinFilter(Filter filter)
@@ -99,7 +108,11 @@ GLenum QGLXTexture3D::pixelType()
 }
 void QGLXTexture3D::release()
 {
-    glBindTexture(GL_TEXTURE_3D,0);
+    if (m_imageUnit != INVALID_IMAGE_UNIT)
+        glBindImageTexture(m_imageUnit, 0, 0, false, 0, GL_READ_ONLY,m_internalFormat);
+    else
+        glBindTexture(GL_TEXTURE_3D,0);
+    m_imageUnit = INVALID_IMAGE_UNIT;
 }
 
 void QGLXTexture3D::setSize(GLuint width,GLuint height,GLuint depth)

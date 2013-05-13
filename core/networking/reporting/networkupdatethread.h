@@ -22,13 +22,8 @@ signals:
     void updateRequested();
 
 public slots:
-    ///Sets the update interval in milliseconds.
     void setInterval(int msec);
-
-    ///Starts the update timer.
     void startUpdates();
-
-    ///Stops the update timer.
     void stopUpdates();
 
 protected:

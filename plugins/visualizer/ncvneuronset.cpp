@@ -94,6 +94,10 @@ QGLXBuffer NCVNeuronSet::positionBuffer()
 }
 
 
+QGLXBufferTexture NCVNeuronSet::positionBufferTexture()
+{
+    return m_positionBufferTexture;
+}
 
 void NCVNeuronSet::bind(QGLXCamera camera, bool deselected)
 {
@@ -101,6 +105,7 @@ void NCVNeuronSet::bind(QGLXCamera camera, bool deselected)
     if (m_currentAttribute != NULL)
     {
         resolve();
+        m_currentAttribute->resolve();
         QGLShaderProgram * program;
         if (m_currentAttribute->type() == Discrete)
             program = &m_discreteProgram;
@@ -120,20 +125,17 @@ void NCVNeuronSet::bind(QGLXCamera camera, bool deselected)
         program->setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
         glVertexAttribDivisor( program->attributeLocation("Inst_ID"), 1);
 
-        glActiveTexture(GL_TEXTURE0);
-        m_positionBuffer.bind(QGLXBuffer::TextureBuffer);
+        m_positionBufferTexture.bind(0);
         program->setUniformValue("Inst_Translation", 0);
 
         if (m_currentAttribute->type() == Discrete)
         {
             NCVDiscreteAttribute * attrib = dynamic_cast<NCVDiscreteAttribute *>(m_currentAttribute);
 
-            glActiveTexture(GL_TEXTURE1);
-            attrib->attributeBuffer().bind(QGLXBuffer::TextureBuffer);
+            attrib->attributeTexture().bind(1);
             program->setUniformValue("Inst_Attribute", 1);
 
-            glActiveTexture(GL_TEXTURE2);
-            attrib->colorationBuffer().bind(QGLXBuffer::TextureBuffer);
+            attrib->colorationTexture().bind(2);
             program->setUniformValue("ColorMap",2);
 
             program->setUniformValue("BitsPerValue", attrib->bitsPerValue());
@@ -144,12 +146,10 @@ void NCVNeuronSet::bind(QGLXCamera camera, bool deselected)
         {
             NCVContinuousAttribute * attrib = dynamic_cast<NCVContinuousAttribute *>(m_currentAttribute);
 
-            glActiveTexture(GL_TEXTURE1);
-            attrib->attributeBuffer().bind(QGLXBuffer::TextureBuffer);
+            attrib->attributeTexture().bind(1);
             program->setUniformValue("Inst_Attribute", 1);
 
-            glActiveTexture(GL_TEXTURE2);
-            attrib->colorationTexture().bind();
+            attrib->colorationTexture().bind(2);
             program->setUniformValue("ColorMap",2);
 
             program->setUniformValue("MinimumValue", attrib->minValue());
@@ -191,9 +191,7 @@ void NCVNeuronSet::bindSilhouettes(QGLXCamera camera, QColor color)
     m_silhouetteProgram.setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
     glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Inst_ID"), 1);
 
-
-    glActiveTexture(GL_TEXTURE0);
-    m_positionBuffer.bind(QGLXBuffer::TextureBuffer);
+    m_positionBufferTexture.bind(0);
     m_silhouetteProgram.setUniformValue("Inst_Translation", 0);
 
     m_silhouetteProgram.setUniformValue("WVP",camera.projection() * camera.view());
@@ -204,9 +202,8 @@ void NCVNeuronSet::bindSilhouettes(QGLXCamera camera, QColor color)
     m_silhouetteProgram.setUniformValue("FarPlane",camera.farPlane());
     m_silhouetteProgram.setUniformValue("DepthBias",m_depthBias);
     m_silhouetteProgram.setUniformValue("FarBias",1.0f/(float)log(camera.farPlane()*m_depthBias + 1));
-    m_silhouetteProgram.setUniformValue("ZStop",camera.farPlane());
-    m_silhouetteProgram.setUniformValue("DepthExponent",0.3f);
-    m_silhouetteProgram.setUniformValue("MaxAlpha",0.25f);
+    m_silhouetteProgram.setUniformValue("SilhouetteDepthMagnification",0.5f);
+    m_silhouetteProgram.setUniformValue("SilhouetteMaxAlpha",0.5f);
 
 
 }
@@ -222,15 +219,15 @@ void NCVNeuronSet::release()
         {
             program = &m_discreteProgram;
             NCVDiscreteAttribute * attrib = dynamic_cast<NCVDiscreteAttribute *>(m_currentAttribute);
-            attrib->colorationBuffer().release();
-            attrib->attributeBuffer().release();
+            attrib->colorationTexture().release();
+            attrib->attributeTexture().release();
         }
         else
         {
             program = &m_continuousProgram;
             NCVContinuousAttribute * attrib = dynamic_cast<NCVContinuousAttribute *>(m_currentAttribute);
             attrib->colorationTexture().release();
-            attrib->attributeBuffer().release();
+            attrib->attributeTexture().release();
         }
 
         program->disableAttributeArray( "Vert_Position" );
@@ -238,7 +235,7 @@ void NCVNeuronSet::release()
         m_idBuffer.release();
         m_vertexBuffer.release();
         m_indexBuffer.release();
-        m_positionBuffer.release();
+        m_positionBufferTexture.release();
 
         program->release();
     }
@@ -254,7 +251,7 @@ void NCVNeuronSet::releaseSilhouettes()
     m_vertexBuffer.release();
     m_indexBuffer.release();
 
-    m_positionBuffer.release();
+    m_positionBufferTexture.release();
     m_silhouetteProgram.release();
 
     glDisable(GL_BLEND);
@@ -360,10 +357,10 @@ void NCVNeuronSet::resolve()
 
         QVector<QVector3D> positions = m_parent->positions();
         m_positionBuffer.create();
-        m_positionBuffer.bind(QGLXBuffer::TextureBuffer);
-        m_positionBuffer.allocate(&positions[0],sizeof(QVector3D) * m_parent->count(),textureFormat);
-        m_positionBuffer.release();
+        m_positionBuffer.allocate(&positions[0],sizeof(QVector3D) * m_parent->count());
 
+        m_positionBufferTexture.create();
+        m_positionBufferTexture.attach(m_positionBuffer,textureFormat);
 
         QVector3D vertices[8] ={
             QVector3D( -0.5, 0.5,-0.5 ),

@@ -23,10 +23,10 @@ public:
 public slots:
     void setNeurons(NCSNeuronSet * neurons);
     void setConnections(NCSConnectionSet * connections);
-	void setSelection(QVector<Range> selection, SelectionFlag flags);
+    void setSelection(QVector<NCVElementRange> selection, NCVSelectionFlag flags);
 
 signals:
-	void selectionChanged(QVector<Range> selection, SelectionFlag flags);
+    void selectionChanged(QVector<NCVElementRange> selection, NCVSelectionFlag flags);
 
 private slots:
     void m_collapseButtonPressed();
@@ -39,8 +39,8 @@ private slots:
 	
 private:
     QString m_projectDir;
-	QVector<Range> m_currentSelection;
-	SelectionFlag m_selectionFlags;
+    QVector<NCVElementRange> m_currentSelection;
+    NCVSelectionFlag m_selectionFlags;
 	QWidgetVector * m_selectionWidget,* m_renderDeselectedWidget, *m_compoundSelectionWidget;
 	QPushButton * m_deselectAllButton;
 	QSwitch * m_renderDeselectedSwitch,*m_compoundSelectionSwitch;

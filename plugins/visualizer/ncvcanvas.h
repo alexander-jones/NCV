@@ -25,7 +25,7 @@
 */
 
 
-class NCVCanvas : public QGLXCanvas
+class NCVCanvas : public QGLWidget
 {
     Q_OBJECT
 public:
@@ -50,11 +50,11 @@ public slots:
     void setConnections(NCVConnectionSet * connections);
     void renderNeurons(bool render);
     void renderConections(bool render);
-	void setSelection(QVector<Range> selection, SelectionFlag flags);
+    void setSelection(QVector<NCVElementRange> selection, NCVSelectionFlag flags);
     void setBackgroundImage(QImage image);
 
 signals:
-	void selectionChanged(QVector<Range> selection, SelectionFlag flags);
+    void selectionChanged(QVector<NCVElementRange> selection, NCVSelectionFlag flags);
 	void deselectedRenderSet(bool on);
     void initialized();
     void frameRendered();
@@ -82,7 +82,7 @@ private:
 
     QGLXPainter m_painter;
     SkySphere m_skySphere;
-	SelectionFlag m_selectionFlags;
+    NCVSelectionFlag m_NCVSelectionFlags;
     bool m_renderDirty,m_performSilhouetting;
     QTime m_timer, m_idleTimer;
     GLfloat m_legendShowTime;
@@ -99,7 +99,7 @@ private:
     bool m_leftMouseDown,m_rightMouseDown,m_renderNeurons,m_renderConnections,m_versionCapable,m_initialized;
     QGLXBuffer m_screenVertices,m_screenCoords;
     QSet<GLuint> m_selectedObjects;
-    QVector<Range> m_ranges;
+    QVector<NCVElementRange> m_ranges;
 };
 
 #endif // NCVCANVAS_H

@@ -3,7 +3,7 @@
 #include "qglx/qglxbuffer.h"
 #include "qglx/qglxcamera.h"
 #include "qglx/qglxtexture2d.h"
-
+#include <QGLShaderProgram>
 
 class SkySphere
 {

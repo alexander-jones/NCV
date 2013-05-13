@@ -1,12 +1,28 @@
 #ifndef NCVNEURONSET_H
 #define NCVNEURONSET_H
 
-#include "ncvcore.h"
 #include "qglx/qglxtexture2d.h"
 #include "qglx/qglxboundingbox.h"
 #include "core/ncsneuronset.h"
 #include "ncvcontinuousattribute.h"
 #include "ncvdiscreteattribute.h"
+
+enum NCVSelectionFlag
+{
+    RenderDeselected = 1,
+    CompoundSelection = 2
+};
+
+struct NCVElementRange
+{
+    int start;
+    int end;
+    bool operator==(const NCVElementRange &rhs)
+    {
+        return start == rhs.start && end == rhs.end;
+    }
+};
+
 
 class NCVNeuronSet:public QObject
 {
@@ -24,6 +40,7 @@ public:
     void release();
     void releaseSilhouettes();
 	QGLXBuffer positionBuffer();
+    QGLXBufferTexture positionBufferTexture();
     QGLXBoundingBox bounds();
     QMap<QString,NCVAttribute *> attributes();
     NCVAttribute* getCurrentAttribute();
@@ -48,6 +65,7 @@ private:
     NCVAttribute * m_currentAttribute;
     QGLXBoundingBox m_bounds;
     QGLXBuffer m_positionBuffer;
+    QGLXBufferTexture m_positionBufferTexture;
     QGLShaderProgram m_silhouetteProgram , m_continuousProgram, m_discreteProgram;
 };
 

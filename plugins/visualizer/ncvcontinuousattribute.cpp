@@ -73,12 +73,49 @@ void NCVContinuousAttribute::destroy()
 {
     if (m_buffer.isCreated())
         m_buffer.destroy();
+
+    if (!m_bufferTexture.isCreated())
+        m_bufferTexture.destroy();
+
     if (m_colorTexture.isCreated())
         m_colorTexture.destroy();
 }
 
 QGLXTexture1D NCVContinuousAttribute::colorationTexture()
 {
+
+    return m_colorTexture;
+}
+
+QGLXBufferTexture NCVContinuousAttribute::attributeTexture()
+{
+
+
+    return m_bufferTexture;
+}
+
+void NCVContinuousAttribute::resolve()
+{
+    if (!m_buffer.isCreated())
+        m_buffer.create();
+
+    GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,1,QGLXTexture::getComponentSize(GL_FLOAT));
+
+    if (!m_bufferTexture.isCreated())
+        m_bufferTexture.create();
+
+    if (m_dataDirty)
+    {
+        GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
+
+        QVector<float> data = m_parent->data();
+        if (data.count() > 0)
+        {
+            m_buffer.allocate(&data[0],componentSize * data.count());
+            m_bufferTexture.attach(m_buffer,textureFormat);
+        }
+        m_dataDirty = false;
+    }
 
     if (!m_colorTexture.isCreated())
         m_colorTexture.create();
@@ -95,25 +132,7 @@ QGLXTexture1D NCVContinuousAttribute::colorationTexture()
         m_colorTexture.release();
         m_colorationDirty = false;
     }
-    return m_colorTexture;
-}
-QGLXBuffer NCVContinuousAttribute::attributeBuffer()
-{
-    if (!m_buffer.isCreated())
-        m_buffer.create();
-    if (m_dataDirty)
-    {
-        GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
-        GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,1,componentSize);
 
-        m_buffer.bind(QGLXBuffer::TextureBuffer);
-        QVector<float> data = m_parent->data();
-        if (data.count() > 0);
-            m_buffer.allocate(&data[0],componentSize * data.count(),textureFormat);
-        m_buffer.release();
-        m_dataDirty = false;
-    }
-    return m_buffer;
 }
 
 void NCVContinuousAttribute::m_parentChanged()

@@ -64,42 +64,61 @@ void NCVDiscreteAttribute::attachColoration(QMap<QString,QRgb> coloration)
     }
     m_colorationDirty = true;
 }
-QGLXBuffer NCVDiscreteAttribute::attributeBuffer()
+
+QGLXBufferTexture NCVDiscreteAttribute::attributeTexture()
 {
+
+    return m_bufferTexture;
+}
+
+void NCVDiscreteAttribute::resolve()
+{
+
     if (!m_buffer.isCreated())
         m_buffer.create();
+    GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_BYTE,1,QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE));
+
+    if (!m_bufferTexture.isCreated())
+    {
+        m_bufferTexture.create();
+    }
 
     if (m_dataDirty)
     {
         GLuint componentSize = QGLXTexture::getComponentSize(GL_UNSIGNED_BYTE);
-        GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_UNSIGNED_BYTE,1,componentSize);
 
         QVector<unsigned char> data = m_parent->data();
         if (data.count() > 0)
-            m_buffer.allocate(&data[0],componentSize * data.count(),textureFormat);
+            m_buffer.allocate(&data[0],componentSize * data.count());
 
+        m_bufferTexture.attach(m_buffer,textureFormat);
         m_dataDirty = false;
     }
-    return m_buffer;
-}
 
-QGLXBuffer NCVDiscreteAttribute::colorationBuffer()
-{
     if (!m_colorBuffer.isCreated())
         m_colorBuffer.create();
 
+    GLenum textureFormatColor  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,3,QGLXTexture::getComponentSize(GL_FLOAT));
+
+    if (!m_colorationTexture.isCreated())
+    {
+        m_colorationTexture.create();
+    }
+
     if (m_colorationDirty)
     {
-        GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
-        GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,3,componentSize);
-
         if (m_colorationData.count() > 0)
-            m_colorBuffer.allocate(&m_colorationData[0],sizeof(QVector3D) * m_colorationData.count(),textureFormat);
+            m_colorBuffer.allocate(&m_colorationData[0],sizeof(QVector3D) * m_colorationData.count());
+
+        m_colorationTexture.attach(m_colorBuffer,textureFormatColor);
         m_colorationDirty = false;
     }
-    return m_colorBuffer;
 }
 
+QGLXBufferTexture NCVDiscreteAttribute::colorationTexture()
+{
+    return m_colorationTexture;
+}
 
 QMap<QString,QColor> NCVDiscreteAttribute::coloration()
 {
@@ -132,8 +151,12 @@ void NCVDiscreteAttribute::destroy()
 {
     if (m_buffer.isCreated())
         m_buffer.destroy();
+    if (m_bufferTexture.isCreated())
+        m_bufferTexture.destroy();
     if (m_colorBuffer.isCreated())
         m_colorBuffer.destroy();
+    if (m_colorationTexture.isCreated())
+        m_colorationTexture.destroy();
 }
 
 void NCVDiscreteAttribute::m_parentChanged()

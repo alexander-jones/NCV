@@ -1,8 +1,12 @@
 #ifndef QGLXTEXTURE2D_H
 #define QGLXTEXTURE2D_H
-
 #include "qglxtexture.h"
 
+/*!
+    \class QGLXTexture2D
+    \author Alex Jones
+    \brief A class for manipulating two dimensional textures.
+*/
 class QGLXTexture2D : public QGLXTexture
 {
 public:
@@ -43,9 +47,10 @@ public:
     /*!
         \param target The logical frame buffer target to use for this texture
         \param attachment The frame buffer attachment slot in the currently bound framebuffer.
+        \param offset The offset from the first attachment slot to use. Only applies to color attachments.
         \brief This function binds the texture to the current context.
     */
-    void bind(FrameBufferTarget target, FrameBufferAttachment attachment) ;
+    void bind(FrameBufferTarget target, FrameBufferAttachment attachment, GLuint offset = 0) ;
 
     /*!
         \param unit The image texture unit to bind this texture to.
@@ -53,7 +58,7 @@ public:
         \param level The level of this texture to bind to the assocaited image texture unit.
         \brief Constructs a QGLXTexture object of type.
     */
-    void bind(ImageUnit unit,ImageTextureAccess access,GLuint level=0);
+    void bind(GLuint unit,Access access,GLuint level=0);
 
 
     /*!
@@ -103,7 +108,6 @@ public:
     */
     GLenum pixelType();
 
-    QRect rect();
     /*!
         \brief This function releases this texture from the current context.
     */
@@ -118,22 +122,20 @@ public:
     void setSize(GLuint width,GLuint height);
 
     /*!
-        \param filter The mag filter to use when sampling this texture.
-        \brief This function sets the mag filter setting for sampling.
-        \note Nearest and Linear are the only valid mag filters.
+        \param filter The texture filtering option to use.
+        \brief This function sets the min filter for this texture.
+        When a surface is rendered with smaller dimensions than the uv mapping of this texture, the min filter controls how pixel values are interpolated.
         It is assumed this texture has been allocated and is bound to the current context.
     */
-
     void setMagFilter(Filter filter);
 
-
     /*!
-        \param filter The min filter to use when sampling this texture.
-        \brief This function sets the min filter setting for sampling.
+        \param filter The texture filtering option to use.
+        \brief This function sets the mag filter for this texture.
+        When a surface is rendered with greater dimensions than the uv mapping of this texture, the mag filter controls how pixel values are interpolated.
         It is assumed this texture has been allocated and is bound to the current context.
     */
     void setMinFilter(Filter filter);
-
 
     /*!
         \param onWidth The wrap function for the x axis of the texture;
@@ -143,6 +145,9 @@ public:
     */
     void setWrapFunction(WrapFunction onWidth, WrapFunction onHeight);
 
+    /*!
+        \brief This function returns the size of this texture.
+    */
     QSize size();
 
     /*!
@@ -152,9 +157,7 @@ public:
 
 private:
     bool m_multisampled;
-    FrameBufferAttachment m_attachment;
-    ImageUnit m_imageUnit;
-    GLuint m_textureUnit;
+    GLuint m_imageUnit;
     GLuint m_samples;
     GLuint m_id;
     GLenum m_pixelType;
