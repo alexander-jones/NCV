@@ -10,7 +10,7 @@
 #include "core/networking/reporting/ncsdatasource.h"
 #include <QMainWindow>
 #include <QVBoxLayout>
-#include <QwwConfigWidget>
+#include <qxt/QxtGui/QxtConfigWidget>
 
 
 class MainWindow : public QMainWindow
@@ -21,8 +21,10 @@ public:
     explicit MainWindow(QWidget *parent = 0);
 
     void addWidget(NCSWidgetPlugin *widget);
+    void addWidget(NCSConnectionWidgetPlugin *widget);
     void addWidget(NCSApplicationWidgetPlugin *widget);
     void addWidget(NCSDistributionWidgetPlugin *widget);
+    void addWidget(NCSSubscriberWidgetPlugin *widget);
     ~MainWindow();
 
 protected:
@@ -34,7 +36,6 @@ private slots:
     void m_publishNetwork();
     void m_loadProject(QString projectDirectory);
     void m_updateTimeScale(int multiplier);
-    void m_distributionFinalized();
     void m_openProjectPressed();
     void m_newProjectPressed();
     void m_ncsApplicationLaunched(NCSApplicationBridge * );
@@ -47,6 +48,12 @@ private slots:
     void m_showLoadingSimulation();
 
 private:
+    QVector< NCSWidgetPlugin *> m_allPlugins;
+    QVector< NCSConnectionWidgetPlugin *> m_connectionPlugins;
+    QVector< NCSApplicationWidgetPlugin *> m_applicationPlugins;
+    QVector< NCSDistributionWidgetPlugin *> m_distributionPlugins;
+    QVector< NCSSubscriberWidgetPlugin *> m_subscriberPlugins;
+
     int m_simulationApplicationIndex;
     QToolBar * m_simulationToolbar;
     QSlider * m_simulationTimeSlider;
@@ -56,11 +63,9 @@ private:
     QTimer * m_updateTimer;
     NCSCommandBridge * m_commandBridge;
     NCSDataSource * m_dataSource;
-    NCVWidget * m_visualizationWidget;
     QString m_rootPath;
     QVBoxLayout * m_layout;
-    QwwConfigWidget * m_tabWidget;
-    NCSConnectionWidget * m_connectionWidget;
+    QxtConfigWidget * m_applicationLauncher;
     QToolBar * m_toolbar;
     QSlider * m_timeScaleSlider;
     QLabel * m_timeScale, * m_simulationLoadingLabel;

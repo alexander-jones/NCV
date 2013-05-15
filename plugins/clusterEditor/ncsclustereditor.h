@@ -19,7 +19,9 @@ public:
 
 
 public slots:
-    void initialize(NCSCommandBridge * bridge);
+    void setCommandBridge(NCSCommandBridge * bridge);
+    void initialize();
+    void cleanup();
     void clear();
 
 private slots:

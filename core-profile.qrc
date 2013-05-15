@@ -49,5 +49,6 @@
         <file>plugins/visualizer/shaders/neuronSilhouette.vert</file>
         <file>plugins/visualizer/shaders/silhouette.frag</file>
         <file>media/loading.gif</file>
+        <file>media/exit.png</file>
     </qresource>
 </RCC>

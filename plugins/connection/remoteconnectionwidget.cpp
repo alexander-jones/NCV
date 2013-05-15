@@ -1,6 +1,6 @@
 #include "remoteconnectionwidget.h"
 #include <QBuffer>
-
+#include <QLabel>
 RemoteConnectionWidget::RemoteConnectionWidget(QWidget *parent) :
     QWidget(parent)
 {
@@ -12,15 +12,31 @@ RemoteConnectionWidget::RemoteConnectionWidget(QWidget *parent) :
     m_credentialEntryLayout = new QVBoxLayout();
     m_credentialEntryLayout->setAlignment(Qt::AlignCenter);
 
-
     m_credentialEntryLabel = new QLabel("Cluster Credentials:");
     m_credentialEntryLabel->setAlignment(Qt::AlignCenter);
     m_credentialEntryLayout->addWidget(m_credentialEntryLabel);
 
-    m_loginWidget = new QwwLoginBox();
-    m_loginWidget->setFields( QwwLoginBox::HostField | QwwLoginBox::UserField	| QwwLoginBox::PasswordField);
+    m_hostVector = new QWidgetVector(this);
+    m_hostVector->addWidget(new QLabel("Host:"));
+    m_hostEdit = new QLineEdit();
+    m_hostVector->addWidget(m_hostEdit);
 
-    m_credentialEntryLayout->addWidget(m_loginWidget);
+    m_credentialEntryLayout->addWidget(m_hostVector);
+
+    m_userVector = new QWidgetVector(this);
+    m_userVector->addWidget(new QLabel("User:"));
+    m_userEdit = new QLineEdit();
+    m_userVector->addWidget(m_userEdit);
+
+    m_credentialEntryLayout->addWidget(m_userVector);
+
+    m_passwordVector = new QWidgetVector(this);
+    m_passwordVector->addWidget(new QLabel("Password:"));
+    m_passwordEdit = new QLineEdit();
+    m_passwordEdit->setEchoMode(QLineEdit::Password);
+    m_passwordVector->addWidget(m_passwordEdit);
+
+    m_credentialEntryLayout->addWidget(m_passwordVector);
 
     m_buttonWidget = new QWidget();
     m_buttonLayout = new QGridLayout();
@@ -149,8 +165,9 @@ bool RemoteConnectionWidget::loadCredentials(QString filename)
 
     QStringList items = QString(allText).split(" ");
 
-    m_loginWidget->setUser( items[0], items[2]);
-    m_loginWidget->setHost( items[1]);
+    m_userEdit->setText(items[0]);
+    m_hostEdit->setText(items[1]);
+    m_passwordEdit->setText(items[2]);
     m_addToRecentCredentials(filename);
     return true;
 
@@ -169,7 +186,7 @@ void RemoteConnectionWidget::saveCredentials(QString fileName)
     //setup our objects
     SimpleCrypt crypto(Q_UINT64_C(0x0c2ad4a4acb9f023)); //some random number
     crypto.setIntegrityProtectionMode(SimpleCrypt::ProtectionHash);  //properly protect the integrity of the data
-    QString allText = m_loginWidget->user()  + " " + m_loginWidget->host() + " " + m_loginWidget->password();
+    QString allText = m_userEdit->text()  + " " + m_hostEdit->text() + " " + m_passwordEdit->text();
 
     QByteArray credentialsEncrypted = crypto.encryptToByteArray(allText.toAscii());
 
@@ -210,7 +227,7 @@ void RemoteConnectionWidget::m_tryConnect()
     QMessageBox msgBox;
     msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
 
-    if (m_loginWidget->user() == "" || m_loginWidget->host() == "" || m_loginWidget->password() == "" )
+    if (m_userEdit->text() == "" || m_hostEdit->text() == "" || m_passwordEdit->text() == "" )
     {
         msgBox.setText("Fields were left empty. Fill all remaining fields and try again.");
         msgBox.exec();
@@ -220,14 +237,14 @@ void RemoteConnectionWidget::m_tryConnect()
     connectionAttempted();
     if (m_connection->isConnected())
         m_connection->disconnectFromHost();
-    m_connection->connectToHost(m_loginWidget->host());
+    m_connection->connectToHost(m_hostEdit->text(),22,QSshSocket::LogOperations);
 
 }
 
 
 void RemoteConnectionWidget::m_onConnect()
 {
-    m_connection->login(m_loginWidget->user(),m_loginWidget->password());
+    m_connection->login(m_userEdit->text(),m_passwordEdit->text());
 }
 
 

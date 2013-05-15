@@ -33,8 +33,8 @@ public:
     explicit NCSLocalCommandBridge(QObject *parent = 0);
     void initialize(QString projectSubDir);
     void validate(QString path);
-    void executeApplication(QString application, NCSCommandArguments arguments);
-    void executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
+    void launchApplication(QString application, NCSCommandArguments arguments);
+    void launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
     bool valid();
     QString hostname();
 

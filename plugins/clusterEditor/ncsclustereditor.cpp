@@ -139,10 +139,18 @@ QString NCSClusterEditor::title()
     return "Cluster Editor";
 }
 
-void NCSClusterEditor::initialize(NCSCommandBridge *bridge)
+void NCSClusterEditor::setCommandBridge(NCSCommandBridge *bridge)
 {
     m_commandBridge = bridge;
     this->setEnabled(true);
+}
+
+void NCSClusterEditor::initialize()
+{
+}
+
+void NCSClusterEditor::cleanup()
+{
 }
 
 void NCSClusterEditor::m_hostFileEditChanged(QString newText)
@@ -185,7 +193,7 @@ void NCSClusterEditor::m_hostfileDetectAndAppend()
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
-    m_commandBridge->executeApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
+    m_commandBridge->launchApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
 void NCSClusterEditor::m_hostfileDetectAndLoad()
@@ -205,7 +213,7 @@ void NCSClusterEditor::m_hostfileDetectAndLoad()
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
-    m_commandBridge->executeApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
+    m_commandBridge->launchApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
 void NCSClusterEditor::m_detectDevicesOverIPRange()

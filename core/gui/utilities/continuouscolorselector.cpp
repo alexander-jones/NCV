@@ -24,13 +24,19 @@ Marker::Type  Marker::type(){return m_type;}
 float  Marker::value(){return m_value;}
 Marker::Size  Marker::size() {return m_size;}
 
-void  Marker::setPosition(int position){m_position = position;}
+void  Marker::setPosition(int position)
+{
+    m_position = position;
+}
 void  Marker::setSize(Size size)
 {
 	 Marker::m_size = size;
 	 Marker::m_drawImage();
 }
-void  Marker::setValue(float value){m_value = value;}
+void  Marker::setValue(float value)
+{
+    m_value = value;
+}
 
 void  Marker::setRightColor(QColor color)
 {

@@ -20,7 +20,9 @@ public:
     QString title();
 
 public slots:
-    void initialize(NCSCommandBridge * bridge);
+    void setCommandBridge(NCSCommandBridge * bridge);
+    void initialize();
+    void cleanup();
 
 private slots:
     void m_readStandardOutput();

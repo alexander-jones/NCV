@@ -14,21 +14,19 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidge
     m_layout = new QVBoxLayout();
 
     m_mainGroupVector = new QGroupVector();
-    m_mainGroupVector->setDirection(QGroupVector::TopToBottom);
-    m_modelWidgetVector = new QWidgetVector();
+
+    m_modelLayout = new QHBoxLayout();
     m_modelFileEdit = new QLineEdit();
-    m_modelWidgetVector->addWidget(m_modelFileEdit);
+    m_modelLayout->addWidget(m_modelFileEdit);
     m_loadModelFileButton = new QPushButton("Load Model File ");
     connect(m_loadModelFileButton,SIGNAL(clicked()),this,SLOT(m_modelLoadPressed()));
-    m_modelWidgetVector->addWidget(m_loadModelFileButton);
-    m_mainGroupVector->addGroup("Model File:");
-    m_mainGroupVector->addToGroup("Model File:",m_modelWidgetVector);
+    m_modelLayout->addWidget(m_loadModelFileButton);
+    m_mainGroupVector->addGroup("Model File:",m_modelLayout);
 
-    m_modelIncludeVector = new QWidgetVector();
-    m_modelIncludeVector->setDirection(QWidgetVector::TopToBottom);
+    m_modelIncludeLayout = new QVBoxLayout();
     m_modelDependencyWidget = new QListWidget();
     m_modelDependencyWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-    m_modelIncludeVector->addWidget(m_modelDependencyWidget);
+    m_modelIncludeLayout->addWidget(m_modelDependencyWidget);
 
     m_modelButtonVector = new QWidgetVector();
     m_appendModelFileButton = new QPushButton("Append Model Include");
@@ -38,9 +36,8 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidge
     connect(m_removeModelFileButton,SIGNAL(clicked()),this,SLOT(m_modelRemovePressed()));
     m_modelButtonVector->addWidget(m_removeModelFileButton);
 
-    m_modelIncludeVector->addWidget(m_modelButtonVector);
-    m_mainGroupVector->addGroup("Model Include Files:");
-    m_mainGroupVector->addToGroup("Model Include Files:",m_modelIncludeVector);
+    m_modelIncludeLayout->addWidget(m_modelButtonVector);
+    m_mainGroupVector->addGroup("Model Include Files:",m_modelIncludeLayout);
 
     m_layout->addWidget(m_mainGroupVector);
 
@@ -83,13 +80,19 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidge
     m_launched = false;
 }
 
-void LIFModelDistributionWidget::initialize(NCSCommandBridge * bridge)
+void LIFModelDistributionWidget::setCommandBridge(NCSCommandBridge * bridge)
 {
     this->setEnabled(true);
     m_commandBridge = bridge;
 
 }
+void LIFModelDistributionWidget::initialize()
+{
+}
 
+void LIFModelDistributionWidget::cleanup()
+{
+}
 
 void LIFModelDistributionWidget::m_modelLoadPressed()
 {
@@ -214,14 +217,15 @@ void LIFModelDistributionWidget::m_launchSimulationPressed()
     QString modelFile = modelPathSegments.at(modelPathSegments.size()-1);
     QString clusterFile = clusterPathSegments.at(clusterPathSegments.size()-1);
 
+    qDebug() << modelFileDependencies.count();
 
     NCSCommandArguments distArgs;
     distArgs << NCSCommandFileArgument(modelFile,m_modelFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution,modelFileDependencies);
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
-    distArgs << NCSCommandFileArgument(m_distributionOutputDir) << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
+    distArgs << m_distributionOutputDir << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     launchTriggered();
-    m_commandBridge->executeApplication("ncsDistributor",distArgs);
+    m_commandBridge->launchApplication("ncsDistributor",distArgs);
 }
 
 void LIFModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::ApplicationError err)
@@ -268,14 +272,14 @@ void LIFModelDistributionWidget::m_distributionFinished()
 
 
     NCSCommandArguments simArgs;
-    simArgs << NCSCommandFileArgument(m_distributionOutputDir) << timeArg;
+    simArgs << m_distributionOutputDir << timeArg;
 
     NCSCluster cluster;
     cluster.read(m_clusterFileEdit->text());
     QString hostFilePath =  m_projectDir + "/tmp/hostfile";
     cluster.writeHostfile(hostFilePath);
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
-    m_commandBridge->executeApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
+    m_commandBridge->launchApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
 

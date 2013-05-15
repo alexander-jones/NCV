@@ -70,7 +70,7 @@ void NCVCanvas::m_drawLegend()
         if (m_neurons != NULL && m_connections != NULL)
         {
             html += "<h4 align=\"center\">Connection (" + QString::number(objectID) + ")</h4>";
-            offset = objectID - m_neurons->count() ;
+            offset = objectID - m_neurons->count() -1;
             attributes = m_connections->attributes();
         }
     }

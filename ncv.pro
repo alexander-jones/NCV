@@ -6,15 +6,16 @@
 
 #QMAKE_CXXFLAGS += -std=c++0x
 
-QT  += core network xml gui opengl wwwidgets
+CONFIG+= qxt
+QXT += core gui
+QT  += core network xml gui opengl
 TARGET = ncv
 TEMPLATE = app
-CONFIG+= wwwidgets
 ICON = media/ncv.png
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lssh -lGLU  -lGLEW
+    LIBS +=  -lssh -lGLU  /usr/lib64/libGLEW.so.1.9.0
 }
 
 #windows specific settings
@@ -35,14 +36,12 @@ SOURCES += \
     core/ncsattribute.cpp \
     core/gui/utilities/qwidgetvector.cpp \
     core/gui/utilities/qswitch.cpp \
-    core/gui/utilities/qgroupvector.cpp \
     core/gui/utilities/orientationbutton.cpp \
     core/gui/utilities/discretecolorselector.cpp \
     core/gui/utilities/continuouscolorselector.cpp \
     core/gui/utilities/combowidget.cpp \
     core/networking/command/ncsremotecommandbridge.cpp \
     core/networking/command/ncslocalcommandbridge.cpp \
-    core/networking/command/ncscommandfileargument.cpp \
     core/networking/reporting/qsocketconnection.cpp \
     core/networking/reporting/qreportclient.cpp \
     core/networking/reporting/networkupdatethread.cpp \
@@ -76,7 +75,9 @@ SOURCES += \
     core/gui/utilities/imagecontainer.cpp \
     plugins/lifLauncher/lifmodeldistributionwidget.cpp \
     core/networking/command/qsshsocket.cpp \
-    plugins/visualizer/qglx/qglxbuffertexture.cpp
+    plugins/visualizer/qglx/qglxbuffertexture.cpp \
+    core/gui/utilities/qgroupvector.cpp \
+    core/networking/command/ncscommandbridge.cpp
 
 HEADERS  += \
     core/ncsneuronset.h \
@@ -90,7 +91,6 @@ HEADERS  += \
     core/gui/plugin-interfaces/ncsapplicationwidgetplugin.h \
     core/gui/utilities/qwidgetvector.h \
     core/gui/utilities/qswitch.h \
-    core/gui/utilities/qgroupvector.h \
     core/gui/utilities/orientationbutton.h \
     core/gui/utilities/discretecolorselector.h \
     core/gui/utilities/continuouscolorselector.h \
@@ -98,7 +98,6 @@ HEADERS  += \
     core/gui/utilities/colorbutton.h \
     core/networking/command/ncsremotecommandbridge.h \
     core/networking/command/ncslocalcommandbridge.h \
-    core/networking/command/ncscommandfileargument.h \
     core/networking/command/ncscommandbridge.h \
     core/networking/reporting/qsocketconnection.h \
     core/networking/reporting/qreportclient.h \
@@ -135,7 +134,8 @@ HEADERS  += \
     core/networking/command/qsshsocket.h \
     core/networking/reporting/sleeper.h \
     plugins/visualizer/qglx/qglxbuffertexture.h \
-    plugins/visualizer/ncvattribute.h
+    plugins/visualizer/ncvattribute.h \
+    core/gui/utilities/qgroupvector.h
 
 FORMS    += \
     mainwindow.ui \

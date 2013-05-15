@@ -21,34 +21,32 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
 
     m_connectionGroupVector = new QGroupVector();
     connect(m_connectionGroupVector,SIGNAL(groupChecked(QString,bool)),this,SLOT(m_connectionGroupChecked(QString,bool)));
-    m_connectionGroupVector->setEnableOnlyChecked(true);
-    m_connectionGroupVector->setDirection(QGroupVector::TopToBottom);
-    m_connectionGroupVector->setCheckState(QGroupVector::CheckSingle);
+    m_connectionGroupVector->setUncheckedBehavior(QGroupVector::DisableUnchecked);
+    m_connectionGroupVector->setCheckedBehavior(QGroupVector::SingleChecked);
 
-    m_connectionGroupVector->addGroup("Use Local Machine as Host");
-    m_connectionGroupVector->setGroupChecked("Use Local Machine as Host",true);
-    m_localNCSDirectoryVector = new QWidgetVector();
+    m_localLayout = new QHBoxLayout();
     m_localNCSDirectoryLabel = new QLabel("NCS 6 Directory:");
-    m_localNCSDirectoryVector->addWidget(m_localNCSDirectoryLabel);
+    m_localLayout->addWidget(m_localNCSDirectoryLabel);
     m_ncsDirectoryEdit = new QLineEdit(projectPath);
     connect(m_ncsDirectoryEdit,SIGNAL(textChanged(QString)),this,SLOT(m_localNCSDirectoryChanged(QString)));
-    m_localNCSDirectoryVector->addWidget(m_ncsDirectoryEdit);
+    m_localLayout->addWidget(m_ncsDirectoryEdit);
     m_ncsBrowseButton = new QPushButton("Browse");
     connect(m_ncsBrowseButton,SIGNAL(clicked()),this,SLOT(m_browseForNCS()));
-    m_localNCSDirectoryVector->addWidget(m_ncsBrowseButton);
-
+    m_localLayout->addWidget(m_ncsBrowseButton);
     m_localValidateButton = new QPushButton("Validate");
     m_localValidateButton->setEnabled(false);
     connect(m_localValidateButton,SIGNAL(clicked()),this,SLOT(m_validateLocalConnection()));
-    m_localNCSDirectoryVector->addWidget(m_localValidateButton);
-    m_connectionGroupVector->addToGroup("Use Local Machine as Host",m_localNCSDirectoryVector);
+    m_localLayout->addWidget(m_localValidateButton);
 
-    m_connectionGroupVector->addGroup("Use Remote Machine as Host");
+    m_connectionGroupVector->addGroup("Use Local Machine as Host", m_localLayout);
+    m_connectionGroupVector->setGroupChecked("Use Local Machine as Host",true);
+
+    m_remoteLayout = new QVBoxLayout();
     m_remoteConnectionWidget = new RemoteConnectionWidget();
     m_remoteConnectionWidget->setEnabled(false);
     connect(m_remoteConnectionWidget,SIGNAL(connected(QSshSocket*)),this,SLOT(m_remoteConnectionEstablished(QSshSocket*)));
     connect(m_remoteConnectionWidget,SIGNAL(connectionFailed()),this,SLOT(m_remoteConnectionFailed()));
-    m_connectionGroupVector->addToGroup("Use Remote Machine as Host",m_remoteConnectionWidget);
+    m_remoteLayout->addWidget(m_remoteConnectionWidget);
 
     m_remoteNCSDirectoryVector = new QWidgetVector();
     m_remoteNCSDirectoryVector->setEnabled(false);
@@ -59,8 +57,9 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     m_remoteValidateButton = new QPushButton("Validate");
     connect(m_remoteValidateButton,SIGNAL(clicked()),this,SLOT(m_validateRemoteConnection()));
     m_remoteNCSDirectoryVector->addWidget(m_remoteValidateButton);
-    m_connectionGroupVector->addToGroup("Use Remote Machine as Host",m_remoteNCSDirectoryVector);
 
+    m_remoteLayout->addWidget(m_remoteNCSDirectoryVector);
+    m_connectionGroupVector->addGroup("Use Remote Machine as Host",m_remoteLayout);
     m_layout->addWidget(m_connectionGroupVector);
 
     m_statusLabel = new QLabel();
@@ -164,6 +163,13 @@ void NCSConnectionWidget::m_connectionInvalidated(NCSCommandBridge::ValidationEr
     msgBox.exec();
 }
 
+void NCSConnectionWidget::initialize()
+{
+}
+
+void NCSConnectionWidget::cleanup()
+{
+}
 QIcon NCSConnectionWidget::icon()
 {
     return QIcon(":/media/connectIcon.png");

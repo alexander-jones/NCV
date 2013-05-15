@@ -21,7 +21,9 @@ public:
     QString title();
 
 public slots:
-    void initialize(NCSCommandBridge * bridge);
+    void setCommandBridge(NCSCommandBridge * bridge);
+    void initialize();
+    void cleanup();
 
 private slots:
     void m_readStandardOutput();
@@ -60,7 +62,9 @@ private:
     QLineEdit * m_clusterFileEdit, * m_modelFileEdit;
     QLabel * m_clusterFileLabel, *m_modelDependencyLabel, * m_timeLabel;
     QPushButton * m_browseClusterButton, * m_loadModelFileButton, * m_appendModelFileButton, * m_removeModelFileButton;
-    QWidgetVector * m_clusterWidgetVector, * m_modelIncludeVector, *m_modelWidgetVector, * m_timeWidgetVector,* m_modelButtonVector;
+    QHBoxLayout * m_modelLayout;
+    QVBoxLayout * m_modelIncludeLayout;
+    QWidgetVector * m_clusterWidgetVector,* m_modelButtonVector, * m_timeWidgetVector;
     QGroupVector * m_mainGroupVector;
     QComboBox * m_timeUnitsComboBox;
     QSpinBox * m_timeSpinBox;

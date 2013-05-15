@@ -2,7 +2,7 @@
 #define QGROUPVECTOR_H
 
 #include <QWidget>
-#include <QGroupBox>
+#include <QxtGroupBox>
 #include <QBoxLayout>
 #include <QSignalMapper>
 
@@ -10,6 +10,7 @@ class QGroupVector : public QWidget
 {
     Q_OBJECT
 public:
+
     enum Direction
     {
         TopToBottom = QBoxLayout::TopToBottom,
@@ -18,33 +19,34 @@ public:
         RightToLeft = QBoxLayout::RightToLeft
     };
 
-    enum CheckState
+    enum CheckedBehavior
     {
-        CheckNone,
-        CheckMultiple,
-        CheckSingle
+        NoChecked,
+        SingleChecked,
+        MultipleChecked
     };
 
+    enum UncheckedBehavior
+    {
+        EnableUnchecked,
+        DisableUnchecked,
+        CollapseUnchecked
+    };
 
     explicit QGroupVector(QWidget *parent = 0);
-    void addGroup(QString groupName);
-    void insertGroup(int index, QString groupName);
+    void addGroup(QString groupName, QLayout * layout);
+    void insertGroup(int index,QString groupName, QLayout * layout);
     void removeGroup(QString groupName);
     bool containsGroup(QString name);
-    void setGroupAlignment(QString groupName,Qt::Alignment);
-    void setGroupDirection(QString groupName,Direction);
+    bool containsGroup(QLayout * layout);
     void setGroupChecked(QString groupName,bool checked);
-    void addToGroup(QString groupName,QWidget * widget);
-    void insertInGroup(QString groupName,int index, QWidget * widget);
-    void removeFromGroup(QString groupName, QWidget * widget);
-    bool groupContainsWidget(QString groupName,QWidget * widget);
     void setDirection(Direction direction);
     void setAlignment(Qt::Alignment alignment);
-    void setCheckState(CheckState state);
-    void setEnableOnlyChecked(bool set);
+    void setCheckedBehavior(CheckedBehavior behavior);
+    void setUncheckedBehavior(UncheckedBehavior state);
     bool isGroupChecked(QString groupName);
-    bool onlyCheckedEnabled();
-    QGroupVector::CheckState checkState();
+    QGroupVector::CheckedBehavior checkBehavior();
+    QGroupVector::UncheckedBehavior uncheckedBehavior();
 
 signals:
     void groupChecked(QString groupName,bool checked);
@@ -59,11 +61,11 @@ private:
 
     QBoxLayout * m_layout;
     QVector<QString> m_groupNames;
-    QVector<QBoxLayout*> m_groupLayouts;
-    QVector<QGroupBox*> m_groupBoxes;
-    CheckState m_checkState;
-    QSignalMapper * m_checkStateMapper;
-    bool m_onlyEnableOnChecked;
+    QVector<QLayout*> m_groupLayouts;
+    QVector<QxtGroupBox*> m_groupBoxes;
+    CheckedBehavior m_checkedBehavior;
+    UncheckedBehavior m_uncheckedBehavior;
+    QSignalMapper * m_checkMapper;
 };
 
 #endif // QGROUPVECTOR_H

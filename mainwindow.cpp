@@ -76,13 +76,75 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_applicationMapper = new QSignalMapper(this);
     connect(m_applicationMapper,SIGNAL(mapped(QObject*)),this,SLOT(m_ncsApplicationFinished(QObject*)));
-    m_tabWidget = NULL;
+    m_applicationLauncher = NULL;
     m_commandBridge = NULL;
     m_dataSource = NULL;
     m_simulationApplicationIndex = -1;
 
 }
 
+
+
+void MainWindow::addWidget(NCSWidgetPlugin *widget)
+{
+    m_allPlugins.append(widget);
+    m_applicationLauncher->addPage(widget,widget->icon(),widget->title());
+}
+
+void MainWindow::addWidget(NCSConnectionWidgetPlugin *widget)
+{
+    for (int i = 0; i < m_applicationPlugins.count(); i ++)
+        connect(widget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),m_applicationPlugins[i],SLOT(setCommandBridge(NCSCommandBridge*)));
+
+    connect(widget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
+    m_connectionPlugins.append(widget);
+    addWidget((NCSWidgetPlugin *)widget);
+}
+
+void MainWindow::addWidget(NCSApplicationWidgetPlugin *widget)
+{
+    for (int i = 0; i < m_connectionPlugins.count(); i ++)
+        connect(m_connectionPlugins[i],SIGNAL(bridgeEstablished(NCSCommandBridge*)),widget,SLOT(setCommandBridge(NCSCommandBridge*)));
+    m_applicationPlugins.append(widget);
+    addWidget((NCSWidgetPlugin *)widget);
+    m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(widget),false);
+}
+void MainWindow::addWidget(NCSDistributionWidgetPlugin *widget)
+{
+    connect(widget,SIGNAL(launchTriggered()),this,SLOT(m_showLoadingSimulation()));
+    connect(widget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
+    connect(widget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
+
+    m_distributionPlugins.append(widget);
+    addWidget((NCSApplicationWidgetPlugin *)widget);
+    m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(widget),false);
+}
+void MainWindow::addWidget(NCSSubscriberWidgetPlugin *widget)
+{
+    m_subscriberPlugins.append(widget);
+    addWidget((NCSWidgetPlugin *)widget);
+    m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(widget),false);
+}
+
+void MainWindow::closeEvent(QCloseEvent * event)
+{
+    while (m_activeApplications.count() > 0)
+    {
+        QVector<NCSApplicationBridge*>::iterator it = m_activeApplications.begin();
+        NCSApplicationBridge* app = *it;
+        QMessageBox msgBox;
+        msgBox.setText("The NCS application '" + app->applicationName() + "' is still running.\n Should this application be closed or left running?"  );
+        QPushButton * leaveOpenButton =  msgBox.addButton("Leave Running", QMessageBox::ActionRole);
+        msgBox.addButton("Close", QMessageBox::ActionRole);
+        msgBox.exec();
+        m_activeApplications.remove(m_activeApplications.indexOf(app));
+
+        if (msgBox.clickedButton() == leaveOpenButton)
+            app->scheduleDestruction(false);
+        else
+            app->scheduleDestruction(true);
+    }
+}
 void MainWindow::m_runSimulation()
 {
     disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
@@ -120,10 +182,22 @@ void  MainWindow::m_stopSimulation()
 
     delete m_dataSource;
 
-    if (m_connections != NULL)
-        m_visualizationWidget->setConnections(NULL);
+    for (int i = 0; i < m_distributionPlugins.count(); i ++)
+        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_distributionPlugins[i]),true);
 
-    m_visualizationWidget->setNeurons(NULL);
+
+    for (int i = 0; i < m_subscriberPlugins.count(); i ++)
+    {
+        int launcherIndex = m_applicationLauncher->indexOf(m_subscriberPlugins[i]);
+        m_applicationLauncher->setPageEnabled(launcherIndex,false);
+        m_subscriberPlugins[i]->setNeurons(NULL);
+        if (m_connections != NULL)
+            m_subscriberPlugins[i]->setConnections(NULL);
+
+
+        if (m_applicationLauncher->currentIndex() == launcherIndex)
+            m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_distributionPlugins[0]));
+    }
 
     m_activeApplications[m_simulationApplicationIndex]->setParent(0);
     NCSApplicationBridge * app = m_activeApplications[m_simulationApplicationIndex];
@@ -133,6 +207,10 @@ void  MainWindow::m_stopSimulation()
     m_simulationApplicationIndex = -1;
     m_setSimulationToolbar(false);
 
+    delete m_neurons;
+    delete m_connections;
+    m_neurons = NULL;
+    m_connections = NULL;
 
 
 }
@@ -176,39 +254,29 @@ void MainWindow::m_loadProject(QString projectDirectory)
 
     QDir(projectDirectory).mkdir("tmp");
 
-    if (m_tabWidget != NULL)
-        delete m_tabWidget;
+    if (m_applicationLauncher != NULL)
+        delete m_applicationLauncher;
 
-    m_tabWidget = new QwwConfigWidget(this);
-    m_tabWidget->setIconSize(QSize(64,64));
+    m_applicationLauncher = new QxtConfigWidget(this);
 
-    this->setCentralWidget(m_tabWidget);
+    m_applicationLauncher->setIconSize(QSize(64,64));
 
-    //NCVBuildWidget * buildWidget = new NCVBuildWidget(projectDirectory,m_tabWidget);
-    //addWidget(buildWidget);
+    this->setCentralWidget(m_applicationLauncher);
 
-    m_connectionWidget = new NCSConnectionWidget(projectDirectory,m_tabWidget);
-    addWidget(m_connectionWidget);
-    connect(m_connectionWidget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
+    NCSConnectionWidget * connectionWidget = new NCSConnectionWidget(projectDirectory,m_applicationLauncher);
+    addWidget(connectionWidget);
 
-    NCSClusterEditor * clusterEditor = new NCSClusterEditor(projectDirectory,m_tabWidget);
+    NCSClusterEditor * clusterEditor = new NCSClusterEditor(projectDirectory,m_applicationLauncher);
     addWidget(clusterEditor);
 
-    LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(projectDirectory,m_tabWidget);
-    connect(modelWidget,SIGNAL(launchTriggered()),this,SLOT(m_showLoadingSimulation()));
-    connect(modelWidget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
-    connect(modelWidget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
+    LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(projectDirectory,m_applicationLauncher);
     addWidget(modelWidget);
 
-    IzhModelDistributionWidget * izhModelWidget= new IzhModelDistributionWidget(projectDirectory,m_tabWidget);
-    connect(izhModelWidget,SIGNAL(launchTriggered()),this,SLOT(m_showLoadingSimulation()));
-    connect(izhModelWidget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
-    connect(izhModelWidget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
+    IzhModelDistributionWidget * izhModelWidget= new IzhModelDistributionWidget(projectDirectory,m_applicationLauncher);
     addWidget(izhModelWidget);
 
-
-    m_visualizationWidget = new NCVWidget(projectDirectory,m_tabWidget);
-    addWidget(m_visualizationWidget);
+    NCVWidget * visualizationWidget = new NCVWidget(projectDirectory,m_applicationLauncher);
+    addWidget(visualizationWidget);
 
 }
 
@@ -217,27 +285,6 @@ void MainWindow::m_showLoadingSimulation()
     m_simulationLoadingLabel->setMovie(m_simulationLoadingMovie);
     m_simulationLoadingMovie->start();
 }
-
-void MainWindow::addWidget(NCSWidgetPlugin *widget)
-{
-    m_tabWidget->addGroup(widget,widget->icon(),widget->title());
-}
-void MainWindow::addWidget(NCSApplicationWidgetPlugin *widget)
-{
-    connect(m_connectionWidget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),widget,SLOT(initialize(NCSCommandBridge*)));
-    addWidget((NCSWidgetPlugin *)widget);
-}
-void MainWindow::addWidget(NCSDistributionWidgetPlugin *widget)
-{
-    addWidget((NCSApplicationWidgetPlugin *)widget);
-}
-
-void MainWindow::m_distributionFinalized()
-{
-    //m_tabWidget->setCurrentGroup(m_visualizationWidget);
-    //m_distributeWidget->setEnabled(false);
-}
-
 void MainWindow::m_updateTimeScale(int value)
 {
     float multiplier = (float)value / (float)m_timeScaleSlider->maximum();
@@ -247,30 +294,12 @@ void MainWindow::m_updateTimeScale(int value)
 
 }
 
-void MainWindow::closeEvent(QCloseEvent * event)
-{
-    while (m_activeApplications.count() > 0)
-    {
-        QVector<NCSApplicationBridge*>::iterator it = m_activeApplications.begin();
-        NCSApplicationBridge* app = *it;
-        QMessageBox msgBox;
-        msgBox.setText("The NCS application '" + app->applicationName() + "' is still running.\n Should this application be closed or left running?"  );
-        QPushButton * leaveOpenButton =  msgBox.addButton("Leave Running", QMessageBox::ActionRole);
-        msgBox.addButton("Close", QMessageBox::ActionRole);
-        msgBox.exec();
-        m_activeApplications.remove(m_activeApplications.indexOf(app));
-
-        if (msgBox.clickedButton() == leaveOpenButton)
-            app->scheduleDestruction(false);
-        else
-            app->scheduleDestruction(true);
-    }
-}
-
 void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
 {
     m_commandBridge = bridge;
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_ncsApplicationLaunched(NCSApplicationBridge*)));
+    for (int i = 0; i < m_applicationPlugins.count(); i ++)
+        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_applicationPlugins[i]),true);
 }
 
 void MainWindow::m_ncsApplicationLaunched(NCSApplicationBridge * app)
@@ -393,6 +422,16 @@ void MainWindow::m_createNetwork(QString topologyFilename)
 void MainWindow::m_publishNetwork()
 {
 
+    for (int i = 0; i < m_distributionPlugins.count(); i ++)
+    {
+        int launcherIndex = m_applicationLauncher->indexOf(m_distributionPlugins[i]);
+        m_applicationLauncher->setPageEnabled(launcherIndex,false);
+
+        if (m_applicationLauncher->currentIndex() == launcherIndex)
+            m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_subscriberPlugins[0]));
+    }
+
+
     m_dataSource = new NCSDataSource();
     qDebug() << m_commandBridge->hostname();
     qDebug() << "NCSDataSource connected:" << m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
@@ -401,9 +440,14 @@ void MainWindow::m_publishNetwork()
         m_dataSource->replaceConnectionSet(m_connections);
     connect(m_updateTimer,SIGNAL(timeout()),m_dataSource,SLOT(updateAttributes()));
 
-    m_visualizationWidget->setNeurons(m_neurons);
-    if (m_connections != NULL)
-        m_visualizationWidget->setConnections(m_connections);
+    for (int i = 0; i < m_subscriberPlugins.count(); i ++)
+    {
+        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_subscriberPlugins[i]),true);
+        m_subscriberPlugins[i]->setNeurons(m_neurons);
+        if (m_connections != NULL)
+            m_subscriberPlugins[i]->setConnections(m_connections);
+    }
+
     m_simulationLoadingMovie->stop();
     m_simulationLoadingLabel->clear();
     m_setSimulationToolbar(true);

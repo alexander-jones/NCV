@@ -10,26 +10,45 @@
 #include <sys/types.h>
 #include <QDebug>
 
+/*!
+    \class QsshSocket
+    \author Alex Jones
+    \brief An socket that manages an ssh & scp session with a remote host.
+*/
 class QSshSocket: public QThread
 {
     Q_OBJECT
 public:
 
+    /*! \brief This enum describes the logging mechanism that should be followed when communicating with a remote host.*/
+    enum LoggingProtocol
+    {
+        /*! \brief Tells the logging mechanism to log nothing.*/
+        LogNone = SSH_LOG_NOLOG,
+        /*! \brief Tells the logging mechanism to log only warnings.*/
+        LogWarnings = SSH_LOG_WARNING,
+        /*! \brief Tells the logging mechanism to log only operations given by the user of this class.*/
+        LogOperations = SSH_LOG_NOLOG,
+        /*! \brief Tells the logging mechanism to log absolutely everything.*/
+        LogAll = SSH_LOG_PACKET | SSH_LOG_PROTOCOL
+    };
+
+    /*! \brief This enum describes the possible errors that could occur when communicating with a remote host.*/
     enum SshError
     {
         /*! \brief There was trouble creating a socket. This was most likely due to the lack of an internet connection.*/
         SocketError,
         /*! \brief The ssh session could not be created due to inability to find the remote host.*/
         SessionCreationError,
-        /*! \brief An ssh channel could not be created for the previous operation.*/
+        /*! \brief An ssh channel could not be created for the operation.*/
         ChannelCreationError,
-        /*! \brief An scp channel could not be created for the previous file transfer operation.*/
+        /*! \brief An scp channel could not be created for the file transfer operation.*/
         ScpChannelCreationError,
         /*! \brief There was an error requesting a pull file transfer.*/
         ScpPullRequestError,
         /*! \brief There was an error requesting a push file transfer.*/
         ScpPushRequestError,
-        /*! \brief The destination file for the previous transfer does not exist.*/
+        /*! \brief The destination file for the transfer does not exist.*/
         ScpFileNotCreatedError,
         /*! \brief There was an error reading a remote file. This could possibly be due to user permissions.*/
         ScpReadError,
@@ -58,7 +77,7 @@ public:
         \param port The port to establish an ssh connection over.
         \brief This function connects this socket to the specified host over the specified port. On success, the signal connected is emitted while error is emmited on failure.
     */
-    void connectToHost(QString host, int port =22);
+    void connectToHost(QString host, int port =22, LoggingProtocol logging = LogNone);
 
     /*!
         \brief This function attempts to clone the current state of this socket using SSH multiplexing."
@@ -225,6 +244,7 @@ private:
     SSHOperation m_currentOperation;
     ssh_session m_session;
     QSshSocket * m_clone;
+    LoggingProtocol m_loggingProtocol;
     bool m_connected,m_run;
 };
 

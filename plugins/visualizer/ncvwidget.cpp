@@ -18,28 +18,29 @@ NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
     m_renderTool->setMaximumWidth(300);
     m_layout->addWidget(m_renderTool);
 
-    m_selectionWidget = new QWidgetVector();
-    m_selectionWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-    m_selectionWidget->setDirection(QWidgetVector::TopToBottom);
+
+    m_selectionLayout = new QVBoxLayout();
+
     m_deselectAllButton = new QPushButton("Deselect All");
-	connect(m_deselectAllButton,SIGNAL(clicked()),this,SLOT(m_onDeselectAll()));
-	m_selectionWidget->addWidget(m_deselectAllButton);
+    connect(m_deselectAllButton,SIGNAL(clicked()),this,SLOT(m_onDeselectAll()));
+    m_selectionLayout->addWidget(m_deselectAllButton);
+
     m_renderDeselectedWidget = new QWidgetVector();
     m_renderDeselectedSwitch = new QSwitch();
 	connect(m_renderDeselectedSwitch,SIGNAL(switched(bool)),this,SLOT(m_onRenderDeselectionSet(bool)));
     m_renderDeselectedWidget->addWidget(new QLabel("Render Deslected: "));
-	m_renderDeselectedWidget->addWidget(m_renderDeselectedSwitch);
-	m_selectionWidget->addWidget(m_renderDeselectedWidget);
-
+    m_renderDeselectedWidget->addWidget(m_renderDeselectedSwitch);
+    m_selectionLayout->addWidget(m_renderDeselectedWidget);
 	
     m_compoundSelectionWidget = new QWidgetVector();
     m_compoundSelectionSwitch = new QSwitch();
 	connect(m_compoundSelectionSwitch,SIGNAL(switched(bool)),this,SLOT(m_onCompoundSelectionSet(bool)));
     m_compoundSelectionWidget->addWidget(new QLabel("Compound Selection: "));
-	m_compoundSelectionWidget->addWidget(m_compoundSelectionSwitch);
-	m_selectionWidget->addWidget(m_compoundSelectionWidget);
-	m_selectionFlags = RenderDeselected;
+    m_compoundSelectionWidget->addWidget(m_compoundSelectionSwitch);
+    m_selectionLayout->addWidget(m_compoundSelectionWidget);
 
+
+    m_selectionFlags = RenderDeselected;
 
     m_collapsed = false;
 
@@ -100,11 +101,13 @@ void  NCVWidget::setSelection(QVector<NCVElementRange> selection,NCVSelectionFla
 	
 	if (selection.count() == 0 )
 	{
-		if (m_currentSelection.count() != 0)
-		    m_renderTool->removeTask(2);
+        if (m_currentSelection.count() != 0)
+            m_renderTool->removeGroup("Selection");
 	}
 	else if (m_currentSelection.count() == 0)
-        m_renderTool->addTask(m_selectionWidget,QIcon(":/media/selectionIcon.png"),"Selection");
+    {
+        m_renderTool->addGroup("Selection",m_selectionLayout);
+    }
 
 	
 	m_currentSelection = selection;
@@ -115,8 +118,8 @@ void NCVWidget::m_onDeselectAll()
 {
 	m_currentSelection.clear();
     m_selectionFlags = RenderDeselected;
-	selectionChanged(m_currentSelection,m_selectionFlags);
-    m_renderTool->removeTask(2);
+    selectionChanged(m_currentSelection,m_selectionFlags);
+    m_renderTool->removeGroup("Selection");
 }
 void NCVWidget::m_onRenderDeselectionSet(bool on)
 {
@@ -232,6 +235,14 @@ void NCVWidget::m_reportFatalError()
     msgBox.setInformativeText("Cannot create a valid OpenGL 3.3 context.");
     msgBox.setStandardButtons(QMessageBox::Ok);
     msgBox.exec();
+}
+
+void NCVWidget::initialize()
+{
+}
+
+void NCVWidget::cleanup()
+{
 }
 
 QIcon NCVWidget::icon()

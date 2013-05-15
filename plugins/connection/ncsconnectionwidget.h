@@ -23,6 +23,8 @@ public:
     QString title();
 
 public slots:
+    void initialize();
+    void cleanup();
 
 private slots:
     void m_connectionInvalidated(NCSCommandBridge::ValidationError err);
@@ -42,8 +44,10 @@ private slots:
 private:
     QLabel * m_statusLabel;
     QString m_projectPath;
-    QWidgetVector * m_localNCSDirectoryVector,* m_remoteNCSDirectoryVector;
     QGroupVector * m_connectionGroupVector;
+    QWidgetVector *m_remoteNCSDirectoryVector;
+    QHBoxLayout * m_localLayout;
+    QVBoxLayout * m_remoteLayout;
     QLineEdit * m_ncsDirectoryEdit, * m_remoteNCSDirectoryEdit;
     QPushButton * m_ncsBrowseButton,*m_hostfileBrowseButton;
     QLabel * m_localNCSDirectoryLabel, *m_remoteNCSDirectoryLabel;

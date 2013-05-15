@@ -1,4 +1,4 @@
-#ifndef IMAGECONTAINER_H
+ #ifndef IMAGECONTAINER_H
 #define IMAGECONTAINER_H
 
 #include <QLabel>

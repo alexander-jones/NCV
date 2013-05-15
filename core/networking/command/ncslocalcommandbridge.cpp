@@ -156,24 +156,22 @@ bool NCSLocalCommandBridge::valid()
 }
 
 
-void NCSLocalCommandBridge::executeApplication(QString application, NCSCommandArguments arguments)
+void NCSLocalCommandBridge::launchApplication(QString application, NCSCommandArguments arguments)
 {
     if (!m_valid)
     {
         return;
     }
 
-    QVector<NCSCommandFileArgument> simFileArgs = arguments.fileArguments();
+    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
     QStringList argLiterals = arguments.literals();
-    for (int i = 0; i <simFileArgs.size();i++)
+    for (int i = 0; i <fileArgs.size();i++)
     {
-        int literalIndex = argLiterals.indexOf(simFileArgs[i].argument());
+        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
         if (literalIndex != -1)
         {
-            if (simFileArgs[i].localSyncFile() != "")
-                argLiterals.replace(literalIndex, simFileArgs[i].localSyncFile());
-            else
-                argLiterals.replace(literalIndex, simFileArgs[i].argument());
+            if (fileArgs[i].filename != "")
+                argLiterals.replace(literalIndex, fileArgs[i].filename);
         }
     }
 
@@ -201,7 +199,7 @@ bool NCSLocalCommandBridge::m_transfer(QString sourcePath, QString destPath)
         return false;
 }
 
-void NCSLocalCommandBridge::executeApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
+void NCSLocalCommandBridge::launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
 {
 
     if (!m_valid)
@@ -209,17 +207,15 @@ void NCSLocalCommandBridge::executeApplication(QString application, NCSCommandAr
         return ;
     }
 
-    QVector<NCSCommandFileArgument> simFileArgs = arguments.fileArguments();
+    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
     QStringList argLiterals = arguments.literals();
-    for (int i = 0; i <simFileArgs.size();i++)
+    for (int i = 0; i <fileArgs.size();i++)
     {
-        int literalIndex = argLiterals.indexOf(simFileArgs[i].argument());
+        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
         if (literalIndex != -1)
         {
-            if (simFileArgs[i].localSyncFile() != "")
-                argLiterals.replace(literalIndex, simFileArgs[i].localSyncFile());
-            else
-                argLiterals.replace(literalIndex, simFileArgs[i].argument());
+            if (fileArgs[i].filename != "")
+                argLiterals.replace(literalIndex, fileArgs[i].filename);
         }
     }
 

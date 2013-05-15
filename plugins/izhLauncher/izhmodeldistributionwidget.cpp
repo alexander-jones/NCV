@@ -108,10 +108,18 @@ QString IzhModelDistributionWidget::title()
 }
 
 
-void IzhModelDistributionWidget::initialize(NCSCommandBridge * bridge)
+void IzhModelDistributionWidget::setCommandBridge(NCSCommandBridge * bridge)
 {
     this->setEnabled(true);
     m_commandBridge = bridge;
+}
+
+void IzhModelDistributionWidget::initialize()
+{
+}
+
+void IzhModelDistributionWidget::cleanup()
+{
 }
 
 void IzhModelDistributionWidget::m_distributionStarted(NCSApplicationBridge * app)
@@ -178,9 +186,9 @@ void IzhModelDistributionWidget::m_launchSimulationPressed()
     distArgs << NCSCommandFileArgument(currentFile,m_currentFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
     distArgs << QString::number(m_neuronCountSpinBox->value());
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
-    distArgs << NCSCommandFileArgument(m_distributionOutputDir) << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
+    distArgs << m_distributionOutputDir << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
-    m_commandBridge->executeApplication("izhDistributor",distArgs);
+    m_commandBridge->launchApplication("izhDistributor",distArgs);
 
 }
 QString IzhModelDistributionWidget::m_getFilename(QString path)
@@ -229,7 +237,7 @@ void IzhModelDistributionWidget::m_distributionFinished()
 
 
     NCSCommandArguments simArgs;
-    simArgs << NCSCommandFileArgument(m_distributionOutputDir) << timeArg;
+    simArgs << m_distributionOutputDir << timeArg;
 
     NCSCluster cluster;
     cluster.read(m_clusterFileEdit->text());
@@ -238,7 +246,7 @@ void IzhModelDistributionWidget::m_distributionFinished()
 
     launchTriggered();
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
-    m_commandBridge->executeApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
+    m_commandBridge->launchApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
 

@@ -3,15 +3,16 @@
 
 #include "core/networking/command/qsshsocket.h"
 #include "core/utilities/simplecrypt.h"
+#include "core/gui/utilities/qwidgetvector.h"
 #include <QWidget>
 #include <QVBoxLayout>
-#include <QwwLoginBox>
 #include <QPushButton>
 #include <QMessageBox>
 #include <QDebug>
 #include <QLabel>
 #include <QListWidget>
 #include <QFileDialog>
+#include <QLineEdit>
 
 
 /*!
@@ -74,9 +75,10 @@ private:
     QListWidget * m_recentCredentials;
     QVBoxLayout *m_credentialEntryLayout,*m_recentCredentialLayout;
     QHBoxLayout * m_layout;
-    QwwLoginBox * m_loginWidget;
     QGridLayout * m_buttonLayout;
     QPushButton *m_connectButton, * m_loadCredentialsButton, * m_saveCredentialsButton;
+    QWidgetVector *m_hostVector,* m_userVector,* m_passwordVector;
+    QLineEdit *m_hostEdit,* m_userEdit,* m_passwordEdit;
 };
 
 #endif // RemoteConnectionWidget_H

@@ -1,5 +1,6 @@
 #include "qsshsocket.h"
 #include <QFileInfo>
+
 // if compiling in windows, add needed flags.
 #ifdef _WIN32
 #   include <io.h>
@@ -38,7 +39,6 @@ static const mode_t S_IXOTH      = 0x00010000;           ///< does nothing
 static const mode_t MS_MODE_MASK = 0x0000ffff;           ///< low word
 #endif
 
-
 QSshSocket::QSshSocket(QObject * parent )
     :QThread(parent)
 {
@@ -75,13 +75,9 @@ void QSshSocket::run()
             {
                 m_session = ssh_new();
 
-                //set logging to verbose so all errors can be debugged if crash happens
-                int verbosity = SSH_LOG_PROTOCOL;
-
                 // set the pertinant ssh session options
                 ssh_options_set(m_session, SSH_OPTIONS_HOST, m_host.toAscii().data());
-                ssh_options_set(m_session, SSH_OPTIONS_USER, m_user.toAscii().data());
-                ssh_options_set(m_session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
+                ssh_options_set(m_session, SSH_OPTIONS_LOG_VERBOSITY, &m_loggingProtocol);
                 ssh_options_set(m_session, SSH_OPTIONS_PORT, &m_port);
 
                 // try to connect given host, user, port
@@ -89,7 +85,10 @@ void QSshSocket::run()
 
                 // if connection is Successful keep track of connection info.
                 if (connectionResponse == SSH_OK)
+                {
+                    m_connected = true;
                     connected();
+                }
 
                 else
                     error(SessionCreationError);
@@ -134,6 +133,8 @@ void QSshSocket::run()
 
             if (m_currentOperation.type == Command || m_currentOperation.type == WorkingDirectoryTest)
             {
+                if (m_loggingProtocol == LogAll || m_loggingProtocol == LogOperations)
+                    qDebug() << "!!! Command '" << m_currentOperation.command << "'' executing on "<< m_user << "@" << m_host <<" at working directory " << m_workingDirectory << " ...";
                 // attempt to open ssh shell channel
                 ssh_channel channel = ssh_channel_new(m_session);
 
@@ -141,6 +142,7 @@ void QSshSocket::run()
                 if (ssh_channel_open_session(channel) != SSH_OK)
                 {
                     error(ChannelCreationError);
+                    break;
                 }
 
 
@@ -154,6 +156,7 @@ void QSshSocket::run()
                 if (requestResponse != SSH_OK)
                 {
                     error(ChannelCreationError);
+                    break;
                 }
 
 
@@ -190,6 +193,9 @@ void QSshSocket::run()
             // if all ssh setup has been completed, check to see if we have any file transfers to execute
             else if (m_currentOperation.type == Pull)
             {
+                if (m_loggingProtocol == LogAll || m_loggingProtocol == LogOperations)
+                    qDebug() << "!!! Remote file '"<< m_currentOperation.remotePath << "'' being pulled to local file '"<< m_currentOperation.localPath <<"'' ..." ;
+
                 ssh_scp scpSession = ssh_scp_new(m_session,SSH_SCP_READ, m_currentOperation.remotePath.toAscii().data());
                 if (scpSession == NULL)
                     error(ScpChannelCreationError);
@@ -201,6 +207,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpChannelCreationError);
+                    break;
                 }
 
 
@@ -210,6 +217,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpPullRequestError);
+                    break;
                 }
 
                 // accept authorization
@@ -229,6 +237,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpReadError);
+                    break;
                 }
 
                 // loop until eof flag
@@ -237,6 +246,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpReadError);
+                    break;
                 }
 
                 //close scp session
@@ -254,6 +264,9 @@ void QSshSocket::run()
             }
             else if (m_currentOperation.type == Push)
             {
+                if (m_loggingProtocol == LogAll || m_loggingProtocol == LogOperations)
+                    qDebug() << "!!! Local file '" << m_currentOperation.localPath <<"'' being pushed to remote file '"<< m_currentOperation.remotePath << "'' ..." ;
+
                 // attempt to create new scp from ssh session.
                 ssh_scp scpSession = ssh_scp_new(m_session,SSH_SCP_WRITE, m_currentOperation.remotePath.toAscii().data());
 
@@ -272,6 +285,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpChannelCreationError);
+                    break;
                 }
 
 
@@ -283,6 +297,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpFileNotCreatedError);
+                    break;
                 }
 
                 // if the file does exist, read all contents as bytes
@@ -297,6 +312,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpPushRequestError);
+                    break;
                 }
 
 
@@ -308,6 +324,7 @@ void QSshSocket::run()
                     ssh_scp_close(scpSession);
                     ssh_scp_free(scpSession);
                     error(ScpWriteError);
+                    break;
                 }
 
 
@@ -340,7 +357,7 @@ void QSshSocket::clone()
     connect(m_clone,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onCloneError(QSshSocket::SshError)));
 
     if (m_connected)
-        m_clone->connectToHost(m_host,m_port);
+        m_clone->connectToHost(m_host,m_port,m_loggingProtocol);
     else
     {
         m_releaseClone();
@@ -410,10 +427,11 @@ void QSshSocket::disconnectFromHost()
     m_session = NULL;
 }
 
-void QSshSocket::connectToHost(QString host, int port)
+void QSshSocket::connectToHost(QString host, int port,LoggingProtocol logging)
 {
     m_host = host;
     m_port = port;
+    m_loggingProtocol = logging;
 }
 void QSshSocket::login(QString user, QString password)
 {

@@ -9,12 +9,12 @@
 #include "core/gui/utilities/discretecolorselector.h"
 #include "core/gui/utilities/qswitch.h"
 #include "core/gui/utilities/qwidgetvector.h"
+#include "core/gui/utilities/qgroupvector.h"
 #include <QWidget>
 #include <QBoxLayout>
-#include <QwwTaskPanel>
 #include <QToolButton>
 
-class NCVRenderTool : public QwwTaskPanel
+class NCVRenderTool : public QGroupVector
 {
     Q_OBJECT
 public:
@@ -53,7 +53,8 @@ private:
 
     bool m_collapsed;
     QSwitch * m_renderNeuronSwitch, * m_renderConnectionSwitch;
-    QWidgetVector * m_neuronVector, *m_connectionVector, *m_renderNeuronVector, *m_renderConnectionVector;
+    QVBoxLayout * m_neuronLayout, *m_connectionLayout;
+    QWidgetVector *m_renderNeuronVector, *m_renderConnectionVector;
     QSignalMapper *m_discreteNeuronMapper, *m_discreteConnectionMapper,*m_continuousNeuronMapper,*m_continuousConnectionMapper;
     ComboWidget * m_neuronAttributeComboWidget, * m_connectionAttributeComboWidget;
     QToolButton * m_neuronLinkButton, *m_connectionLinkButton;
