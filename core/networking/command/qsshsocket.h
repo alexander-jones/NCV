@@ -26,7 +26,7 @@ public:
         /*! \brief Tells the logging mechanism to log nothing.*/
         LogNone = SSH_LOG_NOLOG,
         /*! \brief Tells the logging mechanism to log only warnings.*/
-        LogWarnings = SSH_LOG_WARNING,
+        LogWarnings = SSH_LOG_RARE,
         /*! \brief Tells the logging mechanism to log only operations given by the user of this class.*/
         LogOperations = SSH_LOG_NOLOG,
         /*! \brief Tells the logging mechanism to log absolutely everything.*/

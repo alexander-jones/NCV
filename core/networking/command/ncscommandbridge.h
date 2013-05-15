@@ -47,6 +47,12 @@ struct NCSCommandFileArgument
     */
     NCSCommandFileArgument(QString literal, QString filename, SyncOperation operation, QVector<NCSCommandFileArgument> dependencies);
 
+    /*!
+        \param arg The command file argument to test against.
+        \brief Returns whether or not this file argument has the same literal and same dependencies as arg.
+    */
+    bool operator == (const NCSCommandFileArgument & arg);
+
     /*! \brief The literal used to refer to this file when executing an NCS application.*/
     QString literal;
     /*! \brief The filename of a local copy to sync with the literal.*/
@@ -78,12 +84,43 @@ public:
         \param arg A command file argument to be appended.
         \brief Appends the file argument to the list of file arguments and appends the file argument's literal to the list of literals .
     */
-    void append(NCSCommandFileArgument arg);
+    void append(const NCSCommandFileArgument & arg);
     /*!
         \param arg A literal command argument to be appended.
         \brief Appends literal to the list of literals .
     */
     void append(const QString & literal);
+
+    /*!
+        \brief Returns the number of argument literals contained.
+    */
+    int count();
+
+    /*!
+        \param index The literal index to insert the command argument into.
+        \param arg The command file argument to insert.
+        \brief Insert a command file argument into the list of literals and command file arguments.
+    */
+    void insert(int index,const NCSCommandFileArgument & arg );
+
+    /*!
+        \param index The literal index to insert the argument literal into.
+        \param literal The argument literal to insert.
+        \brief Insert a argument literal into the list of literals.
+    */
+    void insert(int index,const QString & literal);
+
+    /*!
+        \param literal The argument literal to check.
+        \brief Returns the index of the argument literal in the list of literals.
+    */
+    int indexOf(const QString & literal);
+
+    /*!
+        \param arg The command file argument to check.
+        \brief Returns the index of the argument in the list of literals.
+    */
+    int indexOf(const NCSCommandFileArgument & arg );
 
     /*!
         \param arg A command file argument to be appended.
@@ -108,7 +145,8 @@ public:
     QVector<NCSCommandFileArgument> fileArguments();
 
 private:
-    void m_addToFileArguments(NCSCommandFileArgument arg);
+    void m_insertToFileArguments(int index, NCSCommandFileArgument arg);
+    void m_removeFromFileArguments(NCSCommandFileArgument arg);
     QStringList m_literals;
     QVector<NCSCommandFileArgument> m_fileArguments;
 
@@ -183,6 +221,11 @@ public:
     virtual QString applicationName() = 0;
 
 signals:
+
+    /*!
+        \brief Emitted when the NCS application has started executing.
+    */
+    void executionStarted();
 
     /*!
         \param err The error that occured when interacting with the NCS application.

@@ -6,10 +6,10 @@ class NCSRemoteApplicationBridge:public NCSApplicationBridge
 {
     Q_OBJECT
 public:
-    explicit NCSRemoteApplicationBridge(QString name,QObject *parent = 0);
+    explicit NCSRemoteApplicationBridge(QString name,QString projectDirectory, QObject *parent = 0);
     ~NCSRemoteApplicationBridge();
     void setSocket(QSshSocket * socket,bool own = false);
-    void start(QString application,QStringList arguments,QVector<NCSCommandFileArgument> downloadArgs);
+    void start(QString application,NCSCommandArguments arguments);
     QString readAllStandardError();
     QString readAllStandardOutput();
     void scheduleDestruction(bool destroy);
@@ -19,13 +19,15 @@ private slots:
     void m_onCommandExecuted(QString command,QString response);
     void m_onSocketError(QSshSocket::SshError err);
     void m_executeNextPull();
+    void m_executeNextPush();
     void m_checkIfAlive();
 
 private:
+    QVector<NCSCommandFileArgument> m_uploadArguments;
     QVector<NCSCommandFileArgument> m_downloadArguments;
     bool m_destroyProcess,m_alive;
     QSshSocket * m_socket;
-    QString m_stdOut, m_stdErr,m_name, m_pidString;
+    QString m_stdOut, m_stdErr,m_name, m_pidString, m_projectDir, m_wholeCommand;
     QTimer * m_timer;
 };
 
@@ -46,20 +48,20 @@ private slots:
     void m_onSocketCloned(QSshSocket * applicationSocket);
     void m_onCommandExecuted(QString command,QString response);
     void m_onSocketError(QSshSocket::SshError err);
-    void m_executeNextPush();
     void m_socketDirectorySet(QString);
-    void m_clearApplicationContext();
     void m_clearProjectContext();
 
 private:
 
+    struct ApplicationContext
+    {
+        QString applicationPath;
+        NCSCommandArguments arguments;
+        NCSRemoteApplicationBridge * application;
+    };
+    QVector<ApplicationContext> m_launchingApplications;
     QSshSocket * m_socket;
-    NCSRemoteApplicationBridge * m_currentApplication;
-    QVector<NCSCommandFileArgument> m_uploadArguments;
-    QVector<NCSCommandFileArgument> m_downloadArguments;
     QString m_remoteRootPath, m_remoteBuildPath, m_projectPath,m_remoteProjectPath;
-    QString m_application;
-    QStringList m_applicationArguments;
     bool m_valid;
 };
 

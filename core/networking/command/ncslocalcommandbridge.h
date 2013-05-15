@@ -9,7 +9,7 @@ class NCSLocalApplicationBridge:public NCSApplicationBridge
 public:
     explicit NCSLocalApplicationBridge(QString name,QString workingDirectory = "",QObject *parent = 0);
     ~NCSLocalApplicationBridge();
-    void start(QString application,QStringList arguments);
+    void start(QString application,NCSCommandArguments arguments);
     QString readAllStandardError();
     QString readAllStandardOutput();
 
@@ -41,7 +41,6 @@ public:
 
 private:
     void m_invalidate(NCSCommandBridge::ValidationError err);
-    bool m_transfer(QString sourcePath, QString destPath);
 
     QVector<NCSCommandFileArgument> m_downloadArguments;
     QString m_rootPath, m_buildPath, m_projectPath;

@@ -15,7 +15,7 @@ ICON = media/ncv.png
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lssh -lGLU  /usr/lib64/libGLEW.so.1.9.0
+    LIBS +=  -lssh -lGLU  -lGLEW
 }
 
 #windows specific settings

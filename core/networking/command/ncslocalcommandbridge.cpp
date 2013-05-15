@@ -78,10 +78,26 @@ NCSLocalApplicationBridge::~NCSLocalApplicationBridge()
     }
 }
 
-void NCSLocalApplicationBridge::start(QString applicationPath,QStringList arguments)
+void NCSLocalApplicationBridge::start(QString applicationPath,NCSCommandArguments arguments)
 {
+    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
+    QStringList argLiterals = arguments.literals();
+    for (int i = 0; i <fileArgs.size();i++)
+    {
+        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
+        if (literalIndex != -1)
+        {
+            if (fileArgs[i].filename != "")
+            {
+                if (!QFileInfo(fileArgs[i].filename).isAbsolute())
+                    fileArgs[i].filename == QDir::currentPath() + "/" + fileArgs[i].filename;
+                argLiterals.replace(literalIndex, fileArgs[i].filename);
+            }
+        }
+    }
+
     m_runProcessName = applicationPath;
-    m_process->start(applicationPath,arguments);
+    m_process->start(applicationPath,argLiterals);
 }
 
 QString NCSLocalApplicationBridge::readAllStandardError()
@@ -159,74 +175,28 @@ bool NCSLocalCommandBridge::valid()
 void NCSLocalCommandBridge::launchApplication(QString application, NCSCommandArguments arguments)
 {
     if (!m_valid)
-    {
         return;
-    }
-
-    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
-    QStringList argLiterals = arguments.literals();
-    for (int i = 0; i <fileArgs.size();i++)
-    {
-        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
-        if (literalIndex != -1)
-        {
-            if (fileArgs[i].filename != "")
-                argLiterals.replace(literalIndex, fileArgs[i].filename);
-        }
-    }
 
     m_applicationBridge = new NCSLocalApplicationBridge(application,m_buildPath,this);
-    m_applicationBridge->start("applications/" + application  + "/" + application,argLiterals);
+    m_applicationBridge->start("applications/" + application  + "/" + application,arguments);
     applicationStarted(m_applicationBridge);
 }
 
-bool NCSLocalCommandBridge::m_transfer(QString sourcePath, QString destPath)
-{
-    QFile sourceFile(sourcePath);
-    QFile destFile(destPath);
-    if (sourceFile.exists())
-    {
-        if (destFile.exists())
-            if (!destFile.remove())
-                return false;
-
-        if (sourceFile.copy(destPath))
-            return true;
-        else
-            return false;
-    }
-    else
-        return false;
-}
 
 void NCSLocalCommandBridge::launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
 {
 
     if (!m_valid)
-    {
         return ;
-    }
 
-    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
-    QStringList argLiterals = arguments.literals();
-    for (int i = 0; i <fileArgs.size();i++)
-    {
-        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
-        if (literalIndex != -1)
-        {
-            if (fileArgs[i].filename != "")
-                argLiterals.replace(literalIndex, fileArgs[i].filename);
-        }
-    }
-
-    QStringList completeArgs;
-    completeArgs << "--np" << QString::number(numProcesses);
-    if (hostFile != "")
-        completeArgs <<"--hostfile" << hostFile ;
-    completeArgs << ("applications/" + application  + "/" + application)<< argLiterals;
+    arguments.insert(0,"--np");
+    arguments.insert(1,QString::number(numProcesses));
+    arguments.insert(2,"--hostfile");
+    arguments.insert(3,hostFile);
+    arguments.insert(4,"applications/" + application  + "/" + application);
 
     m_applicationBridge = new NCSLocalApplicationBridge(application,m_buildPath,this);
-    m_applicationBridge->start("mpirun",completeArgs);
+    m_applicationBridge->start("mpirun",arguments);
     applicationStarted(m_applicationBridge);
 }
 

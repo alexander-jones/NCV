@@ -1,9 +1,10 @@
 #include "ncsremotecommandbridge.h"
 
-NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name, QObject *parent)
+NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name,QString projectDirectory, QObject *parent)
     :NCSApplicationBridge(parent)
 {
     m_name = name;
+    m_projectDir = projectDirectory;
     m_alive = false;
     m_pidString = -1;
     m_destroyProcess = true;
@@ -18,9 +19,8 @@ NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
     disconnect(m_socket,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onSocketError(QSshSocket::SshError)));
     disconnect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
 
-    if (m_alive)
-        if (m_destroyProcess)
-            m_socket->executeCommand("kill " + m_pidString);
+    if (m_alive && m_destroyProcess)
+        m_socket->executeCommand("kill " + m_pidString);
 }
 void NCSRemoteApplicationBridge::setSocket(QSshSocket * socket, bool own)
 {
@@ -40,13 +40,30 @@ QString NCSRemoteApplicationBridge::applicationName()
 {
     return m_name;
 }
-void NCSRemoteApplicationBridge::start(QString application, QStringList arguments, QVector<NCSCommandFileArgument> downloadArgs)
+void NCSRemoteApplicationBridge::start(QString application, NCSCommandArguments arguments)
 {
-    m_downloadArguments = downloadArgs;
-    for (int i=0; i < arguments.size();i++)
-        application +=" " + arguments[i];
+    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
+    QStringList argLiterals = arguments.literals();
+    for (int i = 0; i <fileArgs.size();i++)
+    {
+        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
+        if (literalIndex != -1)
+            argLiterals.replace(literalIndex, m_projectDir + "/"+ fileArgs[i].literal);
+        fileArgs[i].literal = m_projectDir + "/"+fileArgs[i].literal;
+
+        if (fileArgs[i].operation == NCSCommandFileArgument::UploadBeforeExecution)
+            m_uploadArguments.append(fileArgs[i]);
+        if (fileArgs[i].operation == NCSCommandFileArgument::DownloadAfterExecution)
+            m_downloadArguments.append(fileArgs[i]);
+
+    }
+
+    m_wholeCommand = application;
+    for (int i=0; i < argLiterals.size();i++)
+        m_wholeCommand +=" " + argLiterals[i];
+
     m_alive = true;
-    m_socket->executeCommand(application);
+    m_executeNextPush();
 }
 
 QString NCSRemoteApplicationBridge::readAllStandardError()
@@ -94,6 +111,20 @@ void NCSRemoteApplicationBridge::m_checkIfAlive()
     m_socket->executeCommand("pidof " + m_name);
 }
 
+void NCSRemoteApplicationBridge::m_executeNextPush()
+{
+    if (m_uploadArguments.size() > 0)
+    {
+        NCSCommandFileArgument arg = m_uploadArguments[0];
+        m_uploadArguments.pop_front();
+        m_socket->pushFile(arg.filename,arg.literal);
+    }
+    else
+    {
+        m_socket->executeCommand(m_wholeCommand);
+    }
+}
+
 void NCSRemoteApplicationBridge::m_executeNextPull()
 {
     if (m_downloadArguments.size() > 0)
@@ -120,7 +151,6 @@ void NCSRemoteApplicationBridge::m_onSocketError(QSshSocket::SshError err)
 NCSRemoteCommandBridge::NCSRemoteCommandBridge( QObject *parent ):NCSCommandBridge(parent)
 {
     m_socket = NULL;
-    m_currentApplication = NULL;
     m_clearProjectContext();
 }
 
@@ -152,28 +182,12 @@ void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandAr
     if (!m_valid)
         return ;
 
-    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
-    QStringList argLiterals = arguments.literals();
-    for (int i = 0; i <fileArgs.size();i++)
-    {
-        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
-        if (literalIndex != -1)
-            argLiterals.replace(literalIndex, m_remoteProjectPath + "/"+ fileArgs[i].literal);
-        fileArgs[i].literal = m_remoteProjectPath + "/"+fileArgs[i].literal;
-
-        if (fileArgs[i].operation == NCSCommandFileArgument::UploadBeforeExecution)
-            m_uploadArguments.append(fileArgs[i]);
-        if (fileArgs[i].operation == NCSCommandFileArgument::DownloadAfterExecution)
-            m_downloadArguments.append(fileArgs[i]);
-
-    }
-
-    m_application = " applications/" + application  + "/" + application;
-
-    m_applicationArguments = argLiterals;
-
-    m_currentApplication = new NCSRemoteApplicationBridge(application);
-    m_executeNextPush();
+    ApplicationContext context;
+    context.applicationPath =" applications/" + application  + "/" + application;
+    context.arguments = arguments;
+    context.application = new NCSRemoteApplicationBridge(application,m_projectPath,this);
+    m_launchingApplications.append(context);
+    m_socket->clone();
 
 }
 void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
@@ -181,40 +195,18 @@ void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandAr
     if (!m_valid)
         return;
 
-    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
-    QStringList argLiterals = arguments.literals();
-    m_downloadArguments.clear();
-    m_uploadArguments.clear();
-    QString remoteHostfile = m_remoteProjectPath + "/temp_hostfile.ncv";
-    m_uploadArguments.append(NCSCommandFileArgument(remoteHostfile,hostFile,NCSCommandFileArgument::UploadBeforeExecution));
+    arguments.insert(0,"--np");
+    arguments.insert(1,QString::number(numProcesses));
+    arguments.insert(2,"--hostfile");
+    arguments.insert(3,NCSCommandFileArgument(m_remoteProjectPath + "/temp_hostfile.ncv",hostFile,NCSCommandFileArgument::UploadBeforeExecution));
+    arguments.insert(4,"applications/" + application  + "/" + application);
 
-    for (int i = 0; i <fileArgs.size();i++)
-    {
-        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
-        if (literalIndex != -1)
-            argLiterals.replace(literalIndex, m_remoteProjectPath + "/"+ fileArgs[i].literal);
-        fileArgs[i].literal = m_remoteProjectPath + "/"+fileArgs[i].literal;
-
-        if (fileArgs[i].operation == NCSCommandFileArgument::UploadBeforeExecution)
-            m_uploadArguments.append(fileArgs[i]);
-        if (fileArgs[i].operation == NCSCommandFileArgument::DownloadAfterExecution)
-            m_downloadArguments.append(fileArgs[i]);
-
-    }
-
-    m_application = "mpirun";
-    m_applicationArguments.clear();
-    m_applicationArguments << "--np" << QString::number(numProcesses);
-    if (hostFile != "")
-        m_applicationArguments << "--hostfile" << remoteHostfile ;
-    m_applicationArguments << " applications/" + application  + "/" + application;
-
-    for (int i=0; i < argLiterals.size();i++)
-        m_applicationArguments.append(argLiterals[i]);
-
-    m_currentApplication = new NCSRemoteApplicationBridge(application);
-    connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clearApplicationContext()));
-    m_executeNextPush();
+    ApplicationContext context;
+    context.applicationPath = "mpirun";
+    context.arguments = arguments;
+    context.application = new NCSRemoteApplicationBridge(application,m_remoteProjectPath,this);
+    m_launchingApplications.append(context);
+    m_socket->clone();
 
 }
 bool NCSRemoteCommandBridge::valid()
@@ -226,9 +218,11 @@ bool NCSRemoteCommandBridge::valid()
 void NCSRemoteCommandBridge::m_onSocketCloned(QSshSocket * applicationSocket)
 {
     qDebug() << "cloned!!!";
-    m_currentApplication->setSocket(applicationSocket);
-    m_currentApplication->start(m_application,m_applicationArguments,m_downloadArguments);
-    applicationStarted(m_currentApplication);
+    NCSRemoteApplicationBridge * application = m_launchingApplications[0].application;
+    application->setSocket(applicationSocket);
+    application->start(m_launchingApplications[0].applicationPath,m_launchingApplications[0].arguments);
+    m_launchingApplications.pop_front();
+    applicationStarted(application);
 }
 
 void NCSRemoteCommandBridge::m_onCommandExecuted(QString command,QString response)
@@ -294,13 +288,6 @@ void NCSRemoteCommandBridge::m_socketDirectorySet(QString dir)
         m_socket->executeCommand("[ -d ./tmp-project ] && echo 'exists'");
 }
 
-void NCSRemoteCommandBridge::m_clearApplicationContext()
-{
-    m_application = "";
-    m_applicationArguments.clear();
-    m_downloadArguments.clear();
-    m_uploadArguments.clear();
-}
 
 void NCSRemoteCommandBridge::m_clearProjectContext()
 {
@@ -310,7 +297,6 @@ void NCSRemoteCommandBridge::m_clearProjectContext()
     m_remoteBuildPath = "";
     m_remoteProjectPath = "";
     m_valid = false;
-    m_clearApplicationContext();
 }
 
 void NCSRemoteCommandBridge::m_onSocketError(QSshSocket::SshError err)
@@ -318,26 +304,15 @@ void NCSRemoteCommandBridge::m_onSocketError(QSshSocket::SshError err)
     if (err == QSshSocket::CloneError)
     {
         qDebug() << "not cloned!!!";
-        m_currentApplication->setSocket(m_socket);
-        m_currentApplication->start(m_application,m_applicationArguments,m_downloadArguments);
-        applicationStarted(m_currentApplication);
+        NCSRemoteApplicationBridge * application = m_launchingApplications[0].application;
+        application->setSocket(m_socket);
+        application->start(m_launchingApplications[0].applicationPath,m_launchingApplications[0].arguments);
+        m_launchingApplications.pop_front();
+        applicationStarted(application);
     }
     else
         m_clearProjectContext();
 
-}
-void NCSRemoteCommandBridge::m_executeNextPush()
-{
-    if (m_uploadArguments.size() > 0)
-    {
-        NCSCommandFileArgument arg = m_uploadArguments[0];
-        m_uploadArguments.pop_front();
-        m_socket->pushFile(arg.filename,arg.literal);
-    }
-    else
-    {
-        m_socket->clone();
-    }
 }
 
 QString NCSRemoteCommandBridge::hostname()
