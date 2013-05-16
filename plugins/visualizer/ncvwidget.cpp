@@ -46,7 +46,7 @@ NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
 
     m_expandText = ">";
     m_collapseText = "<";
-    m_collapseButton = new OrientationButton();
+    m_collapseButton = new QxtPushButton();
     QFont font = m_collapseButton->font();
     font.setPointSize(5);
     m_collapseButton->setFont(font);
@@ -102,11 +102,11 @@ void  NCVWidget::setSelection(QVector<NCVElementRange> selection,NCVSelectionFla
 	if (selection.count() == 0 )
 	{
         if (m_currentSelection.count() != 0)
-            m_renderTool->removeGroup("Selection");
+            m_renderTool->removeGroup(m_selectionLayout);
 	}
 	else if (m_currentSelection.count() == 0)
     {
-        m_renderTool->addGroup("Selection",m_selectionLayout);
+        m_renderTool->addGroup(m_selectionLayout,"Selection");
     }
 
 	
@@ -119,7 +119,7 @@ void NCVWidget::m_onDeselectAll()
 	m_currentSelection.clear();
     m_selectionFlags = RenderDeselected;
     selectionChanged(m_currentSelection,m_selectionFlags);
-    m_renderTool->removeGroup("Selection");
+    m_renderTool->removeGroup(m_selectionLayout);
 }
 void NCVWidget::m_onRenderDeselectionSet(bool on)
 {

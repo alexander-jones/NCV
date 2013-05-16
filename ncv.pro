@@ -36,7 +36,6 @@ SOURCES += \
     core/ncsattribute.cpp \
     core/gui/utilities/qwidgetvector.cpp \
     core/gui/utilities/qswitch.cpp \
-    core/gui/utilities/orientationbutton.cpp \
     core/gui/utilities/discretecolorselector.cpp \
     core/gui/utilities/continuouscolorselector.cpp \
     core/gui/utilities/combowidget.cpp \
@@ -72,7 +71,6 @@ SOURCES += \
     plugins/visualizer/qglx/qglxboundingbox.cpp \
     main.cpp \
     core/gui/utilities/colorbutton.cpp \
-    core/gui/utilities/imagecontainer.cpp \
     plugins/lifLauncher/lifmodeldistributionwidget.cpp \
     core/networking/command/qsshsocket.cpp \
     plugins/visualizer/qglx/qglxbuffertexture.cpp \
@@ -91,7 +89,6 @@ HEADERS  += \
     core/gui/plugin-interfaces/ncsapplicationwidgetplugin.h \
     core/gui/utilities/qwidgetvector.h \
     core/gui/utilities/qswitch.h \
-    core/gui/utilities/orientationbutton.h \
     core/gui/utilities/discretecolorselector.h \
     core/gui/utilities/continuouscolorselector.h \
     core/gui/utilities/combowidget.h \
@@ -127,7 +124,6 @@ HEADERS  += \
     plugins/visualizer/qglx/qglxbuffer.h \
     plugins/visualizer/qglx/qglxboundingbox.h \
     mainwindow.h \
-    core/gui/utilities/imagecontainer.h \
     plugins/lifLauncher/lifmodeldistributionwidget.h \
     core/gui/plugin-interfaces/ncsconnectionwidgetplugin.h \
     core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h \

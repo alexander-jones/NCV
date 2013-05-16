@@ -15,7 +15,6 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QComboBox>
-#include "imagecontainer.h"
 
 struct Marker
 {
@@ -56,10 +55,10 @@ private:
 
     void m_setColors(QColor leftColor, QColor rightColor);
     void m_drawImage();
-	static QColor m_leftColorTemplate(){return QColor(255,0,0);}
-	static QColor m_leftColorBorderTemplate(){return QColor(0,255,255);}
-	static QColor m_rightColorTemplate(){return QColor(0,255,0);}
-	static QColor m_rightColorBorderTemplate(){ return QColor(255,0,255);}
+    static QColor m_leftColorTemplate(){return QColor(255,0,0);}
+    static QColor m_leftColorBorderTemplate(){return QColor(0,255,255);}
+    static QColor m_rightColorTemplate(){return QColor(0,255,0);}
+    static QColor m_rightColorBorderTemplate(){ return QColor(255,0,255);}
 
     QWidget * m_parent;
     Type m_type;
@@ -70,6 +69,23 @@ private:
     QImage m_image;
     Size m_size;
 };
+
+class ImageContainer: public QLabel
+{
+    Q_OBJECT
+public:
+    explicit ImageContainer(QWidget * parent = 0);
+
+signals:
+    void doubleClicked(Qt::MouseButton button, QPoint pos);
+    void exited();
+
+
+protected:
+    void mouseDoubleClickEvent ( QMouseEvent * event );
+    void leaveEvent(QEvent *);
+};
+
 
 class ContinuousColorSelector : public QWidget
 {

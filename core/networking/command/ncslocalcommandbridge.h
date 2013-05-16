@@ -38,7 +38,6 @@ public:
     bool valid();
     QString hostname();
 
-
 private:
     void m_invalidate(NCSCommandBridge::ValidationError err);
 

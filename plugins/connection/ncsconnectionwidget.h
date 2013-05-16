@@ -35,11 +35,12 @@ private slots:
     void m_validateRemoteConnection();
     void m_validateLocalConnection();
 
+    void m_clearRemoteContext();
     void m_remoteConnectionEstablished(QSshSocket * connection);
     void m_remoteConnectionError(QSshSocket::SshError err);
     void m_remoteConnectionFailed();
     void m_remoteConnectionValidated();
-    void m_connectionGroupChecked(QString groupName,bool checked);
+    void m_connectionGroupChecked(QLayout * layout);
 
 private:
     QLabel * m_statusLabel;

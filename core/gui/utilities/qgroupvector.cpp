@@ -7,20 +7,27 @@ QGroupVector::QGroupVector(QWidget *parent) :
     m_checkedBehavior = NoChecked;
     m_uncheckedBehavior = EnableUnchecked;
     m_checkMapper = new QSignalMapper();
-    connect(m_checkMapper,SIGNAL(mapped(QString)),this,SLOT(m_groupChecked(QString)));
+    connect(m_checkMapper,SIGNAL(mapped(QObject*)),this,SLOT(m_groupChecked(QObject*)));
     this->setLayout(m_layout);
 }
 
-void QGroupVector::addGroup(QString groupName, QLayout * layout)
+
+void QGroupVector::addGroup(QLayout * layout)
 {
-    insertGroup(m_groupNames.count(),groupName,layout);
+    insertGroup(m_groupBoxes.count(),layout);
 }
-void QGroupVector::insertGroup(int index, QString groupName,QLayout *  layout )
+
+void QGroupVector::addGroup(QLayout * layout,const QString & title)
 {
-    m_groupNames.insert(index,groupName);
+    insertGroup(m_groupBoxes.count(),layout);
+    m_groupBoxes[m_groupBoxes.count() -1]->setTitle(title);
+}
+
+void QGroupVector::insertGroup(int index, QLayout * layout)
+{
     m_groupLayouts.insert(index,layout);
 
-    QxtGroupBox * groupBox = new QxtGroupBox(groupName);
+    QxtGroupBox * groupBox = new QxtGroupBox();
     groupBox->setLayout(layout);
     m_groupBoxes.insert(index,groupBox);
     m_layout->insertWidget(index,groupBox);
@@ -32,48 +39,47 @@ void QGroupVector::insertGroup(int index, QString groupName,QLayout *  layout )
     else
     {
         m_groupBoxes[index]->setCheckable(true);
+        m_setGroupChecked(index,true);
         connect(m_groupBoxes[index],SIGNAL(clicked(bool)),m_checkMapper,SLOT(map()));
-        m_checkMapper->setMapping(m_groupBoxes[index],m_groupNames[index]);
+        m_checkMapper->setMapping(m_groupBoxes[index],layout);
     }
 
     if (m_checkedBehavior == SingleChecked)
     {
-        bool boxAlreadyChecked = false;
-        for (int i = 0; i < m_groupBoxes.count(); i ++)
-        {
-            if (!boxAlreadyChecked)
-            {
-                m_groupBoxes[i]->setChecked(true);
-                m_setGroupEnabled(i,true);
-                boxAlreadyChecked = true;
-                if (m_uncheckedBehavior == CollapseUnchecked)
-                    m_groupBoxes[i]->setCollapsed(false);
-            }
-            else
-            {
-                m_groupBoxes[i]->setChecked(false);
-                if (m_uncheckedBehavior == DisableUnchecked)
-                    m_setGroupEnabled(i,false);
-                else if (m_uncheckedBehavior == CollapseUnchecked)
-                    m_groupBoxes[i]->setCollapsed(true);
-            }
-        }
+        if (m_groupBoxes.count() > 1)
+            m_setGroupChecked(index,false);
+        else
+            m_setGroupChecked(index,true);
+
     }
 }
-void QGroupVector::removeGroup(QString groupName)
+
+void QGroupVector::insertGroup(int index, QLayout * layout,const QString & title)
 {
-    int index = m_groupNames.indexOf(groupName);
+    insertGroup(index,layout);
+    m_groupBoxes[index]->setTitle(title);
+}
+
+
+void QGroupVector::removeGroup(QLayout * layout)
+{
+    int index = m_groupLayouts.indexOf(layout);
     if (index == -1)
         return;
+
+    bool checkNewAfterRemove = (m_checkedBehavior == SingleChecked && m_groupBoxes[index]->isChecked());
+
     m_layout->removeWidget(m_groupBoxes[index]);
     m_groupBoxes[index]->hide();
-    m_groupNames.remove(index);
     m_groupLayouts.remove(index);
     m_groupBoxes.remove(index);
+
+    if (checkNewAfterRemove && m_groupBoxes.count() > 0)
+        setGroupChecked(m_groupLayouts[0],true);
 }
-bool QGroupVector::containsGroup(QString name)
+bool QGroupVector::containsGroup(QLayout * layout)
 {
-    return m_groupNames.contains(name);
+    return m_groupLayouts.contains(layout);
 }
 void QGroupVector::setDirection(Direction direction)
 {
@@ -84,16 +90,38 @@ void QGroupVector::setAlignment(Qt::Alignment alignment)
     m_layout->setAlignment(alignment);
 }
 
-void QGroupVector::setGroupChecked(QString groupName,bool checked)
+void QGroupVector::setGroupChecked(QLayout * layout,bool checked)
 {
-    int index = m_groupNames.indexOf(groupName);
+    int index = m_groupLayouts.indexOf(layout);
     if (index == -1)
         return;
-    m_groupBoxes[index]->setChecked(checked);
+
+    if (m_checkedBehavior == NoChecked)
+        return;
+
+    if (m_checkedBehavior == MultipleChecked)
+        m_setGroupChecked(index,checked);
+
+    else if (m_checkedBehavior == SingleChecked)
+    {
+        if (checked && !m_groupBoxes[index]->isChecked())
+            for (int i = 0; i < m_groupBoxes.count(); i ++)
+            {
+                if (index == i)
+                    m_setGroupChecked(i,true);
+
+                else if (m_groupBoxes[i]->isChecked())
+                    m_setGroupChecked(i,false);
+            }
+    }
+
 }
 
 void QGroupVector::setUncheckedBehavior(UncheckedBehavior behavior)
 {
+    if (m_uncheckedBehavior == behavior)
+        return;
+
     m_uncheckedBehavior = behavior;
     for (int i = 0; i < m_groupBoxes.count(); i ++)
     {
@@ -115,52 +143,69 @@ void QGroupVector::setUncheckedBehavior(UncheckedBehavior behavior)
 
 void QGroupVector::setCheckedBehavior(CheckedBehavior behavior )
 {
-    bool boxAlreadyChecked = false;
+
+    if (m_checkedBehavior == behavior)
+        return;
+
+    bool boxChecked = false;
     for (int i = 0; i < m_groupBoxes.count(); i ++)
     {
         if (behavior == NoChecked)
         {
             if (m_checkedBehavior != NoChecked)
+            {
                 disconnect(m_groupBoxes[i],SIGNAL(clicked(bool)),m_checkMapper,SLOT(map()));
-            m_groupBoxes[i]->setCheckable(false);
+                m_checkMapper->removeMappings(m_groupBoxes[i]);
+                m_groupBoxes[i]->setCheckable(false);
+            }
         }
         else if (behavior == SingleChecked)
         {
-            m_groupBoxes[i]->setCheckable(true);
-            if (!boxAlreadyChecked)
+            if (m_checkedBehavior == NoChecked)
             {
-                m_groupBoxes[i]->setChecked(true);
-                boxAlreadyChecked = true;
-                m_setGroupEnabled(i,true);
-                if (m_uncheckedBehavior == CollapseUnchecked)
-                    m_groupBoxes[i]->setCollapsed(false);
+                m_groupBoxes[i]->setCheckable(true);
+
+                if (!boxChecked)
+                {
+                    m_setGroupChecked(i,true);
+                    boxChecked = true;
+                }
+                else
+                    m_setGroupChecked(i,false);
+
+                connect(m_groupBoxes[i],SIGNAL(clicked(bool)),m_checkMapper,SLOT(map()));
+                m_checkMapper->setMapping(m_groupBoxes[i],m_groupLayouts[i]);
             }
-            else
+            else if (m_checkedBehavior == MultipleChecked)
             {
-                m_groupBoxes[i]->setChecked(false);
-                if (m_uncheckedBehavior == DisableUnchecked)
-                    m_setGroupEnabled(i,false);
-                else if (m_uncheckedBehavior == CollapseUnchecked)
-                    m_groupBoxes[i]->setCollapsed(true);
+                if (!boxChecked)
+                {
+                    if (m_groupBoxes[i]->isChecked())
+                        boxChecked = true;
+
+                    else if (i == ( m_groupBoxes.count() -1 ) )
+                        m_setGroupChecked(0,true);
+
+                }
+                else if (m_groupBoxes[i]->isChecked())
+                    m_setGroupChecked(i,false);
+
             }
 
-            connect(m_groupBoxes[i],SIGNAL(clicked(bool)),m_checkMapper,SLOT(map()));
-            m_checkMapper->setMapping(m_groupBoxes[i],m_groupNames[i]);
         }
         else if (behavior == MultipleChecked)
         {
-            m_groupBoxes[i]->setCheckable(true);
+            if (m_checkedBehavior == NoChecked)
+            {
+                m_groupBoxes[i]->setCheckable(true);
 
-            if (m_groupBoxes[i]->isChecked())
-                m_setGroupEnabled(i,true);
-            else if (m_uncheckedBehavior == DisableUnchecked)
-                m_setGroupEnabled(i,false);
-            else if (m_uncheckedBehavior == CollapseUnchecked)
-                m_groupBoxes[i]->setCollapsed(true);
+                if (m_groupBoxes[i]->isChecked())
+                    m_setGroupEnabled(i,true);
 
+                connect(m_groupBoxes[i],SIGNAL(clicked(bool)),m_checkMapper,SLOT(map()));
+                m_checkMapper->setMapping(m_groupBoxes[i],m_groupLayouts[i]);
+            }
 
-            connect(m_groupBoxes[i],SIGNAL(clicked(bool)),m_checkMapper,SLOT(map()));
-            m_checkMapper->setMapping(m_groupBoxes[i],m_groupNames[i]);
         }
     }
 
@@ -168,44 +213,44 @@ void QGroupVector::setCheckedBehavior(CheckedBehavior behavior )
 
 }
 
-void QGroupVector::m_groupChecked(QString groupName)
+void QGroupVector::m_groupChecked(QObject * layout)
 {
-    int groupIndex = m_groupNames.indexOf(groupName);
+    QLayout * groupLayout= (QLayout *) layout;
+    int groupIndex = m_groupLayouts.indexOf(groupLayout);
+    bool newCheck = true;
+
+    m_groupBoxes[groupIndex]->blockSignals(true);
     if (m_checkedBehavior == SingleChecked)
     {
+        // if group was unchecked during single check behavior,
+        // then check it again so that at least one group is checked.
         if (!m_groupBoxes[groupIndex]->isChecked())
         {
-            m_groupBoxes[groupIndex]->blockSignals(true);
-            m_groupBoxes[groupIndex]->setChecked(true);
-            m_setGroupEnabled(groupIndex,true);
-            if (m_uncheckedBehavior == CollapseUnchecked)
-                m_groupBoxes[groupIndex]->setCollapsed(false);
-            m_groupBoxes[groupIndex]->blockSignals(false);
+            m_setGroupChecked(groupIndex,true);
+            newCheck = false;
         }
         else
         {
-            m_setGroupEnabled(groupIndex,true);
+            m_setGroupChecked(groupIndex,true);
             for (int i = 0; i < m_groupBoxes.count(); i ++)
                 if (i != groupIndex)
-                {
-                    m_groupBoxes[i]->blockSignals(true);
-                    if (m_uncheckedBehavior == DisableUnchecked)
-                        m_setGroupEnabled(i,false);
-                    else if (m_uncheckedBehavior == CollapseUnchecked)
-                        m_groupBoxes[i]->setCollapsed(true);
-                    m_groupBoxes[i]->setChecked(false);
-                    m_groupBoxes[i]->blockSignals(false);
-                }
-
+                    m_setGroupChecked(i,false);
         }
     }
-    groupChecked(groupName,m_groupBoxes[groupIndex]->isChecked());
+    else if (m_checkedBehavior == MultipleChecked)
+        m_setGroupChecked(groupIndex,m_groupBoxes[groupIndex]->isChecked());
+
+    m_groupBoxes[groupIndex]->blockSignals(false);
+
+    if (newCheck)
+        groupChecked(groupLayout);
+    groupClicked(groupLayout,m_groupBoxes[groupIndex]->isChecked());
 }
 
 
-bool QGroupVector::isGroupChecked(QString groupName)
+bool QGroupVector::isGroupChecked(QLayout * layout)
 {
-    int index = m_groupNames.indexOf(groupName);
+    int index = m_groupLayouts.indexOf(layout);
     return m_groupBoxes[index]->isChecked();
 }
 
@@ -224,4 +269,22 @@ void QGroupVector::m_setGroupEnabled(int index, bool set)
 {
     for (int i = 0; i < m_groupLayouts[index]->count(); i ++)
         m_groupLayouts[index]->itemAt(i)->widget()->setEnabled(set);
+}
+
+void QGroupVector::m_setGroupChecked(int index, bool checked)
+{
+    if (checked)
+    {
+        m_setGroupEnabled(index,true);
+        if (m_uncheckedBehavior == CollapseUnchecked)
+            m_groupBoxes[index]->setCollapsed(false);
+    }
+    else
+    {
+        if (m_uncheckedBehavior == DisableUnchecked)
+            m_setGroupEnabled(index,false);
+        else if (m_uncheckedBehavior == CollapseUnchecked)
+            m_groupBoxes[index]->setCollapsed(true);
+    }
+    m_groupBoxes[index]->setChecked(checked);
 }

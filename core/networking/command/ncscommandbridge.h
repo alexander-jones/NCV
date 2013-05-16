@@ -7,7 +7,6 @@
 #include <QTimer>
 #include <QHostAddress>
 
-
 /*!
     \struct NCSCommandFileArgument
     \author Alex Jones

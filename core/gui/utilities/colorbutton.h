@@ -1,9 +1,9 @@
 #ifndef COLORBUTTON_H
 #define COLORBUTTON_H
 
-#include "orientationbutton.h"
+#include <QxtPushButton>
 
-class ColorButton : public OrientationButton
+class ColorButton : public QxtPushButton
 {
     Q_OBJECT
 

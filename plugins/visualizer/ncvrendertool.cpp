@@ -51,7 +51,7 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_neuronScaleSlider->setValue(825);
     m_neuronLayout->addWidget(m_neuronScaleSlider);
 
-    this->addGroup("Neurons",m_neuronLayout);
+    this->addGroup(m_neuronLayout,"Neurons");
 
     m_connectionLayout = new QVBoxLayout();
 
@@ -73,7 +73,7 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_connectionScaleSlider->setValue(15);
     m_connectionLayout->addWidget(m_connectionScaleSlider);
 
-    this->addGroup("Connections",m_connectionLayout);
+    this->addGroup(m_connectionLayout,"Connections");
 
     connect(m_neuronAttributeComboWidget,SIGNAL(widgetChanged(QString)),this,SLOT(m_currentNeuronAttributeSet(QString)));
     connect(m_connectionAttributeComboWidget,SIGNAL(widgetChanged(QString)),this,SLOT(m_currentConnectionAttributeSet(QString)));

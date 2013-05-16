@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <QLabel>
 #include <QListWidget>
+#include <QFormLayout>
 #include <QFileDialog>
 #include <QLineEdit>
 
@@ -67,8 +68,8 @@ private slots:
 
 private:
     void m_addToRecentCredentials(QString fileName);
-
     QSshSocket * m_connection;
+    QString m_lastHost, m_lastUser, m_lastPassword;
     QLabel * m_credentialEntryLabel,*m_recentCredentialsLabel;
     QWidget *m_buttonWidget;
     QFrame *m_credentialEntryWidget, *m_recentCredentialWidget ;
@@ -77,7 +78,8 @@ private:
     QHBoxLayout * m_layout;
     QGridLayout * m_buttonLayout;
     QPushButton *m_connectButton, * m_loadCredentialsButton, * m_saveCredentialsButton;
-    QWidgetVector *m_hostVector,* m_userVector,* m_passwordVector;
+    QWidget * m_loginWidget;
+    QFormLayout * m_loginWidgetLayout;
     QLineEdit *m_hostEdit,* m_userEdit,* m_passwordEdit;
 };
 

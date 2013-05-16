@@ -2,10 +2,9 @@
 #define NCVWIDGET_H
 
 #include "core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h"
-#include "core/gui/utilities/orientationbutton.h"
-#include "core/gui/utilities/qwidgetvector.h"
 #include "ncvrendertool.h"
 #include "ncvcanvas.h"
+#include <QxtPushButton>
 #include <QWidget>
 #include <QTabWidget>
 #include <QTreeWidget>
@@ -51,7 +50,7 @@ private:
     bool m_collapsed;
     QBoxLayout * m_layout;
     QLabel * m_framesPerSecond;
-    OrientationButton * m_collapseButton;
+    QxtPushButton * m_collapseButton;
     QString m_expandText, m_collapseText;
     QTime m_timer;
     NCVNeuronSet * m_neurons;

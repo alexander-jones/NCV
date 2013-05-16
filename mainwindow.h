@@ -10,7 +10,8 @@
 #include "core/networking/reporting/ncsdatasource.h"
 #include <QMainWindow>
 #include <QVBoxLayout>
-#include <qxt/QxtGui/QxtConfigWidget>
+#include <QxtConfigWidget>
+
 
 
 class MainWindow : public QMainWindow
@@ -48,6 +49,7 @@ private slots:
     void m_showLoadingSimulation();
 
 private:
+
     QVector< NCSWidgetPlugin *> m_allPlugins;
     QVector< NCSConnectionWidgetPlugin *> m_connectionPlugins;
     QVector< NCSApplicationWidgetPlugin *> m_applicationPlugins;

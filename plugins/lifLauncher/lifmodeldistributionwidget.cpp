@@ -21,7 +21,7 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidge
     m_loadModelFileButton = new QPushButton("Load Model File ");
     connect(m_loadModelFileButton,SIGNAL(clicked()),this,SLOT(m_modelLoadPressed()));
     m_modelLayout->addWidget(m_loadModelFileButton);
-    m_mainGroupVector->addGroup("Model File:",m_modelLayout);
+    m_mainGroupVector->addGroup(m_modelLayout,"Model File:");
 
     m_modelIncludeLayout = new QVBoxLayout();
     m_modelDependencyWidget = new QListWidget();
@@ -37,7 +37,7 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidge
     m_modelButtonVector->addWidget(m_removeModelFileButton);
 
     m_modelIncludeLayout->addWidget(m_modelButtonVector);
-    m_mainGroupVector->addGroup("Model Include Files:",m_modelIncludeLayout);
+    m_mainGroupVector->addGroup(m_modelIncludeLayout,"Model Include Files:");
 
     m_layout->addWidget(m_mainGroupVector);
 

@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QtCore/qmath.h>
 
-
+const int NO_MARKER = -1;
 
  Marker::Marker(Type type , Size size )
 {
@@ -125,7 +125,22 @@ void Marker::m_drawImage()
 
 	}
 }
-const int NO_MARKER = -1;
+ImageContainer::ImageContainer(QWidget *parent) :
+    QLabel(parent)
+{
+}
+
+
+void ImageContainer::mouseDoubleClickEvent ( QMouseEvent * event )
+{
+    ImageContainer::doubleClicked(event->button(),event->pos());
+}
+
+void ImageContainer::leaveEvent(QEvent *)
+{
+    exited();
+}
+
 ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
     QWidget(parent)
 {
@@ -199,45 +214,6 @@ void ContinuousColorSelector::resizeEvent(QResizeEvent *ev)
     m_updateValueLayerContainer();
 }
 
-/*void ContinuousColorSelector::setWidth(int width)
-{
-    QImage * oldImage = m_rangeLayer;
-
-    int imagePosition = width - 100;
-    int imageHeight = m_markerHeight;
-
-    m_rangeLayer = new QImage(imagePosition,imageHeight,QImage::Format_RGB32);
-    if (oldImage != NULL)
-    {
-        for (int y = 0; y < imageHeight; y++)
-            for (int x = 0; x < imagePosition; x++)
-            {
-                if (x < oldImage->width() && y < oldImage->height())
-                    m_rangeLayer->setPixel(x,y,oldImage->pixel(x,y));
-                else
-                    m_rangeLayer->setPixel(x,y,qRgb(0,0,0));
-            }
-        delete oldImage;
-
-    }
-
-    if (m_markerLayer != NULL)
-        delete m_markerLayer;
-    m_markerLayer = new QImage(width,imageHeight,QImage::Format_ARGB32);
-    m_markerLayer->fill(QColor(0,0,0,0));
-
-    for (int i = 0; i < m_markers.size();i++)
-        m_markers[i].setPosition( width * ((m_markers[i].value() - m_lowThreshold) /(m_highThreshold - m_lowThreshold)));
-
-    m_updateRange();
-
-    if (m_valueLayer != NULL)
-        delete m_valueLayer;
-    m_valueLayer = new QImage(width ,m_markerHeight,QImage::Format_ARGB32);
-    m_valueLayer->fill(QColor(0,0,0,0));
-    m_updateValueLayerContainer();
-
-}*/
 void ContinuousColorSelector::m_markerTypeSelected(QString name)
 {
     if (name == "Solid")

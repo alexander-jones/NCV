@@ -60,6 +60,8 @@ QSshSocket::QSshSocket(QObject * parent )
 
 QSshSocket::~QSshSocket()
 {
+    if (m_session != NULL)
+        ssh_free(m_session);
     m_run = false;
     this->wait();
 }

@@ -16,27 +16,20 @@ RemoteConnectionWidget::RemoteConnectionWidget(QWidget *parent) :
     m_credentialEntryLabel->setAlignment(Qt::AlignCenter);
     m_credentialEntryLayout->addWidget(m_credentialEntryLabel);
 
-    m_hostVector = new QWidgetVector(this);
-    m_hostVector->addWidget(new QLabel("Host:"));
+    m_loginWidget = new QWidget();
+    m_loginWidgetLayout = new QFormLayout();
     m_hostEdit = new QLineEdit();
-    m_hostVector->addWidget(m_hostEdit);
+    m_loginWidgetLayout->addRow("Host:",m_hostEdit);
 
-    m_credentialEntryLayout->addWidget(m_hostVector);
-
-    m_userVector = new QWidgetVector(this);
-    m_userVector->addWidget(new QLabel("User:"));
     m_userEdit = new QLineEdit();
-    m_userVector->addWidget(m_userEdit);
+    m_loginWidgetLayout->addRow("User:",m_userEdit);
 
-    m_credentialEntryLayout->addWidget(m_userVector);
-
-    m_passwordVector = new QWidgetVector(this);
-    m_passwordVector->addWidget(new QLabel("Password:"));
     m_passwordEdit = new QLineEdit();
     m_passwordEdit->setEchoMode(QLineEdit::Password);
-    m_passwordVector->addWidget(m_passwordEdit);
+    m_loginWidgetLayout->addRow("Password:",m_passwordEdit);
 
-    m_credentialEntryLayout->addWidget(m_passwordVector);
+    m_loginWidget->setLayout(m_loginWidgetLayout);
+    m_credentialEntryLayout->addWidget(m_loginWidget);
 
     m_buttonWidget = new QWidget();
     m_buttonLayout = new QGridLayout();
@@ -107,12 +100,9 @@ RemoteConnectionWidget::RemoteConnectionWidget(QWidget *parent) :
     m_recentCredentialWidget->setLayout(m_recentCredentialLayout);
     m_layout->addWidget(m_recentCredentialWidget);
 
-    this->setLayout(m_layout);
-    m_connection = new QSshSocket(this);
-    connect(m_connection,SIGNAL(connected()),this,SLOT(m_onConnect()));
-    connect(m_connection,SIGNAL(loginSuccessful()),this,SLOT(m_onAuthentication()));
-    connect(m_connection,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onError(QSshSocket::SshError)));
+    m_connection = NULL;
 
+    this->setLayout(m_layout);
 
 }
 
@@ -132,7 +122,8 @@ void RemoteConnectionWidget::m_loadCredentials()
 }
 void RemoteConnectionWidget::m_onError(QSshSocket::SshError err)
 {
-    qDebug() << "ERROR: " << err;
+    m_connection->deleteLater();
+    m_connection = NULL;
     connectionFailed();
 
 }
@@ -227,7 +218,14 @@ void RemoteConnectionWidget::m_tryConnect()
     QMessageBox msgBox;
     msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
 
-    if (m_userEdit->text() == "" || m_hostEdit->text() == "" || m_passwordEdit->text() == "" )
+    if (m_connection != NULL)
+    {
+        msgBox.setText("NCV is still attempting another connection. Please wait");
+        msgBox.exec();
+        return;
+    }
+
+    else if (m_userEdit->text() == "" || m_hostEdit->text() == "" || m_passwordEdit->text() == "" )
     {
         msgBox.setText("Fields were left empty. Fill all remaining fields and try again.");
         msgBox.exec();
@@ -235,8 +233,11 @@ void RemoteConnectionWidget::m_tryConnect()
     }
 
     connectionAttempted();
-    if (m_connection->isConnected())
-        m_connection->disconnectFromHost();
+
+    m_connection = new QSshSocket(this);
+    connect(m_connection,SIGNAL(connected()),this,SLOT(m_onConnect()));
+    connect(m_connection,SIGNAL(loginSuccessful()),this,SLOT(m_onAuthentication()));
+    connect(m_connection,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onError(QSshSocket::SshError)));
     m_connection->connectToHost(m_hostEdit->text(),22,QSshSocket::LogOperations);
 
 }
@@ -250,7 +251,9 @@ void RemoteConnectionWidget::m_onConnect()
 
 void RemoteConnectionWidget::m_onAuthentication()
 {
-    connected(m_connection);
+    QSshSocket * exitSock = m_connection;
+    m_connection = NULL;
+    connected(exitSock);
     return;
 }
 

@@ -2,6 +2,7 @@
 #define NCSREMOTECOMMANDBRIDGE_H
 #include "ncscommandbridge.h"
 #include "qsshsocket.h"
+
 class NCSRemoteApplicationBridge:public NCSApplicationBridge
 {
     Q_OBJECT

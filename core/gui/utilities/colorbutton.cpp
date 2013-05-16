@@ -1,7 +1,7 @@
 #include "colorbutton.h"
 
 ColorButton::ColorButton(QWidget *parent )
-    :OrientationButton(parent)
+    :QxtPushButton(parent)
 {
     this->setAutoFillBackground(true);
 }

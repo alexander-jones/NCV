@@ -12,15 +12,11 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     connect(m_localCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
     connect(m_localCommandBridge,SIGNAL(validated()),this,SLOT(m_localConnectionValidated()));
 
-    m_remoteCommandBridge = new NCSRemoteCommandBridge(this);
-    connect(m_remoteCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
-    connect(m_remoteCommandBridge,SIGNAL(validated()),this,SLOT(m_remoteConnectionValidated()));
-
     m_layout = new QVBoxLayout();
     m_layout->setAlignment(Qt::AlignCenter);
 
     m_connectionGroupVector = new QGroupVector();
-    connect(m_connectionGroupVector,SIGNAL(groupChecked(QString,bool)),this,SLOT(m_connectionGroupChecked(QString,bool)));
+    connect(m_connectionGroupVector,SIGNAL(groupChecked(QLayout *)),this,SLOT(m_connectionGroupChecked(QLayout *)));
     m_connectionGroupVector->setUncheckedBehavior(QGroupVector::DisableUnchecked);
     m_connectionGroupVector->setCheckedBehavior(QGroupVector::SingleChecked);
 
@@ -38,14 +34,15 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     connect(m_localValidateButton,SIGNAL(clicked()),this,SLOT(m_validateLocalConnection()));
     m_localLayout->addWidget(m_localValidateButton);
 
-    m_connectionGroupVector->addGroup("Use Local Machine as Host", m_localLayout);
-    m_connectionGroupVector->setGroupChecked("Use Local Machine as Host",true);
+    m_connectionGroupVector->addGroup(m_localLayout,"Use Local Machine as Host");
+    m_connectionGroupVector->setGroupChecked(m_localLayout,true);
 
     m_remoteLayout = new QVBoxLayout();
     m_remoteConnectionWidget = new RemoteConnectionWidget();
     m_remoteConnectionWidget->setEnabled(false);
     connect(m_remoteConnectionWidget,SIGNAL(connected(QSshSocket*)),this,SLOT(m_remoteConnectionEstablished(QSshSocket*)));
     connect(m_remoteConnectionWidget,SIGNAL(connectionFailed()),this,SLOT(m_remoteConnectionFailed()));
+    connect(m_remoteConnectionWidget,SIGNAL(connectionAttempted()),this,SLOT(m_clearRemoteContext()));
     m_remoteLayout->addWidget(m_remoteConnectionWidget);
 
     m_remoteNCSDirectoryVector = new QWidgetVector();
@@ -59,7 +56,7 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     m_remoteNCSDirectoryVector->addWidget(m_remoteValidateButton);
 
     m_remoteLayout->addWidget(m_remoteNCSDirectoryVector);
-    m_connectionGroupVector->addGroup("Use Remote Machine as Host",m_remoteLayout);
+    m_connectionGroupVector->addGroup(m_remoteLayout,"Use Remote Machine as Host");
     m_layout->addWidget(m_connectionGroupVector);
 
     m_statusLabel = new QLabel();
@@ -75,9 +72,9 @@ void NCSConnectionWidget::m_localNCSDirectoryChanged(QString newText)
         m_localValidateButton->setEnabled(false);
 }
 
-void NCSConnectionWidget::m_connectionGroupChecked(QString groupName,bool checked)
+void NCSConnectionWidget::m_connectionGroupChecked(QLayout * layout)
 {
-    if (groupName == "Use Remote Machine as Host" && checked)
+    if (layout == m_remoteLayout)
     {
         if(m_socket == NULL)
             m_remoteNCSDirectoryVector->setEnabled(false);
@@ -96,6 +93,23 @@ void NCSConnectionWidget::m_browseForNCS()
 
 }
 
+void NCSConnectionWidget::m_clearRemoteContext( )
+{
+    if (m_socket != NULL)
+    {
+        m_socket->disconnect();
+        m_socket->deleteLater();
+        if (m_remoteCommandBridge != NULL)
+        {
+            m_remoteCommandBridge->disconnect();
+            m_socket->deleteLater();
+        }
+    }
+    m_socket = NULL;
+    m_remoteCommandBridge = NULL;
+    m_remoteNCSDirectoryEdit->clear();
+    m_remoteNCSDirectoryVector->setEnabled(false);
+}
 void NCSConnectionWidget::m_remoteConnectionFailed()
 {
     QMessageBox msgBox;
@@ -116,17 +130,29 @@ void NCSConnectionWidget::m_remoteConnectionError(QSshSocket::SshError err)
 
 void NCSConnectionWidget::m_remoteConnectionEstablished(QSshSocket * socket)
 {
+    if (m_socket != NULL)
+    {
+        m_socket->disconnect();
+        m_socket->deleteLater();
+        if (m_remoteCommandBridge != NULL)
+        {
+            m_remoteCommandBridge->disconnect();
+            m_remoteCommandBridge->deleteLater();
+        }
+    }
     m_socket = socket;
+    m_remoteCommandBridge = new NCSRemoteCommandBridge(this);
+    connect(m_remoteCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
+    connect(m_remoteCommandBridge,SIGNAL(validated()),this,SLOT(m_remoteConnectionValidated()));
     m_remoteCommandBridge->initialize(m_projectPath,socket);
+
+
     m_remoteNCSDirectoryVector->setEnabled(true);
 }
 void NCSConnectionWidget::m_validateRemoteConnection()
 {
-    if (m_socket != NULL)
-    {
-        m_remoteCommandBridge->validate(m_remoteNCSDirectoryEdit->text());
-        m_socket = NULL;
-    }
+    m_remoteCommandBridge->validate(m_remoteNCSDirectoryEdit->text());
+
 }
 void NCSConnectionWidget::m_remoteConnectionValidated()
 {
@@ -141,6 +167,9 @@ void NCSConnectionWidget::m_validateLocalConnection()
 void NCSConnectionWidget::m_localConnectionValidated()
 {
     m_statusLabel->setText("<font color='green'> NCS Installation Validated</font>");
+    m_socket = NULL;
+    m_remoteNCSDirectoryEdit->clear();
+    m_remoteNCSDirectoryVector->setEnabled(false);
     bridgeEstablished(m_localCommandBridge);
 }
 void NCSConnectionWidget::m_connectionInvalidated(NCSCommandBridge::ValidationError err)

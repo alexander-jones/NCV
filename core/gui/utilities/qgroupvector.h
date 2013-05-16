@@ -34,33 +34,35 @@ public:
     };
 
     explicit QGroupVector(QWidget *parent = 0);
-    void addGroup(QString groupName, QLayout * layout);
-    void insertGroup(int index,QString groupName, QLayout * layout);
-    void removeGroup(QString groupName);
-    bool containsGroup(QString name);
+    void addGroup(QLayout * layout);
+    void addGroup(QLayout * layout,const QString & title);
+    void insertGroup(int index, QLayout * layout);
+    void insertGroup(int index, QLayout * layout,const QString & title);
+    void removeGroup(QLayout * layout);
     bool containsGroup(QLayout * layout);
-    void setGroupChecked(QString groupName,bool checked);
+    void setGroupChecked(QLayout * layout,bool checked);
     void setDirection(Direction direction);
     void setAlignment(Qt::Alignment alignment);
     void setCheckedBehavior(CheckedBehavior behavior);
     void setUncheckedBehavior(UncheckedBehavior state);
-    bool isGroupChecked(QString groupName);
+    bool isGroupChecked(QLayout * layout);
     QGroupVector::CheckedBehavior checkBehavior();
     QGroupVector::UncheckedBehavior uncheckedBehavior();
 
 signals:
-    void groupChecked(QString groupName,bool checked);
+    void groupClicked(QLayout * layout,bool checked = false);
+    void groupChecked(QLayout * layout);
 
 public slots:
 
 private slots:
-    void m_groupChecked(QString groupName);
+    void m_groupChecked(QObject * layout);
 
 private:
     void m_setGroupEnabled(int index, bool set);
+    void m_setGroupChecked(int index, bool checked);
 
     QBoxLayout * m_layout;
-    QVector<QString> m_groupNames;
     QVector<QLayout*> m_groupLayouts;
     QVector<QxtGroupBox*> m_groupBoxes;
     CheckedBehavior m_checkedBehavior;
