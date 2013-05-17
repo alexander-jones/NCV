@@ -7,7 +7,7 @@ class NCSConnectionWidgetPlugin: public NCSWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit NCSConnectionWidgetPlugin( QString projectDir,QWidget *parent = 0):NCSWidgetPlugin(projectDir, parent){}
+    explicit NCSConnectionWidgetPlugin( QWidget *parent = 0):NCSWidgetPlugin(parent){}
 
 signals:
     void bridgeEstablished(NCSCommandBridge * bridge);

@@ -17,7 +17,7 @@ int NCSDiscreteAttribute::bitMask()
     return m_bitMask;
 }
 
-void NCSDiscreteAttribute::attachData(QVector<unsigned char> data )
+void NCSDiscreteAttribute::attachData(QVector<unsigned char> & data )
 {
     m_data = data;
     dataChanged();

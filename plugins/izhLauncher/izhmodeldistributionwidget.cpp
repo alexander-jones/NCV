@@ -3,16 +3,14 @@
 #include <QMessageBox>
 #include "core/ncscluster.h"
 
-IzhModelDistributionWidget::IzhModelDistributionWidget(QString projectDir,QWidget *parent) :
-    NCSDistributionWidgetPlugin(projectDir,parent)
+IzhModelDistributionWidget::IzhModelDistributionWidget(QWidget *parent) :
+    NCSDistributionWidgetPlugin(parent)
 {
 
-    m_projectDir = projectDir;
     m_commandBridge = NULL;
     m_currentApplication = NULL;
     m_launching = false;
     m_distributionOutputDir = "izhout";
-    m_topologyFilename = m_projectDir + "/tmp/topology";
 
     m_layout = new QVBoxLayout();
 
@@ -74,7 +72,7 @@ IzhModelDistributionWidget::IzhModelDistributionWidget(QString projectDir,QWidge
     m_timeLabel = new QLabel("Simulation Runtime: ");
     m_timeWidgetVector->addWidget(m_timeLabel);
     m_timeSpinBox = new QSpinBox();
-    m_timeSpinBox->setMinimum(0);
+    m_timeSpinBox->setMinimum(1);
     m_timeSpinBox->setMaximum(10000);
     m_timeWidgetVector->addWidget(m_timeSpinBox);
     m_timeUnitsComboBox = new QComboBox();
@@ -95,6 +93,12 @@ IzhModelDistributionWidget::IzhModelDistributionWidget(QString projectDir,QWidge
     this->setLayout(m_layout);
     this->setEnabled(false);
 
+}
+
+void IzhModelDistributionWidget::loadProject(QString projectDir)
+{
+    m_projectDir = projectDir;
+    m_topologyFilename = m_projectDir + "/tmp/topology";
 }
 
 QIcon IzhModelDistributionWidget::icon()
@@ -257,6 +261,7 @@ void IzhModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::Applic
     msgBox.setText("Simulation Launching Failed." );
     msgBox.exec();
     m_launching = false;
+    launchFailed();
     m_destroySimulation();
 }
 void IzhModelDistributionWidget::m_simulationFinished()

@@ -1,14 +1,12 @@
 #include "ncsconnectionwidget.h"
 
-NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
-    NCSConnectionWidgetPlugin(projectPath,parent)
+NCSConnectionWidget::NCSConnectionWidget(QWidget *parent) :
+    NCSConnectionWidgetPlugin(parent)
 {
     m_remoteCommandBridge = NULL;
 
-    m_projectPath = projectPath;
     m_socket = NULL;
     m_localCommandBridge = new NCSLocalCommandBridge(this);
-    m_localCommandBridge->initialize(m_projectPath);
     connect(m_localCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
     connect(m_localCommandBridge,SIGNAL(validated()),this,SLOT(m_localConnectionValidated()));
 
@@ -23,7 +21,7 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     m_localLayout = new QHBoxLayout();
     m_localNCSDirectoryLabel = new QLabel("NCS 6 Directory:");
     m_localLayout->addWidget(m_localNCSDirectoryLabel);
-    m_ncsDirectoryEdit = new QLineEdit(projectPath);
+    m_ncsDirectoryEdit = new QLineEdit();
     connect(m_ncsDirectoryEdit,SIGNAL(textChanged(QString)),this,SLOT(m_localNCSDirectoryChanged(QString)));
     m_localLayout->addWidget(m_ncsDirectoryEdit);
     m_ncsBrowseButton = new QPushButton("Browse");
@@ -64,6 +62,14 @@ NCSConnectionWidget::NCSConnectionWidget(QString projectPath,QWidget *parent) :
     m_layout->addWidget(m_statusLabel);
     this->setLayout(m_layout);
 }
+
+void NCSConnectionWidget::loadProject(QString projectDir)
+{
+    m_projectPath = projectDir;
+    m_localCommandBridge->initialize(m_projectPath);
+    m_ncsDirectoryEdit->setText(m_projectPath);
+}
+
 void NCSConnectionWidget::m_localNCSDirectoryChanged(QString newText)
 {
     if (newText != "" && QDir(newText).exists())

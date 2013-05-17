@@ -8,7 +8,7 @@ class NCSContinuousAttribute: public NCSAttribute
     Q_OBJECT
 public:
     NCSContinuousAttribute( NCSElementType type, float minValue , float maxValue,QObject *parent = 0);
-    void attachData(QVector<float> data);
+    void attachData(QVector<float> & data);
     QVector<float> data();
     NCSElementType elementType();
     float minValue();

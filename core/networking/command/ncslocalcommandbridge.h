@@ -13,7 +13,7 @@ public:
     QString readAllStandardError();
     QString readAllStandardOutput();
 
-    void scheduleDestruction(bool destroy);
+    void stopExecution(bool destroy);
     QString applicationName();
 private slots:
     void m_processErrorOccured(QProcess::ProcessError);

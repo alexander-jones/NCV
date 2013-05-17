@@ -2,10 +2,9 @@
 #include "ncsclustereditor.h"
 #include <QByteArray>
 
-NCSClusterEditor::NCSClusterEditor(QString projectDir,QWidget * parent)
-    :NCSApplicationWidgetPlugin(projectDir,parent)
+NCSClusterEditor::NCSClusterEditor(QWidget * parent)
+    :NCSApplicationWidgetPlugin(parent)
 {
-    m_projectDir = projectDir;
     m_layout = new QVBoxLayout();
 
     /*m_ipRangeDetectionVector = new QWidgetVector();
@@ -127,6 +126,10 @@ NCSClusterEditor::NCSClusterEditor(QString projectDir,QWidget * parent)
 
     this->setLayout(m_layout);
     this->setEnabled(false);
+}
+void NCSClusterEditor::loadProject(QString projectDir)
+{
+    m_projectDir = projectDir;
 }
 
 QIcon NCSClusterEditor::icon()

@@ -8,12 +8,12 @@ class NCSClusterEditor : public NCSApplicationWidgetPlugin
     Q_OBJECT
 
 public:
-    explicit NCSClusterEditor(QString projectDir,QWidget * parent = 0);
+    explicit NCSClusterEditor(QWidget * parent = 0);
     void saveHostFile( QString filename);
     void saveClusterFile(QString filename);
     void loadClusterFile(QString filename, bool append = false);
     int enabledMachines();
-
+    void loadProject(QString projectDir);
     QIcon icon();
     QString title();
 

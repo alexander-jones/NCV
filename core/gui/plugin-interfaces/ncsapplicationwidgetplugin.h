@@ -7,7 +7,7 @@ class NCSApplicationWidgetPlugin: public NCSWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit NCSApplicationWidgetPlugin( QString projectDir,QWidget *parent = 0):NCSWidgetPlugin(projectDir,parent){}
+    explicit NCSApplicationWidgetPlugin( QWidget *parent = 0):NCSWidgetPlugin(parent){}
 public slots:
     virtual void setCommandBridge(NCSCommandBridge * bridge) = 0;
 };

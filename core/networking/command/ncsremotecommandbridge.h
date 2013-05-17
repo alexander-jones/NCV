@@ -13,7 +13,7 @@ public:
     void start(QString application,NCSCommandArguments arguments);
     QString readAllStandardError();
     QString readAllStandardOutput();
-    void scheduleDestruction(bool destroy);
+    void stopExecution(bool destroy);
     QString applicationName();
 
 private slots:

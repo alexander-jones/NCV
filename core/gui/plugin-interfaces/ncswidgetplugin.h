@@ -7,7 +7,8 @@ class NCSWidgetPlugin: public QWidget
 {
     Q_OBJECT
 public:
-    explicit NCSWidgetPlugin( QString projectDir,QWidget *parent = 0):QWidget(parent){}
+    explicit NCSWidgetPlugin( QWidget *parent = 0):QWidget(parent){}
+    virtual void loadProject(QString projectDir) = 0;
     virtual QIcon icon() = 0;
     virtual QString title() = 0;
 

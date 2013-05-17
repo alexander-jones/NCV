@@ -1,12 +1,11 @@
 #include "ncvwidget.h"
 
 
-NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
-    NCSSubscriberWidgetPlugin(projectDir,parent)
+NCVWidget::NCVWidget(QWidget *parent) :
+    NCSSubscriberWidgetPlugin(parent)
 {
     m_neurons = NULL;
     m_connections = NULL;
-    m_projectDir = projectDir;
     m_layout = new QBoxLayout(QBoxLayout::LeftToRight);
     m_layout->setSpacing(0);
 
@@ -84,7 +83,13 @@ NCVWidget::NCVWidget(QString projectDir,QWidget *parent) :
     connect(m_canvas,SIGNAL(selectionChanged(QVector<NCVElementRange>,NCVSelectionFlag)),this,SLOT(setSelection(QVector<NCVElementRange>,NCVSelectionFlag)));
 
 }
-	
+
+void NCVWidget::loadProject(QString projectDir)
+{
+    m_projectDir = projectDir;
+}
+
+
 void  NCVWidget::setSelection(QVector<NCVElementRange> selection,NCVSelectionFlag flags)
 { 
 	m_selectionFlags = flags;

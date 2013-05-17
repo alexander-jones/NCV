@@ -6,12 +6,13 @@ class NCSDistributionWidgetPlugin: public NCSApplicationWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit NCSDistributionWidgetPlugin( QString projectDir,QWidget *parent = 0):NCSApplicationWidgetPlugin(projectDir,parent){}
+    explicit NCSDistributionWidgetPlugin( QWidget *parent = 0):NCSApplicationWidgetPlugin(parent){}
 
 signals:
     void launchTriggered();
     void distributed(QString topologyFile);
     void launched();
+    void launchFailed();
 };
 
 #endif // NCVDISTRIBUTIONWIDGETPLUGIN_H

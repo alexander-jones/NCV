@@ -22,7 +22,9 @@ NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
 
 
     if (m_alive && m_destroyProcess)
+    {
         m_socket->executeCommand("kill " + m_pidString);
+    }
 }
 void NCSRemoteApplicationBridge::setSocket(QSshSocket * socket, bool own)
 {
@@ -33,7 +35,7 @@ void NCSRemoteApplicationBridge::setSocket(QSshSocket * socket, bool own)
     connect(m_socket,SIGNAL(pushSuccessful(QString,QString)),this,SLOT(m_executeNextPush()));
 }
 
-void NCSRemoteApplicationBridge::scheduleDestruction(bool destroy)
+void NCSRemoteApplicationBridge::stopExecution(bool destroy)
 {
     m_destroyProcess = destroy;
     executionFinished();
@@ -187,7 +189,7 @@ void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandAr
     ApplicationContext context;
     context.applicationPath =" applications/" + application  + "/" + application;
     context.arguments = arguments;
-    context.application = new NCSRemoteApplicationBridge(application,m_projectPath,this);
+    context.application = new NCSRemoteApplicationBridge(application,m_remoteProjectPath,this);
     m_launchingApplications.append(context);
     m_socket->clone();
 
@@ -200,7 +202,7 @@ void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandAr
     arguments.insert(0,"--np");
     arguments.insert(1,QString::number(numProcesses));
     arguments.insert(2,"--hostfile");
-    arguments.insert(3,NCSCommandFileArgument(m_remoteProjectPath + "/temp_hostfile.ncv",hostFile,NCSCommandFileArgument::UploadBeforeExecution));
+    arguments.insert(3,NCSCommandFileArgument("temp_hostfile.ncv",hostFile,NCSCommandFileArgument::UploadBeforeExecution));
     arguments.insert(4,"applications/" + application  + "/" + application);
 
     ApplicationContext context;

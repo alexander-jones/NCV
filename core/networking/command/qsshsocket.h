@@ -213,11 +213,13 @@ signals:
     void workingDirectorySet(QString cwd);
 
 private slots:
-    void run();
     void m_onCloneConnect();
     void m_onCloneLoggedIn();
     void m_onCloneCWDSet(QString cwd);
     void m_onCloneError(QSshSocket::SshError);
+
+protected:
+    void run();
 
 private:
     void m_releaseClone();

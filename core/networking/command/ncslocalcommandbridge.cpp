@@ -15,7 +15,7 @@ NCSLocalApplicationBridge::NCSLocalApplicationBridge(QString name,QString workin
     connect(m_process,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(m_processFinished()));
 }
 
-void NCSLocalApplicationBridge::scheduleDestruction(bool destroy)
+void NCSLocalApplicationBridge::stopExecution(bool destroy)
 {
     m_destroyProcess = destroy;
     executionFinished();
@@ -28,7 +28,6 @@ QString NCSLocalApplicationBridge::applicationName()
 
 NCSLocalApplicationBridge::~NCSLocalApplicationBridge()
 {
-    executionFinished();
     m_process->disconnect();
     if (m_destroyProcess)
     {
@@ -73,7 +72,6 @@ NCSLocalApplicationBridge::~NCSLocalApplicationBridge()
                 killer.waitForFinished(-1);
             #endif
         }
-
 
     }
 }

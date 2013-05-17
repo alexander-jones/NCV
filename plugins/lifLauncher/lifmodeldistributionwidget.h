@@ -16,9 +16,10 @@ class LIFModelDistributionWidget : public NCSDistributionWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit LIFModelDistributionWidget(QString projectDir,QWidget *parent = 0);
+    explicit LIFModelDistributionWidget(QWidget *parent = 0);
     QIcon icon();
     QString title();
+    void loadProject(QString projectDir);
 
 public slots:
     void setCommandBridge(NCSCommandBridge * bridge);

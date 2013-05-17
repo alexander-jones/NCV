@@ -175,7 +175,6 @@ QSocketConnection *QSocketConnection::clone(bool master)
     {
         int port = -1;
 
-        m_socket->waitForReadyRead();
         recv<int>(&port, 1);
         return new QSocketConnection(peer, port, 10);
     }
@@ -222,15 +221,18 @@ bool QSocketConnection::_recv(void *data, unsigned int count)
             return false;
         }
 
-        bytesRead = m_socket->read((char*)data + totalRead, count - totalRead);
-        totalRead += bytesRead;
+        while (!m_socket->waitForReadyRead()){ }
 
-        if(bytesRead <= 0 && !m_socket->waitForReadyRead())
+        bytesRead = m_socket->read((char*)data + totalRead, count - totalRead);
+
+        if(bytesRead <= 0)
         {
             qDebug() << "Error reading data: " << m_socket->errorString();
             break;
         }
+        totalRead += bytesRead;
     }
+
 
     return totalRead == count;
 }//_recv()

@@ -14,8 +14,9 @@ class NCVWidget : public NCSSubscriberWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit NCVWidget(QString projectDir,QWidget *parent = 0);
+    explicit NCVWidget(QWidget *parent = 0);
     ~NCVWidget();
+    void loadProject(QString projectDir);
     QIcon icon();
     QString title();
 

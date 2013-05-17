@@ -208,11 +208,6 @@ public:
     */
     virtual QString readAllStandardOutput() = 0;
 
-    /*!
-        \param destroy Whether or not to destroy the NCS application process when this class instance is destructed.
-        \brief Instruct this class whether or not to destroy the NCS application process when this class instance is destructed.
-    */
-    virtual void scheduleDestruction(bool destroy) = 0;
 
     /*!
         \brief Returns the name of the NCS application associated with this class instance.
@@ -246,6 +241,16 @@ signals:
         \brief Emitted when the NCS application has returned standard error
     */
     void readyReadStandardError();
+
+private:
+
+    /*!
+        \param destroy Whether or not to destroy the NCS application process when this class instance is destructed.
+        \brief This function exists so that the main application can terminate applications launched by plugins at exit.
+        It will emit the executionFinished signal so that plugins can terminate the application instance.
+    */
+    virtual void stopExecution(bool destroy) = 0;
+    friend class MainWindow;
 };
 
 /*!

@@ -7,7 +7,7 @@
 #include "plugins/lifLauncher/lifmodeldistributionwidget.h"
 #include "plugins/izhLauncher/izhmodeldistributionwidget.h"
 #include "plugins/visualizer/ncvwidget.h"
-#include "core/networking/reporting/ncsdatasource.h"
+#include "core/networking/reporting/networkupdatemanager.h"
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QxtConfigWidget>
@@ -21,11 +21,11 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
 
-    void addWidget(NCSWidgetPlugin *widget);
-    void addWidget(NCSConnectionWidgetPlugin *widget);
-    void addWidget(NCSApplicationWidgetPlugin *widget);
-    void addWidget(NCSDistributionWidgetPlugin *widget);
-    void addWidget(NCSSubscriberWidgetPlugin *widget);
+    void addPlugin(NCSWidgetPlugin *widget);
+    void addPlugin(NCSConnectionWidgetPlugin *widget);
+    void addPlugin(NCSApplicationWidgetPlugin *widget);
+    void addPlugin(NCSDistributionWidgetPlugin *widget);
+    void addPlugin(NCSSubscriberWidgetPlugin *widget);
     ~MainWindow();
 
 protected:
@@ -36,17 +36,20 @@ private slots:
     void m_createNetwork(QString topologyFilename);
     void m_publishNetwork();
     void m_loadProject(QString projectDirectory);
+    void m_closeProject();
     void m_updateTimeScale(int multiplier);
     void m_openProjectPressed();
     void m_newProjectPressed();
     void m_ncsApplicationLaunched(NCSApplicationBridge * );
     void m_ncsApplicationFinished(QObject * );
 
-    void m_runSimulation();
-    void m_pauseSimulation();
-    void m_stopSimulation();
+    void m_runSimulationPressed();
+    void m_pauseSimulationPressed();
+    void m_stopSimulationPressed();
+    void m_disconnectFromSimulator(bool destroy = true);
     void m_setSimulationToolbar(bool on);
     void m_showLoadingSimulation();
+    void m_hideLoadingSimulation();
 
 private:
 
@@ -57,14 +60,14 @@ private:
     QVector< NCSSubscriberWidgetPlugin *> m_subscriberPlugins;
 
     int m_simulationApplicationIndex;
+    QString m_projectDirectory;
     QToolBar * m_simulationToolbar;
     QSlider * m_simulationTimeSlider;
     QAction *m_runSimulationButton, * m_pauseSimulationButton, * m_stopSimulationButton;
     QSignalMapper * m_applicationMapper;
     QVector<NCSApplicationBridge *> m_activeApplications;
-    QTimer * m_updateTimer;
     NCSCommandBridge * m_commandBridge;
-    NCSDataSource * m_dataSource;
+    NetworkUpdateManager * m_reportingManager;
     QString m_rootPath;
     QVBoxLayout * m_layout;
     QxtConfigWidget * m_applicationLauncher;

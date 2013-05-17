@@ -4,7 +4,6 @@
 #include "remoteconnectionwidget.h"
 #include "core/networking/command/ncslocalcommandbridge.h"
 #include "core/networking/command/ncsremotecommandbridge.h"
-#include "core/networking/reporting/ncsdatasource.h"
 #include "core/gui/plugin-interfaces/ncsconnectionwidgetplugin.h"
 #include "core/gui/utilities/qwidgetvector.h"
 #include "core/gui/utilities/qgroupvector.h"
@@ -18,9 +17,10 @@ class NCSConnectionWidget : public NCSConnectionWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit NCSConnectionWidget(QString projectPath,QWidget *parent = 0);
+    explicit NCSConnectionWidget(QWidget *parent = 0);
     QIcon icon();
     QString title();
+    void loadProject(QString projectDir);
 
 public slots:
     void initialize();

@@ -9,7 +9,7 @@ class NCSDiscreteAttribute:public NCSAttribute
     Q_OBJECT
 public:
     NCSDiscreteAttribute(NCSElementType type, QVector<QString> states,int bitsPerValue,QObject *parent = 0);
-    void attachData(QVector<unsigned char> data);
+    void attachData(QVector<unsigned char> & data);
     QVector<unsigned char> data();
     QVector<QString> states();
     QVector<QString> stateValues();

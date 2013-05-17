@@ -15,7 +15,7 @@ ICON = media/ncv.png
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lssh -lGLU  -lGLEW
+    LIBS +=  -lssh -lGLU  /usr/lib64/libGLEW.so.1.9.0
 }
 
 #windows specific settings
@@ -43,9 +43,7 @@ SOURCES += \
     core/networking/command/ncslocalcommandbridge.cpp \
     core/networking/reporting/qsocketconnection.cpp \
     core/networking/reporting/qreportclient.cpp \
-    core/networking/reporting/networkupdatethread.cpp \
     core/networking/reporting/networkupdatemanager.cpp \
-    core/networking/reporting/ncsdatasource.cpp \
     core/utilities/simplecrypt.cpp \
     mainwindow.cpp \
     plugins/clusterEditor/ncsclustereditor.cpp \
@@ -98,9 +96,7 @@ HEADERS  += \
     core/networking/command/ncscommandbridge.h \
     core/networking/reporting/qsocketconnection.h \
     core/networking/reporting/qreportclient.h \
-    core/networking/reporting/networkupdatethread.h \
     core/networking/reporting/networkupdatemanager.h \
-    core/networking/reporting/ncsdatasource.h \
     core/utilities/simplecrypt.h \
     plugins/clusterEditor/ncsclustereditor.h \
     plugins/connection/remoteconnectionwidget.h \
@@ -128,7 +124,6 @@ HEADERS  += \
     core/gui/plugin-interfaces/ncsconnectionwidgetplugin.h \
     core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h \
     core/networking/command/qsshsocket.h \
-    core/networking/reporting/sleeper.h \
     plugins/visualizer/qglx/qglxbuffertexture.h \
     plugins/visualizer/ncvattribute.h \
     core/gui/utilities/qgroupvector.h

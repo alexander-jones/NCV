@@ -70,6 +70,7 @@ void QGroupVector::removeGroup(QLayout * layout)
     bool checkNewAfterRemove = (m_checkedBehavior == SingleChecked && m_groupBoxes[index]->isChecked());
 
     m_layout->removeWidget(m_groupBoxes[index]);
+    m_groupBoxes[index]->setParent(this);
     m_groupBoxes[index]->hide();
     m_groupLayouts.remove(index);
     m_groupBoxes.remove(index);

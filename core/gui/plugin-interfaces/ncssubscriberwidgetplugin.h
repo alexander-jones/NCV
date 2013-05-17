@@ -9,7 +9,7 @@ class NCSSubscriberWidgetPlugin: public NCSWidgetPlugin
 {
     Q_OBJECT
 public:
-    explicit NCSSubscriberWidgetPlugin( QString projectDir,QWidget *parent = 0):NCSWidgetPlugin(projectDir, parent){}
+    explicit NCSSubscriberWidgetPlugin( QWidget *parent = 0):NCSWidgetPlugin(parent){}
     virtual void setNeurons(NCSNeuronSet * neurons) = 0;
     virtual void setConnections(NCSConnectionSet * connections) = 0;
 };

@@ -52,20 +52,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setMenuBar(m_menuBar);
 
-    m_updateTimer = new QTimer(this);
 
+    m_reportingManager = new NetworkUpdateManager(this);
 
     m_simulationToolbar = this->addToolBar("Simulation");
     m_runSimulationButton = m_simulationToolbar->addAction(QIcon(":/media/playIcon.png"), "Run Simulation");
-    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
+    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
     m_stopSimulationButton = m_simulationToolbar->addAction(QIcon(":/media/stopIcon.png"), "Stop Simulation");
-    connect(m_stopSimulationButton,SIGNAL(triggered()),this,SLOT(m_stopSimulation()));
+    connect(m_stopSimulationButton,SIGNAL(triggered()),this,SLOT(m_stopSimulationPressed()));
     m_simulationTimeSlider = new QSlider(this);
     m_simulationTimeSlider->setOrientation(Qt::Horizontal);
     m_simulationTimeSlider->setMinimum(1);
     m_simulationTimeSlider->setValue(100);
     m_simulationTimeSlider->setMaximum(5000);
-    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_updateTimer,SLOT(start(int)));
+    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
     m_simulationToolbar->addWidget(m_simulationTimeSlider);
     m_simulationLoadingLabel = new QLabel();
     m_simulationLoadingMovie = new QMovie(":/media/loading.gif");
@@ -78,99 +78,105 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_applicationMapper,SIGNAL(mapped(QObject*)),this,SLOT(m_ncsApplicationFinished(QObject*)));
     m_applicationLauncher = NULL;
     m_commandBridge = NULL;
-    m_dataSource = NULL;
     m_simulationApplicationIndex = -1;
 
+
+
+    m_applicationLauncher = new QxtConfigWidget(this);
+    m_applicationLauncher->setIconSize(QSize(64,64));
+
+    NCSConnectionWidget * connectionWidget = new NCSConnectionWidget(m_applicationLauncher);
+    addPlugin(connectionWidget);
+
+    NCSClusterEditor * clusterEditor = new NCSClusterEditor(m_applicationLauncher);
+    addPlugin(clusterEditor);
+
+    LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(m_applicationLauncher);
+    addPlugin(modelWidget);
+
+    IzhModelDistributionWidget * izhModelWidget= new IzhModelDistributionWidget(m_applicationLauncher);
+    addPlugin(izhModelWidget);
+
+    NCVWidget * visualizationWidget = new NCVWidget(m_applicationLauncher);
+    addPlugin(visualizationWidget);
+
+    this->setCentralWidget(m_applicationLauncher);
+    m_applicationLauncher->setEnabled(false);
 }
 
 
 
-void MainWindow::addWidget(NCSWidgetPlugin *widget)
+void MainWindow::addPlugin(NCSWidgetPlugin *widget)
 {
     m_allPlugins.append(widget);
-    m_applicationLauncher->addPage(widget,widget->icon(),widget->title());
+    int index = m_applicationLauncher->addPage(widget,widget->icon(),widget->title());
 }
 
-void MainWindow::addWidget(NCSConnectionWidgetPlugin *widget)
+void MainWindow::addPlugin(NCSConnectionWidgetPlugin *widget)
 {
+    connect(widget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
+
     for (int i = 0; i < m_applicationPlugins.count(); i ++)
         connect(widget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),m_applicationPlugins[i],SLOT(setCommandBridge(NCSCommandBridge*)));
 
-    connect(widget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
     m_connectionPlugins.append(widget);
-    addWidget((NCSWidgetPlugin *)widget);
+    addPlugin((NCSWidgetPlugin *)widget);
 }
 
-void MainWindow::addWidget(NCSApplicationWidgetPlugin *widget)
+void MainWindow::addPlugin(NCSApplicationWidgetPlugin *widget)
 {
     for (int i = 0; i < m_connectionPlugins.count(); i ++)
         connect(m_connectionPlugins[i],SIGNAL(bridgeEstablished(NCSCommandBridge*)),widget,SLOT(setCommandBridge(NCSCommandBridge*)));
     m_applicationPlugins.append(widget);
-    addWidget((NCSWidgetPlugin *)widget);
-    m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(widget),false);
+    addPlugin((NCSWidgetPlugin *)widget);
 }
-void MainWindow::addWidget(NCSDistributionWidgetPlugin *widget)
+void MainWindow::addPlugin(NCSDistributionWidgetPlugin *widget)
 {
     connect(widget,SIGNAL(launchTriggered()),this,SLOT(m_showLoadingSimulation()));
+    connect(widget,SIGNAL(launchFailed()),this,SLOT(m_hideLoadingSimulation()));
     connect(widget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
     connect(widget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
 
     m_distributionPlugins.append(widget);
-    addWidget((NCSApplicationWidgetPlugin *)widget);
-    m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(widget),false);
+    addPlugin((NCSApplicationWidgetPlugin *)widget);
 }
-void MainWindow::addWidget(NCSSubscriberWidgetPlugin *widget)
+void MainWindow::addPlugin(NCSSubscriberWidgetPlugin *widget)
 {
     m_subscriberPlugins.append(widget);
-    addWidget((NCSWidgetPlugin *)widget);
-    m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(widget),false);
+    addPlugin((NCSWidgetPlugin *)widget);
 }
 
 void MainWindow::closeEvent(QCloseEvent * event)
 {
-    while (m_activeApplications.count() > 0)
-    {
-        QVector<NCSApplicationBridge*>::iterator it = m_activeApplications.begin();
-        NCSApplicationBridge* app = *it;
-        QMessageBox msgBox;
-        msgBox.setText("The NCS application '" + app->applicationName() + "' is still running.\n Should this application be closed or left running?"  );
-        QPushButton * leaveOpenButton =  msgBox.addButton("Leave Running", QMessageBox::ActionRole);
-        msgBox.addButton("Close", QMessageBox::ActionRole);
-        msgBox.exec();
-        m_activeApplications.remove(m_activeApplications.indexOf(app));
-
-        if (msgBox.clickedButton() == leaveOpenButton)
-            app->scheduleDestruction(false);
-        else
-            app->scheduleDestruction(true);
-    }
+    m_closeProject();
+    m_reportingManager->disconnectFromHost();
 }
-void MainWindow::m_runSimulation()
+void MainWindow::m_runSimulationPressed()
 {
-    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
-    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulation()));
-    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_updateTimer,SLOT(start(int)));
+    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
+    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulationPressed()));
+    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
     m_runSimulationButton->setIcon(QIcon(":/media/pauseIcon.png"));
     m_runSimulationButton->setText("Pause Simulation");
-    if (!m_updateTimer->isActive())
-        m_updateTimer->start(m_simulationTimeSlider->value());
+    m_reportingManager->setUpdateInterval(m_simulationTimeSlider->value());
+    m_reportingManager->startUpdates();
     m_stopSimulationButton->setEnabled(true);
 }
 
-void MainWindow::m_pauseSimulation()
+void MainWindow::m_pauseSimulationPressed()
 {
-    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulation()));
-    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulation()));
-    disconnect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_updateTimer,SLOT(start(int)));
+    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulationPressed()));
+    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
+    disconnect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
     m_runSimulationButton->setIcon(QIcon(":/media/playIcon.png"));
     m_runSimulationButton->setText("Run Simulation");
-    m_updateTimer->stop();
+    m_reportingManager->stopUpdates();
     m_stopSimulationButton->setEnabled(true);
 }
 
-void  MainWindow::m_stopSimulation()
+void  MainWindow::m_stopSimulationPressed()
 {
-    m_pauseSimulation();
+    m_pauseSimulationPressed();
 
     QMessageBox msgBox;
     msgBox.setText("Stop the simulation?" );
@@ -180,7 +186,8 @@ void  MainWindow::m_stopSimulation()
     if (msgBox.clickedButton() == cancelButton)
         return;
 
-    delete m_dataSource;
+
+    m_disconnectFromSimulator();
 
     for (int i = 0; i < m_distributionPlugins.count(); i ++)
         m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_distributionPlugins[i]),true);
@@ -190,19 +197,28 @@ void  MainWindow::m_stopSimulation()
     {
         int launcherIndex = m_applicationLauncher->indexOf(m_subscriberPlugins[i]);
         m_applicationLauncher->setPageEnabled(launcherIndex,false);
-        m_subscriberPlugins[i]->setNeurons(NULL);
-        if (m_connections != NULL)
-            m_subscriberPlugins[i]->setConnections(NULL);
-
 
         if (m_applicationLauncher->currentIndex() == launcherIndex)
             m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_distributionPlugins[0]));
     }
 
-    m_activeApplications[m_simulationApplicationIndex]->setParent(0);
-    NCSApplicationBridge * app = m_activeApplications[m_simulationApplicationIndex];
-    m_activeApplications.remove(m_activeApplications.indexOf(app));
-    app->scheduleDestruction(true);
+
+}
+
+void MainWindow::m_disconnectFromSimulator(bool destroy )
+{
+
+    for (int i = 0; i < m_subscriberPlugins.count(); i ++)
+    {
+        m_subscriberPlugins[i]->setNeurons(NULL);
+        if (m_connections != NULL)
+            m_subscriberPlugins[i]->setConnections(NULL);
+    }
+
+    m_reportingManager->setNeurons(NULL);
+    m_reportingManager->setConnections(NULL);
+
+    m_activeApplications[m_simulationApplicationIndex]->stopExecution(destroy);
 
     m_simulationApplicationIndex = -1;
     m_setSimulationToolbar(false);
@@ -211,8 +227,6 @@ void  MainWindow::m_stopSimulation()
     delete m_connections;
     m_neurons = NULL;
     m_connections = NULL;
-
-
 }
 
 void MainWindow::m_openProjectPressed()
@@ -220,7 +234,11 @@ void MainWindow::m_openProjectPressed()
 
     QString projDir = QFileDialog::getExistingDirectory(this,"Open Project File",m_rootPath);
     if (projDir != "")
+    {
+        if (m_projectDirectory != "")
+            m_closeProject();
         m_loadProject(projDir);
+    }
 }
 
 void MainWindow::m_newProjectPressed()
@@ -228,6 +246,9 @@ void MainWindow::m_newProjectPressed()
     QString projName = QInputDialog::getText(this,"Create New Project","What would you like to name this project?");
     if (projName != "")
     {
+        if (m_projectDirectory != "")
+            m_closeProject();
+
         if (QDir(m_rootPath + "/" + projName).exists())
         {
             QMessageBox msgBox;
@@ -254,30 +275,54 @@ void MainWindow::m_loadProject(QString projectDirectory)
 
     QDir(projectDirectory).mkdir("tmp");
 
-    if (m_applicationLauncher != NULL)
-        delete m_applicationLauncher;
+    m_projectDirectory = projectDirectory;
+    m_applicationLauncher->setEnabled(true);
 
-    m_applicationLauncher = new QxtConfigWidget(this);
+     m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_connectionPlugins[0]));
 
-    m_applicationLauncher->setIconSize(QSize(64,64));
+    for (int i = 0; i < m_applicationPlugins.count(); i ++)
+        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_applicationPlugins[i]),false);
 
-    this->setCentralWidget(m_applicationLauncher);
+    for (int i = 0; i < m_subscriberPlugins.count(); i ++)
+        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_subscriberPlugins[i]),false);
 
-    NCSConnectionWidget * connectionWidget = new NCSConnectionWidget(projectDirectory,m_applicationLauncher);
-    addWidget(connectionWidget);
+    for (int i = 0; i < m_allPlugins.count(); i ++)
+        m_allPlugins[i]->loadProject(m_projectDirectory);
 
-    NCSClusterEditor * clusterEditor = new NCSClusterEditor(projectDirectory,m_applicationLauncher);
-    addWidget(clusterEditor);
 
-    LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(projectDirectory,m_applicationLauncher);
-    addWidget(modelWidget);
+}
+void MainWindow::m_closeProject()
+{
 
-    IzhModelDistributionWidget * izhModelWidget= new IzhModelDistributionWidget(projectDirectory,m_applicationLauncher);
-    addWidget(izhModelWidget);
+    for (int i = 0; i < m_activeApplications.count(); i ++)
+    {
 
-    NCVWidget * visualizationWidget = new NCVWidget(projectDirectory,m_applicationLauncher);
-    addWidget(visualizationWidget);
+        // if this application has already been untracked, skip.
+        if (m_activeApplications[i] == NULL)
+            continue;
 
+        QMessageBox msgBox;
+        msgBox.setText("The NCS application '" + m_activeApplications[i]->applicationName() + "' is still running.\n Should this application be closed or left running?"  );
+        msgBox.addButton("Leave Running", QMessageBox::ActionRole);
+        QPushButton * closeButton =  msgBox.addButton("Close", QMessageBox::ActionRole);
+        msgBox.exec();
+
+        // if this application finished while the prompt was displayed, skip.
+        if (m_activeApplications[i] == NULL)
+            continue;
+
+        disconnect(m_activeApplications[i],SIGNAL(executionFinished()), m_applicationMapper,SLOT(map()));
+        if (i == m_simulationApplicationIndex)
+            m_disconnectFromSimulator(msgBox.clickedButton() == closeButton);
+        else
+            m_activeApplications[i]->stopExecution(msgBox.clickedButton() == closeButton);
+    }
+    m_activeApplications.clear();
+
+    if (QDir(m_projectDirectory + "/tmp").exists())
+        removeDir(m_projectDirectory+"/tmp");
+
+    m_projectDirectory = "";
 }
 
 void MainWindow::m_showLoadingSimulation()
@@ -285,6 +330,13 @@ void MainWindow::m_showLoadingSimulation()
     m_simulationLoadingLabel->setMovie(m_simulationLoadingMovie);
     m_simulationLoadingMovie->start();
 }
+
+void MainWindow::m_hideLoadingSimulation()
+{
+    m_simulationLoadingMovie->stop();
+    m_simulationLoadingLabel->clear();
+}
+
 void MainWindow::m_updateTimeScale(int value)
 {
     float multiplier = (float)value / (float)m_timeScaleSlider->maximum();
@@ -318,8 +370,11 @@ void MainWindow::m_ncsApplicationFinished(QObject * app)
     NCSApplicationBridge * application = dynamic_cast<NCSApplicationBridge *> (app);
     disconnect(application,SIGNAL(executionFinished()), m_applicationMapper,SLOT(map()));
     int index = m_activeApplications.indexOf(application);
-    if (index != -1)
-        m_activeApplications.remove(index);
+
+    m_activeApplications[index] = NULL;
+    if (index == m_simulationApplicationIndex)
+        m_simulationApplicationIndex = -1;
+
 }
 
 void MainWindow::m_createNetwork(QString topologyFilename)
@@ -432,13 +487,11 @@ void MainWindow::m_publishNetwork()
     }
 
 
-    m_dataSource = new NCSDataSource();
     qDebug() << m_commandBridge->hostname();
-    qDebug() << "NCSDataSource connected:" << m_dataSource->establishConnection(m_commandBridge->hostname().toStdString(),8951);
-    m_dataSource->replaceNeuronSet(m_neurons);
+    qDebug() << "NCSDataSource connected:" << m_reportingManager->connectToHost(m_commandBridge->hostname().toStdString(),8951);
+    m_reportingManager->setNeurons(m_neurons);
     if (m_connections != NULL)
-        m_dataSource->replaceConnectionSet(m_connections);
-    connect(m_updateTimer,SIGNAL(timeout()),m_dataSource,SLOT(updateAttributes()));
+        m_reportingManager->setConnections(m_connections);
 
     for (int i = 0; i < m_subscriberPlugins.count(); i ++)
     {
@@ -448,8 +501,7 @@ void MainWindow::m_publishNetwork()
             m_subscriberPlugins[i]->setConnections(m_connections);
     }
 
-    m_simulationLoadingMovie->stop();
-    m_simulationLoadingLabel->clear();
+    m_hideLoadingSimulation();
     m_setSimulationToolbar(true);
 }
 
@@ -458,7 +510,7 @@ void MainWindow::m_setSimulationToolbar(bool on)
     m_runSimulationButton->setEnabled(on);
     m_simulationTimeSlider->setEnabled(on);
     m_stopSimulationButton->setEnabled(on);
-    m_simulationLoadingLabel->setEnabled(!on);
+    m_simulationLoadingLabel->setEnabled(false);
 }
 
 MainWindow::~MainWindow()

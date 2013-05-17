@@ -2,14 +2,12 @@
 #include <QMessageBox>
 #include <QFileDialog>
 
-LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidget *parent) :
-    NCSDistributionWidgetPlugin(projectDir,parent)
+LIFModelDistributionWidget::LIFModelDistributionWidget(QWidget *parent) :
+    NCSDistributionWidgetPlugin(parent)
 {
-    m_projectDir = projectDir;
     m_commandBridge = NULL;
     m_launching = false;
     m_distributionOutputDir = "ncsout";
-    m_topologyFilename = m_projectDir + "/tmp/topology";
 
     m_layout = new QVBoxLayout();
 
@@ -56,7 +54,7 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidge
     m_timeLabel = new QLabel("Simulation Runtime: ");
     m_timeWidgetVector->addWidget(m_timeLabel);
     m_timeSpinBox = new QSpinBox();
-    m_timeSpinBox->setMinimum(0);
+    m_timeSpinBox->setMinimum(1);
     m_timeSpinBox->setMaximum(10000);
     m_timeWidgetVector->addWidget(m_timeSpinBox);
     m_timeUnitsComboBox = new QComboBox();
@@ -78,6 +76,12 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QString projectDir,QWidge
     this->setEnabled(false);
     m_currentApplication = NULL;
     m_launched = false;
+}
+
+void LIFModelDistributionWidget::loadProject(QString projectDir)
+{
+    m_projectDir = projectDir;
+    m_topologyFilename = m_projectDir + "/tmp/topology";
 }
 
 void LIFModelDistributionWidget::setCommandBridge(NCSCommandBridge * bridge)
@@ -237,6 +241,7 @@ void LIFModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::Appl
     msgBox.setText("Distribution Failed." );
     msgBox.exec();
     m_launching = false;
+    launchFailed();
     m_destroyDistribution();
 
 }

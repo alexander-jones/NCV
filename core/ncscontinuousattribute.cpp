@@ -8,7 +8,7 @@ NCSContinuousAttribute::NCSContinuousAttribute( NCSElementType type, float minVa
     m_type = type;
 
 }
-void NCSContinuousAttribute::attachData(QVector<float> data)
+void NCSContinuousAttribute::attachData(QVector<float> & data)
 {
     m_data = data;
     dataChanged();
