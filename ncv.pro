@@ -15,7 +15,7 @@ ICON = media/ncv.png
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lssh -lGLU  /usr/lib64/libGLEW.so.1.9.0
+    LIBS +=  -lssh -lGLU  -lGLEW
 }
 
 #windows specific settings
@@ -126,7 +126,8 @@ HEADERS  += \
     core/networking/command/qsshsocket.h \
     plugins/visualizer/qglx/qglxbuffertexture.h \
     plugins/visualizer/ncvattribute.h \
-    core/gui/utilities/qgroupvector.h
+    core/gui/utilities/qgroupvector.h \
+    core/networking/reporting/sleeper.h
 
 FORMS    += \
     mainwindow.ui \

@@ -11,6 +11,7 @@
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QxtConfigWidget>
+#include <QLabel>
 
 
 
@@ -37,7 +38,7 @@ private slots:
     void m_publishNetwork();
     void m_loadProject(QString projectDirectory);
     void m_closeProject();
-    void m_updateTimeScale(int multiplier);
+    void m_updateTimeScale(int updateInterval);
     void m_openProjectPressed();
     void m_newProjectPressed();
     void m_ncsApplicationLaunched(NCSApplicationBridge * );
@@ -71,9 +72,8 @@ private:
     QString m_rootPath;
     QVBoxLayout * m_layout;
     QxtConfigWidget * m_applicationLauncher;
-    QToolBar * m_toolbar;
     QSlider * m_timeScaleSlider;
-    QLabel * m_timeScale, * m_simulationLoadingLabel;
+    QLabel * m_timeScaleLabel ,* m_simulationLoadingLabel, *m_ncsInstallationLabel;
     QMovie * m_simulationLoadingMovie;
     QMenu * m_fileMenu, * m_editMenu, *m_toolsMenu;
 	QMenuBar * m_menuBar;
@@ -81,7 +81,6 @@ private:
     NCSConnectionSet * m_connections;
     QMap<QString,NCSDiscreteAttribute *> m_discreteNeuronAttributes,m_discreteConnectionAttributes;
     QMap<QString,NCSContinuousAttribute *> m_continuousNeuronAttributes,m_continuousConnectionAttributes;
-
 };
 
 #endif // MAINWINDOW_H

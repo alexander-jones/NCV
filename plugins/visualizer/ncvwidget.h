@@ -31,11 +31,11 @@ signals:
     void selectionChanged(QVector<NCVElementRange> selection, NCVSelectionFlag flags);
 
 private slots:
+    void m_selectionClicked(QLayout * layout, bool checked);
     void m_collapseButtonPressed();
     void m_reportFatalError();
     void m_newFrameReceived();
-	void m_onDeselectAll();
-	void m_onRenderDeselectionSet(bool on);
+    void m_onRenderDeselectionSet(bool on);
 	void m_onCompoundSelectionSet(bool on);
 
 	
@@ -45,9 +45,8 @@ private:
     NCVSelectionFlag m_selectionFlags;
     QVBoxLayout * m_selectionLayout;
     QWidgetVector * m_renderDeselectedWidget, *m_compoundSelectionWidget;
-	QPushButton * m_deselectAllButton;
-	QSwitch * m_renderDeselectedSwitch,*m_compoundSelectionSwitch;
-	NCVRenderTool * m_renderTool;
+    QSwitch * m_renderDeselectedSwitch,*m_compoundSelectionSwitch;
+    NCVRenderTool * m_renderTool;
     bool m_collapsed;
     QBoxLayout * m_layout;
     QLabel * m_framesPerSecond;

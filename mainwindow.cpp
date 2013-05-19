@@ -55,21 +55,33 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_reportingManager = new NetworkUpdateManager(this);
 
+
     m_simulationToolbar = this->addToolBar("Simulation");
+    m_simulationLoadingLabel = new QLabel();
+    m_simulationLoadingMovie = new QMovie(":/media/loading.gif");
+    m_simulationToolbar->addWidget(m_simulationLoadingLabel);
+    m_simulationToolbar->setMovable(false);
     m_runSimulationButton = m_simulationToolbar->addAction(QIcon(":/media/playIcon.png"), "Run Simulation");
     connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
     m_stopSimulationButton = m_simulationToolbar->addAction(QIcon(":/media/stopIcon.png"), "Stop Simulation");
     connect(m_stopSimulationButton,SIGNAL(triggered()),this,SLOT(m_stopSimulationPressed()));
     m_simulationTimeSlider = new QSlider(this);
+    m_simulationTimeSlider->setToolTip("Adjust the  Update Interval");
     m_simulationTimeSlider->setOrientation(Qt::Horizontal);
     m_simulationTimeSlider->setMinimum(1);
     m_simulationTimeSlider->setValue(100);
     m_simulationTimeSlider->setMaximum(5000);
-    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
+    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),this,SLOT(m_updateTimeScale(int)));
     m_simulationToolbar->addWidget(m_simulationTimeSlider);
-    m_simulationLoadingLabel = new QLabel();
-    m_simulationLoadingMovie = new QMovie(":/media/loading.gif");
-    m_simulationToolbar->addWidget(m_simulationLoadingLabel);
+    m_timeScaleLabel = new QLabel();
+    m_timeScaleLabel->setTextFormat(Qt::RichText);
+    m_timeScaleLabel->setText(" ( <b>" + QString::number(m_simulationTimeSlider->value()) +"</b> msec ) ");
+    m_timeScaleLabel->setEnabled(false);
+    m_simulationToolbar->addWidget(m_timeScaleLabel);
+    m_ncsInstallationLabel = new QLabel();
+    m_ncsInstallationLabel->setText("<b> [ Unconnected ] </b>");
+    m_ncsInstallationLabel->setTextFormat(Qt::RichText);
+    m_simulationToolbar->addWidget(m_ncsInstallationLabel);
 
     m_setSimulationToolbar(false);
 
@@ -148,8 +160,20 @@ void MainWindow::addPlugin(NCSSubscriberWidgetPlugin *widget)
 
 void MainWindow::closeEvent(QCloseEvent * event)
 {
-    m_closeProject();
-    m_reportingManager->disconnectFromHost();
+
+    QMessageBox msgBox;
+    msgBox.setText("Are you sure that you want to exit NCV? "  );
+    QPushButton * exitButton =  msgBox.addButton("Exit", QMessageBox::ActionRole);
+    msgBox.addButton("Cancel", QMessageBox::ActionRole);
+    msgBox.exec();
+
+    if (msgBox.clickedButton() == exitButton)
+    {
+        m_closeProject();
+        m_reportingManager->disconnectFromHost();
+    }
+    else
+        event->ignore();
 }
 void MainWindow::m_runSimulationPressed()
 {
@@ -207,6 +231,7 @@ void  MainWindow::m_stopSimulationPressed()
 
 void MainWindow::m_disconnectFromSimulator(bool destroy )
 {
+    m_timeScaleLabel->setText(" ( <b>" + QString::number(m_simulationTimeSlider->value()) +"</b> msec ) ");
 
     for (int i = 0; i < m_subscriberPlugins.count(); i ++)
     {
@@ -323,6 +348,7 @@ void MainWindow::m_closeProject()
         removeDir(m_projectDirectory+"/tmp");
 
     m_projectDirectory = "";
+    m_ncsInstallationLabel->setText("<b> [ Unconnected ] </b>");
 }
 
 void MainWindow::m_showLoadingSimulation()
@@ -339,10 +365,9 @@ void MainWindow::m_hideLoadingSimulation()
 
 void MainWindow::m_updateTimeScale(int value)
 {
-    float multiplier = (float)value / (float)m_timeScaleSlider->maximum();
-    QString str = "Time Scale:";
-    str.append(QString(" %1 X").arg(multiplier));
-    m_timeScale->setText(str);
+    int val = pow(value,0.2f);
+    m_reportingManager->setUpdateInterval(value);
+    m_timeScaleLabel->setText(" <font color= '#772953' >( <b>" + QString::number(value) +"</b> msec )</font> ");
 
 }
 
@@ -352,6 +377,7 @@ void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_ncsApplicationLaunched(NCSApplicationBridge*)));
     for (int i = 0; i < m_applicationPlugins.count(); i ++)
         m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_applicationPlugins[i]),true);
+    m_ncsInstallationLabel->setText("<font color= '#dd4814' > [ <i>NCS6</i>@<b>" + m_commandBridge->hostname()+ "</b> ] </font> ");
 }
 
 void MainWindow::m_ncsApplicationLaunched(NCSApplicationBridge * app)
@@ -510,6 +536,9 @@ void MainWindow::m_setSimulationToolbar(bool on)
     m_runSimulationButton->setEnabled(on);
     m_simulationTimeSlider->setEnabled(on);
     m_stopSimulationButton->setEnabled(on);
+    m_timeScaleLabel->setEnabled(on);
+    if (on)
+        m_updateTimeScale(m_simulationTimeSlider->value());
     m_simulationLoadingLabel->setEnabled(false);
 }
 

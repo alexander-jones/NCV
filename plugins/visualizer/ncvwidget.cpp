@@ -15,29 +15,27 @@ NCVWidget::NCVWidget(QWidget *parent) :
 
     m_renderTool = new NCVRenderTool();
     m_renderTool->setMaximumWidth(300);
-    m_layout->addWidget(m_renderTool);
 
 
     m_selectionLayout = new QVBoxLayout();
 
-    m_deselectAllButton = new QPushButton("Deselect All");
-    connect(m_deselectAllButton,SIGNAL(clicked()),this,SLOT(m_onDeselectAll()));
-    m_selectionLayout->addWidget(m_deselectAllButton);
-
     m_renderDeselectedWidget = new QWidgetVector();
     m_renderDeselectedSwitch = new QSwitch();
-	connect(m_renderDeselectedSwitch,SIGNAL(switched(bool)),this,SLOT(m_onRenderDeselectionSet(bool)));
+    connect(m_renderDeselectedSwitch,SIGNAL(switched(bool)),this,SLOT(m_onRenderDeselectionSet(bool)));
     m_renderDeselectedWidget->addWidget(new QLabel("Render Deslected: "));
     m_renderDeselectedWidget->addWidget(m_renderDeselectedSwitch);
     m_selectionLayout->addWidget(m_renderDeselectedWidget);
-	
+
     m_compoundSelectionWidget = new QWidgetVector();
     m_compoundSelectionSwitch = new QSwitch();
-	connect(m_compoundSelectionSwitch,SIGNAL(switched(bool)),this,SLOT(m_onCompoundSelectionSet(bool)));
+    connect(m_compoundSelectionSwitch,SIGNAL(switched(bool)),this,SLOT(m_onCompoundSelectionSet(bool)));
     m_compoundSelectionWidget->addWidget(new QLabel("Compound Selection: "));
     m_compoundSelectionWidget->addWidget(m_compoundSelectionSwitch);
     m_selectionLayout->addWidget(m_compoundSelectionWidget);
 
+    connect(m_renderTool,SIGNAL(groupClicked(QLayout*,bool)),this,SLOT(m_selectionClicked(QLayout*,bool)));
+
+    m_layout->addWidget(m_renderTool);
 
     m_selectionFlags = RenderDeselected;
 
@@ -94,14 +92,14 @@ void  NCVWidget::setSelection(QVector<NCVElementRange> selection,NCVSelectionFla
 { 
 	m_selectionFlags = flags;
 	if ((int)m_selectionFlags & (int)RenderDeselected)
-		m_renderDeselectedSwitch->setSwitched(true);
+        m_renderDeselectedSwitch->setSwitched(true);
 	else
-		m_renderDeselectedSwitch->setSwitched(false);
+        m_renderDeselectedSwitch->setSwitched(false);
 	
 	if ((int)m_selectionFlags & (int)CompoundSelection)
-		m_compoundSelectionSwitch->setSwitched(true);
+        m_compoundSelectionSwitch->setSwitched(true);
 	else
-		m_compoundSelectionSwitch->setSwitched(false);
+        m_compoundSelectionSwitch->setSwitched(false);
 
 	
 	if (selection.count() == 0 )
@@ -115,17 +113,10 @@ void  NCVWidget::setSelection(QVector<NCVElementRange> selection,NCVSelectionFla
     }
 
 	
-	m_currentSelection = selection;
+    m_currentSelection = selection;
     selectionChanged(m_currentSelection,m_selectionFlags);
 }
 
-void NCVWidget::m_onDeselectAll()
-{
-	m_currentSelection.clear();
-    m_selectionFlags = RenderDeselected;
-    selectionChanged(m_currentSelection,m_selectionFlags);
-    m_renderTool->removeGroup(m_selectionLayout);
-}
 void NCVWidget::m_onRenderDeselectionSet(bool on)
 {
     if (on)
@@ -205,6 +196,17 @@ void NCVWidget::m_collapseButtonPressed()
         m_collapseButton->setToolTip("Click to collapse the management sidebar");
     }
 
+}
+
+void NCVWidget::m_selectionClicked(QLayout * layout, bool checked)
+{
+    if (layout ==  m_selectionLayout && !checked)
+    {
+        m_currentSelection.clear();
+        m_selectionFlags = RenderDeselected;
+        selectionChanged(m_currentSelection,m_selectionFlags);
+        m_renderTool->removeGroup(m_selectionLayout);
+    }
 }
 
 void NCVWidget::m_newFrameReceived()

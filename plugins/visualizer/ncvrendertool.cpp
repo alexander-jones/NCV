@@ -6,8 +6,12 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_connections = NULL;
     m_neurons = NULL;
 
+    this->setCheckedBehavior(QGroupVector::MultipleChecked);
+    this->setUncheckedBehavior(QGroupVector::DisableUnchecked);
     this->setMaximumWidth(300);
 	this->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
+    connect(this,SIGNAL(groupClicked(QLayout*,bool)),this,SLOT(m_groupClicked(QLayout*,bool)));
+
     m_discreteNeuronMapper = new QSignalMapper(this);
     m_discreteConnectionMapper = new QSignalMapper(this);
     m_continuousNeuronMapper = new QSignalMapper(this);
@@ -30,16 +34,7 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_unlinkedIcon = QIcon(":/media/unlinked.png");
 
     m_neuronLayout = new QVBoxLayout();
-
-    m_renderNeuronVector = new QWidgetVector();
-    m_renderNeuronVector->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-    m_renderNeuronVector->setAlignment(Qt::AlignCenter);
-    m_renderNeuronVector->addWidget(new QLabel("Render:"));
-    m_renderNeuronSwitch = new QSwitch();
-    connect(m_renderNeuronSwitch,SIGNAL(switched(bool)),this,SLOT(m_neuronRenderSwitched(bool)));
-    m_renderNeuronVector->addWidget(m_renderNeuronSwitch);
-    m_neuronLayout->addWidget(m_renderNeuronVector);
-
+    m_neuronLayout->setSpacing(0);
 
     m_neuronAttributeComboWidget = new ComboWidget();
     m_neuronAttributeComboWidget->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
@@ -54,14 +49,7 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     this->addGroup(m_neuronLayout,"Neurons");
 
     m_connectionLayout = new QVBoxLayout();
-
-    m_renderConnectionVector = new QWidgetVector();
-    m_renderConnectionVector->setAlignment(Qt::AlignCenter);
-    m_renderConnectionVector->addWidget(new QLabel("Render:"));
-    m_renderConnectionSwitch = new QSwitch();
-    connect(m_renderConnectionSwitch,SIGNAL(switched(bool)),this,SLOT(m_connectionRenderSwitched(bool)));
-    m_renderConnectionVector->addWidget(m_renderConnectionSwitch);
-    m_connectionLayout->addWidget(m_renderConnectionVector);
+    m_connectionLayout->setSpacing(0);
 
     m_connectionAttributeComboWidget = new ComboWidget();
     m_connectionAttributeComboWidget->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
@@ -134,34 +122,25 @@ void  NCVRenderTool::setNeurons(NCVNeuronSet * neurons)
 
 }
 
-void NCVRenderTool::m_neuronRenderSwitched(bool on)
+void NCVRenderTool::m_groupClicked(QLayout *layout, bool checked)
 {
-    if (on)
+    if (layout == m_neuronLayout)
     {
-        m_neuronScaleSlider->setEnabled(true);
-        m_neuronAttributeComboWidget->setEnabled(true);
-    }
-    else
-    {
-        m_neuronScaleSlider->setEnabled(false);
-        m_neuronAttributeComboWidget->setEnabled(false);
-    }
-    neuronRenderSet(on);
 
-}
-void NCVRenderTool::m_connectionRenderSwitched(bool on)
-{
-    if (on)
+        m_neuronScaleSlider->setEnabled(checked);
+        m_neuronAttributeComboWidget->setEnabled(checked);
+        neuronRenderSet(checked);
+    }
+    else if (layout == m_connectionLayout)
     {
-        m_connectionScaleSlider->setEnabled(true);
-        m_connectionAttributeComboWidget->setEnabled(true);
+        m_connectionScaleSlider->setEnabled(checked);
+        m_connectionAttributeComboWidget->setEnabled(checked);
+        connectionRenderSet(checked);
     }
     else
     {
-        m_connectionScaleSlider->setEnabled(false);
-        m_connectionAttributeComboWidget->setEnabled(false);
     }
-    connectionRenderSet(on);
+
 }
 
 void  NCVRenderTool::setConnections(NCVConnectionSet * connections)

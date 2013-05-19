@@ -158,6 +158,7 @@ ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
 
 
     m_layout = new QVBoxLayout();
+    m_layout->setContentsMargins(0,0,0,0);
     m_layout->setAlignment(Qt::AlignCenter);
 
     m_markerRangeContainer = new ImageContainer();

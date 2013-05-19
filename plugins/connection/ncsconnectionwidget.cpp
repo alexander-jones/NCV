@@ -57,9 +57,6 @@ NCSConnectionWidget::NCSConnectionWidget(QWidget *parent) :
     m_connectionGroupVector->addGroup(m_remoteLayout,"Use Remote Machine as Host");
     m_layout->addWidget(m_connectionGroupVector);
 
-    m_statusLabel = new QLabel();
-    m_statusLabel->setAlignment(Qt::AlignCenter);
-    m_layout->addWidget(m_statusLabel);
     this->setLayout(m_layout);
 }
 
@@ -162,7 +159,6 @@ void NCSConnectionWidget::m_validateRemoteConnection()
 }
 void NCSConnectionWidget::m_remoteConnectionValidated()
 {
-    m_statusLabel->setText("<font color='green'> NCS Installation Validated</font>");
     bridgeEstablished(m_remoteCommandBridge);
 }
 void NCSConnectionWidget::m_validateLocalConnection()
@@ -172,7 +168,6 @@ void NCSConnectionWidget::m_validateLocalConnection()
 
 void NCSConnectionWidget::m_localConnectionValidated()
 {
-    m_statusLabel->setText("<font color='green'> NCS Installation Validated</font>");
     m_socket = NULL;
     m_remoteNCSDirectoryEdit->clear();
     m_remoteNCSDirectoryVector->setEnabled(false);

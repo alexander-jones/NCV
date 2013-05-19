@@ -7,6 +7,7 @@ ComboWidget::ComboWidget(QWidget *parent) :
 {
     m_layout = new QVBoxLayout();
     m_layout->setSpacing(0);
+    m_layout->setContentsMargins(0,0,0,0);
 
     m_toolbar = new QWidget();
     m_toolbarLayout = new QHBoxLayout();

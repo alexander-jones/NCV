@@ -7,6 +7,7 @@ DiscreteColorSelector::DiscreteColorSelector(QWidget *parent) :
     m_mapper = new QSignalMapper(this);
     m_layout = new QHBoxLayout();
     m_layout->setAlignment(Qt::AlignCenter);
+    m_layout->setContentsMargins(0,0,0,0);
 
     connect(m_mapper,SIGNAL(mapped(QString )),this,SLOT(m_buttonClicked(QString )));
     m_widget->setLayout(m_layout);

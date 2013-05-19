@@ -30,8 +30,7 @@ signals:
 	void connectionRenderSet(bool set);
 
 private slots:
-    void m_neuronRenderSwitched(bool on);
-    void m_connectionRenderSwitched(bool on);
+    void m_groupClicked(QLayout * layout, bool checked);
     void m_currentNeuronAttributeSet(QString name);
     void m_currentConnectionAttributeSet(QString name);
     void m_neuronLinkButtonPressed();
@@ -52,9 +51,7 @@ private:
     bool m_continuousAttributeConsistent(QString attributeName);
 
     bool m_collapsed;
-    QSwitch * m_renderNeuronSwitch, * m_renderConnectionSwitch;
     QVBoxLayout * m_neuronLayout, *m_connectionLayout;
-    QWidgetVector *m_renderNeuronVector, *m_renderConnectionVector;
     QSignalMapper *m_discreteNeuronMapper, *m_discreteConnectionMapper,*m_continuousNeuronMapper,*m_continuousConnectionMapper;
     ComboWidget * m_neuronAttributeComboWidget, * m_connectionAttributeComboWidget;
     QToolButton * m_neuronLinkButton, *m_connectionLinkButton;

@@ -43,7 +43,6 @@ private slots:
     void m_connectionGroupChecked(QLayout * layout);
 
 private:
-    QLabel * m_statusLabel;
     QString m_projectPath;
     QGroupVector * m_connectionGroupVector;
     QWidgetVector *m_remoteNCSDirectoryVector;
