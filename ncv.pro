@@ -20,7 +20,7 @@ unix:!macx{
 
 #windows specific settings
 win32{
-    LIBS += -lssh  -lglew32  -lwwwidgets4d
+    LIBS += -lssh  -lglew32
 }
 
 #mac specific settings
@@ -47,8 +47,6 @@ SOURCES += \
     core/utilities/simplecrypt.cpp \
     mainwindow.cpp \
     plugins/clusterEditor/ncsclustereditor.cpp \
-    plugins/connection/remoteconnectionwidget.cpp \
-    plugins/connection/ncsconnectionwidget.cpp \
     plugins/izhLauncher/izhmodeldistributionwidget.cpp \
     plugins/visualizer/skysphere.cpp \
     plugins/visualizer/ncvwidget.cpp \
@@ -73,7 +71,9 @@ SOURCES += \
     core/networking/command/qsshsocket.cpp \
     plugins/visualizer/qglx/qglxbuffertexture.cpp \
     core/gui/utilities/qgroupvector.cpp \
-    core/networking/command/ncscommandbridge.cpp
+    core/networking/command/ncscommandbridge.cpp \
+    core/gui/ncsconnectionwizardpage.cpp \
+    core/gui/remoteconnectionwidget.cpp
 
 HEADERS  += \
     core/ncsneuronset.h \
@@ -99,8 +99,6 @@ HEADERS  += \
     core/networking/reporting/networkupdatemanager.h \
     core/utilities/simplecrypt.h \
     plugins/clusterEditor/ncsclustereditor.h \
-    plugins/connection/remoteconnectionwidget.h \
-    plugins/connection/ncsconnectionwidget.h \
     plugins/izhLauncher/izhmodeldistributionwidget.h \
     plugins/visualizer/skysphere.h \
     plugins/visualizer/ncvwidget.h \
@@ -121,13 +119,14 @@ HEADERS  += \
     plugins/visualizer/qglx/qglxboundingbox.h \
     mainwindow.h \
     plugins/lifLauncher/lifmodeldistributionwidget.h \
-    core/gui/plugin-interfaces/ncsconnectionwidgetplugin.h \
     core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h \
     core/networking/command/qsshsocket.h \
     plugins/visualizer/qglx/qglxbuffertexture.h \
     plugins/visualizer/ncvattribute.h \
     core/gui/utilities/qgroupvector.h \
-    core/networking/reporting/sleeper.h
+    core/networking/reporting/sleeper.h \
+    core/gui/ncsconnectionwizardpage.h \
+    core/gui/remoteconnectionwidget.h
 
 FORMS    += \
     mainwindow.ui \

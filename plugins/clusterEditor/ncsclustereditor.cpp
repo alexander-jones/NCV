@@ -130,6 +130,13 @@ NCSClusterEditor::NCSClusterEditor(QWidget * parent)
 void NCSClusterEditor::loadProject(QString projectDir)
 {
     m_projectDir = projectDir;
+    m_machineList->clear();
+    m_deviceList->clear();
+    m_hostFileEdit->clear();
+    m_allCPUCheckBox->setChecked(false);
+    m_allGPUCheckBox->setChecked(false);
+    m_onlyGPUCheckBox->setChecked(false);
+    m_onlyCPUCheckBox->setChecked(false);
 }
 
 QIcon NCSClusterEditor::icon()

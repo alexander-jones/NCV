@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_connections = NULL;
 
     this->setWindowTitle("NCV");
-    m_rootPath = QDir::homePath() + "/NCV";
+    m_rootPath = QDir::homePath() + "/NCV_Projects";
     if (!QDir(m_rootPath).exists())
         QDir().mkpath(m_rootPath);
 
@@ -92,13 +92,14 @@ MainWindow::MainWindow(QWidget *parent) :
     m_commandBridge = NULL;
     m_simulationApplicationIndex = -1;
 
-
+    m_startupWizard = new QWizard(this);
+    m_startupWizard->setOption(QWizard::NoDefaultButton );
+    m_connectionPage = new NCSConnectionWizardPage();
+    connect(m_connectionPage,SIGNAL(bridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
+    m_startupWizard->addPage(m_connectionPage);
 
     m_applicationLauncher = new QxtConfigWidget(this);
     m_applicationLauncher->setIconSize(QSize(64,64));
-
-    NCSConnectionWidget * connectionWidget = new NCSConnectionWidget(m_applicationLauncher);
-    addPlugin(connectionWidget);
 
     NCSClusterEditor * clusterEditor = new NCSClusterEditor(m_applicationLauncher);
     addPlugin(clusterEditor);
@@ -114,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     this->setCentralWidget(m_applicationLauncher);
     m_applicationLauncher->setEnabled(false);
+    this->showMaximized();
 }
 
 
@@ -124,21 +126,9 @@ void MainWindow::addPlugin(NCSWidgetPlugin *widget)
     int index = m_applicationLauncher->addPage(widget,widget->icon(),widget->title());
 }
 
-void MainWindow::addPlugin(NCSConnectionWidgetPlugin *widget)
-{
-    connect(widget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
-
-    for (int i = 0; i < m_applicationPlugins.count(); i ++)
-        connect(widget,SIGNAL(bridgeEstablished(NCSCommandBridge*)),m_applicationPlugins[i],SLOT(setCommandBridge(NCSCommandBridge*)));
-
-    m_connectionPlugins.append(widget);
-    addPlugin((NCSWidgetPlugin *)widget);
-}
-
 void MainWindow::addPlugin(NCSApplicationWidgetPlugin *widget)
 {
-    for (int i = 0; i < m_connectionPlugins.count(); i ++)
-        connect(m_connectionPlugins[i],SIGNAL(bridgeEstablished(NCSCommandBridge*)),widget,SLOT(setCommandBridge(NCSCommandBridge*)));
+    connect(m_connectionPage,SIGNAL(bridgeEstablished(NCSCommandBridge*)),widget,SLOT(setCommandBridge(NCSCommandBridge*)));
     m_applicationPlugins.append(widget);
     addPlugin((NCSWidgetPlugin *)widget);
 }
@@ -147,7 +137,7 @@ void MainWindow::addPlugin(NCSDistributionWidgetPlugin *widget)
     connect(widget,SIGNAL(launchTriggered()),this,SLOT(m_showLoadingSimulation()));
     connect(widget,SIGNAL(launchFailed()),this,SLOT(m_hideLoadingSimulation()));
     connect(widget,SIGNAL(distributed(QString)),this,SLOT(m_createNetwork(QString)));
-    connect(widget,SIGNAL(launched()),this,SLOT(m_publishNetwork()));
+    connect(widget,SIGNAL(launched(QString)),this,SLOT(m_publishNetwork(QString)));
 
     m_distributionPlugins.append(widget);
     addPlugin((NCSApplicationWidgetPlugin *)widget);
@@ -300,10 +290,10 @@ void MainWindow::m_loadProject(QString projectDirectory)
 
     QDir(projectDirectory).mkdir("tmp");
 
+    m_startupWizard->show();
+
     m_projectDirectory = projectDirectory;
     m_applicationLauncher->setEnabled(true);
-
-     m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_connectionPlugins[0]));
 
     for (int i = 0; i < m_applicationPlugins.count(); i ++)
         m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_applicationPlugins[i]),false);
@@ -321,7 +311,6 @@ void MainWindow::m_closeProject()
 
     for (int i = 0; i < m_activeApplications.count(); i ++)
     {
-
         // if this application has already been untracked, skip.
         if (m_activeApplications[i] == NULL)
             continue;
@@ -384,16 +373,19 @@ void MainWindow::m_ncsApplicationLaunched(NCSApplicationBridge * app)
 {
 
     m_activeApplications.append(app);
+    qDebug() << "launched " <<app->applicationName();
     if (app->applicationName() == "simulator")
         m_simulationApplicationIndex = m_activeApplications.count() -1;
 
     m_applicationMapper->setMapping(app,app);
     connect(app,SIGNAL(executionFinished()), m_applicationMapper,SLOT(map()));
+    connect(app,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)), m_applicationMapper,SLOT(map()));
 }
 
 void MainWindow::m_ncsApplicationFinished(QObject * app)
 {
     NCSApplicationBridge * application = dynamic_cast<NCSApplicationBridge *> (app);
+    qDebug() << application->applicationName();
     disconnect(application,SIGNAL(executionFinished()), m_applicationMapper,SLOT(map()));
     int index = m_activeApplications.indexOf(application);
 
@@ -421,7 +413,7 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     // create stub neuron data source
     QVector<QVector3D> neuronPositions;
 
-    int numNeurons;
+    unsigned int numNeurons;
     dataStream >> numNeurons;
     qDebug() << "Neurons Created:" <<numNeurons;
     for (int i = 0; i <numNeurons; i ++)
@@ -456,7 +448,7 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     m_discreteNeuronAttributes["firing"]->setReportable(false);
     m_neurons->addAttribute("firing", m_discreteNeuronAttributes["firing"]);
 
-    int numConnections;
+    unsigned int numConnections;
     dataStream >> numConnections;
     qDebug() <<  "Connections Created:" << numConnections;
     if (numConnections ==0)
@@ -500,8 +492,20 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     topologyFile.close();
 }
 
-void MainWindow::m_publishNetwork()
+void MainWindow::m_publishNetwork(QString reportHost)
 {
+
+    if (m_reportingManager->connectToHost(reportHost.toStdString(),8951))
+        qDebug() << "NCV connected to NCS simulation reporting from " << reportHost;
+    else
+    {
+        m_hideLoadingSimulation();
+        QMessageBox msgBox;
+        msgBox.setText("NCV could not connect to the report host of NCS. This may be due to another simulator instance running on the host or because of problems with the internet connection."  );
+        msgBox.addButton("Ok", QMessageBox::ActionRole);
+        msgBox.exec();
+        return;
+    }
 
     for (int i = 0; i < m_distributionPlugins.count(); i ++)
     {
@@ -513,8 +517,6 @@ void MainWindow::m_publishNetwork()
     }
 
 
-    qDebug() << m_commandBridge->hostname();
-    qDebug() << "NCSDataSource connected:" << m_reportingManager->connectToHost(m_commandBridge->hostname().toStdString(),8951);
     m_reportingManager->setNeurons(m_neurons);
     if (m_connections != NULL)
         m_reportingManager->setConnections(m_connections);

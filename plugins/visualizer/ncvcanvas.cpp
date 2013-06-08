@@ -55,7 +55,7 @@ void NCVCanvas::m_drawLegend()
     int offset;
     QMap<QString, NCVAttribute *> attributes;
 
-    if (objectID  < (GLuint)m_neurons->count())
+    if (objectID  <= (GLuint)m_neurons->count())
     {
         if (m_neurons != NULL )
         {
@@ -340,7 +340,7 @@ void NCVCanvas::m_performSelectionRender()
                 break;
             else if (range.end > m_neurons->count())
             {
-                m_neurons->drawSubset(range.start-1,m_neurons->count()-range.start);
+                m_neurons->drawSubset(range.start-1,m_neurons->count() + 1 -range.start);
                 break;
             }
             else
@@ -381,7 +381,7 @@ void NCVCanvas::m_performSelectionRender()
                 break;
             else if (range.end > m_neurons->count())
             {
-                m_neurons->drawSubset(range.start-1,m_neurons->count()-range.start);
+                m_neurons->drawSubset(range.start-1,m_neurons->count()+ 1-range.start);
                 break;
             }
             else
@@ -430,7 +430,7 @@ void NCVCanvas::m_performSelectionRender()
                 previousEnd = range.end;
             }
             if (previousEnd < m_neurons->count())
-                m_neurons->drawSubset(previousEnd-1,m_neurons->count()-previousEnd);
+                m_neurons->drawSubset(previousEnd-1,m_neurons->count()+ 1-previousEnd);
 
             m_neurons->release();
         }
@@ -471,10 +471,10 @@ void NCVCanvas::m_performSelectionRender()
                 previousEnd = range.end;
             }
             if (previousEnd < m_neurons->count())
-                m_neurons->drawSubset(previousEnd-1,m_neurons->count()-previousEnd);
+                m_neurons->drawSubset(previousEnd-1,m_neurons->count()+ 1-previousEnd);
 
 
-			m_neurons->releaseSilhouettes();
+            m_neurons->releaseSilhouettes();
 		}
         if (m_renderConnections && m_connections != NULL)
 		{

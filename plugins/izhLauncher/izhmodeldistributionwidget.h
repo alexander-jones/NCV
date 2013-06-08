@@ -51,6 +51,7 @@ private slots:
 private:
     QString m_getFilename(QString path);
 
+    QString m_reportHost;
     QVBoxLayout * m_layout;
     QWidgetVector * m_neuronFileVector,* m_synapseFileVector,*m_currentFileVector,*m_clusterFileVector;
     QLineEdit * m_neuronFileEdit,* m_synapseFileEdit,*m_currentFileEdit,*m_clusterFileEdit;

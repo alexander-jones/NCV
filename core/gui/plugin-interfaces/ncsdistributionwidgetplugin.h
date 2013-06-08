@@ -11,7 +11,7 @@ public:
 signals:
     void launchTriggered();
     void distributed(QString topologyFile);
-    void launched();
+    void launched(QString reportHost);
     void launchFailed();
 };
 

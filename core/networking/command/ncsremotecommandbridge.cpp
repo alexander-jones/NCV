@@ -20,7 +20,6 @@ NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
     disconnect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
     disconnect(m_socket,SIGNAL(pushSuccessful(QString,QString)),this,SLOT(m_executeNextPush()));
 
-
     if (m_alive && m_destroyProcess)
     {
         m_socket->executeCommand("kill " + m_pidString);

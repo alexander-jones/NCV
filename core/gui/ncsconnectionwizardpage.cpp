@@ -1,14 +1,16 @@
-#include "ncsconnectionwidget.h"
+#include "ncsconnectionwizardpage.h"
 
-NCSConnectionWidget::NCSConnectionWidget(QWidget *parent) :
-    NCSConnectionWidgetPlugin(parent)
+
+NCSConnectionWizardPage::NCSConnectionWizardPage(QWidget *parent) :
+    QWizardPage(parent)
 {
+    this->setTitle("Connect to NCS");
+    this->setSubTitle("Establish a connection to a built installation of NCS by specifying a path on a remote or local host. ");
+    m_complete = false;
     m_remoteCommandBridge = NULL;
 
     m_socket = NULL;
-    m_localCommandBridge = new NCSLocalCommandBridge(this);
-    connect(m_localCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
-    connect(m_localCommandBridge,SIGNAL(validated()),this,SLOT(m_localConnectionValidated()));
+    m_localCommandBridge = NULL;
 
     m_layout = new QVBoxLayout();
     m_layout->setAlignment(Qt::AlignCenter);
@@ -57,17 +59,19 @@ NCSConnectionWidget::NCSConnectionWidget(QWidget *parent) :
     m_connectionGroupVector->addGroup(m_remoteLayout,"Use Remote Machine as Host");
     m_layout->addWidget(m_connectionGroupVector);
 
+    this->setPixmap(QWizard::LogoPixmap,QPixmap(":/media/ncvWizardLogo.png"));
+    this->setPixmap(QWizard::WatermarkPixmap,QPixmap(":/media/ncsBannerVertical.png"));
+    this->setPixmap(QWizard::BackgroundPixmap,QPixmap(":/media/ncsBannerVertical.png"));
     this->setLayout(m_layout);
 }
-
-void NCSConnectionWidget::loadProject(QString projectDir)
+void NCSConnectionWizardPage::loadProject(QString projectDir)
 {
     m_projectPath = projectDir;
     m_localCommandBridge->initialize(m_projectPath);
     m_ncsDirectoryEdit->setText(m_projectPath);
 }
 
-void NCSConnectionWidget::m_localNCSDirectoryChanged(QString newText)
+void NCSConnectionWizardPage::m_localNCSDirectoryChanged(QString newText)
 {
     if (newText != "" && QDir(newText).exists())
         m_localValidateButton->setEnabled(true);
@@ -75,7 +79,7 @@ void NCSConnectionWidget::m_localNCSDirectoryChanged(QString newText)
         m_localValidateButton->setEnabled(false);
 }
 
-void NCSConnectionWidget::m_connectionGroupChecked(QLayout * layout)
+void NCSConnectionWizardPage::m_connectionGroupChecked(QLayout * layout)
 {
     if (layout == m_remoteLayout)
     {
@@ -87,7 +91,7 @@ void NCSConnectionWidget::m_connectionGroupChecked(QLayout * layout)
 }
 
 
-void NCSConnectionWidget::m_browseForNCS()
+void NCSConnectionWizardPage::m_browseForNCS()
 {
     QString dirPath = QFileDialog::getExistingDirectory(this,"Find NCS 6 Directory",m_ncsDirectoryEdit->text());
     if (dirPath != "")
@@ -96,7 +100,7 @@ void NCSConnectionWidget::m_browseForNCS()
 
 }
 
-void NCSConnectionWidget::m_clearRemoteContext( )
+void NCSConnectionWizardPage::m_clearRemoteContext( )
 {
     if (m_socket != NULL)
     {
@@ -113,7 +117,7 @@ void NCSConnectionWidget::m_clearRemoteContext( )
     m_remoteNCSDirectoryEdit->clear();
     m_remoteNCSDirectoryVector->setEnabled(false);
 }
-void NCSConnectionWidget::m_remoteConnectionFailed()
+void NCSConnectionWizardPage::m_remoteConnectionFailed()
 {
     QMessageBox msgBox;
     msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
@@ -122,7 +126,7 @@ void NCSConnectionWidget::m_remoteConnectionFailed()
 }
 
 
-void NCSConnectionWidget::m_remoteConnectionError(QSshSocket::SshError err)
+void NCSConnectionWizardPage::m_remoteConnectionError(QSshSocket::SshError err)
 {
 
     QMessageBox msgBox;
@@ -131,8 +135,11 @@ void NCSConnectionWidget::m_remoteConnectionError(QSshSocket::SshError err)
     msgBox.exec();
 }
 
-void NCSConnectionWidget::m_remoteConnectionEstablished(QSshSocket * socket)
+void NCSConnectionWizardPage::m_remoteConnectionEstablished(QSshSocket * socket)
 {
+    m_complete = false;
+    completeChanged();
+
     if (m_socket != NULL)
     {
         m_socket->disconnect();
@@ -148,32 +155,51 @@ void NCSConnectionWidget::m_remoteConnectionEstablished(QSshSocket * socket)
     connect(m_remoteCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
     connect(m_remoteCommandBridge,SIGNAL(validated()),this,SLOT(m_remoteConnectionValidated()));
     m_remoteCommandBridge->initialize(m_projectPath,socket);
-
-
     m_remoteNCSDirectoryVector->setEnabled(true);
 }
-void NCSConnectionWidget::m_validateRemoteConnection()
+bool NCSConnectionWizardPage::validatePage()
 {
+    if (!m_complete)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("An NCS installation has not been validated. Enter a local or remote NCS installation path then press 'Validate' to continue." );
+        msgBox.addButton("Ok", QMessageBox::ActionRole);
+        msgBox.exec();
+    }
+    return m_complete;
+}
+
+void NCSConnectionWizardPage::m_validateRemoteConnection()
+{
+    m_complete = false;
     m_remoteCommandBridge->validate(m_remoteNCSDirectoryEdit->text());
 
 }
-void NCSConnectionWidget::m_remoteConnectionValidated()
+void NCSConnectionWizardPage::m_remoteConnectionValidated()
 {
+    m_complete = true;
     bridgeEstablished(m_remoteCommandBridge);
+    m_remoteCommandBridge = NULL;
 }
-void NCSConnectionWidget::m_validateLocalConnection()
+void NCSConnectionWizardPage::m_validateLocalConnection()
 {
+    m_complete = false;
+    m_localCommandBridge = new NCSLocalCommandBridge(this);
+    connect(m_localCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
+    connect(m_localCommandBridge,SIGNAL(validated()),this,SLOT(m_localConnectionValidated()));
     m_localCommandBridge->validate(m_ncsDirectoryEdit->text());
 }
 
-void NCSConnectionWidget::m_localConnectionValidated()
+void NCSConnectionWizardPage::m_localConnectionValidated()
 {
     m_socket = NULL;
     m_remoteNCSDirectoryEdit->clear();
     m_remoteNCSDirectoryVector->setEnabled(false);
+    m_complete = true;
     bridgeEstablished(m_localCommandBridge);
+    m_localCommandBridge = NULL;
 }
-void NCSConnectionWidget::m_connectionInvalidated(NCSCommandBridge::ValidationError err)
+void NCSConnectionWizardPage::m_connectionInvalidated(NCSCommandBridge::ValidationError err)
 {
     QMessageBox msgBox;
     msgBox.setText("NCS installation could not be validated:");
@@ -193,19 +219,10 @@ void NCSConnectionWidget::m_connectionInvalidated(NCSCommandBridge::ValidationEr
     msgBox.exec();
 }
 
-void NCSConnectionWidget::initialize()
+void NCSConnectionWizardPage::initialize()
 {
 }
 
-void NCSConnectionWidget::cleanup()
+void NCSConnectionWizardPage::cleanup()
 {
-}
-QIcon NCSConnectionWidget::icon()
-{
-    return QIcon(":/media/connectIcon.png");
-}
-
-QString NCSConnectionWidget::title()
-{
-    return "Connect to NCS";
 }

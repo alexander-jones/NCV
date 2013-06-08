@@ -3,29 +3,19 @@
 #include "core/ncsdiscreteattribute.h"
 
 
-
-NetworkUpdateManager::NetworkUpdateManager(QObject *parent) : QThread(parent)
+NetworkUpdateManager::NetworkUpdateManager(QObject *parent) : QObject(parent)
 {
 
     m_neurons = NULL;
     m_connections = NULL;
     m_timer = new QTimer(this);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(m_updateAttributes()));
-    start();
-}
-
-
-void NetworkUpdateManager::run()
-{
-    exec();
 }
 
 
 NetworkUpdateManager::~NetworkUpdateManager()
 {
     disconnectFromHost();
-    this->quit();
-    this->wait();
 }
 
 void NetworkUpdateManager::setUpdateInterval(int msec)
@@ -52,7 +42,6 @@ bool NetworkUpdateManager::connectToHost(const std::string &host, int port)
 {
     return m_client.connectToSimulator(host, port, 3);
 }
-
 
 
 void NetworkUpdateManager::disconnectFromHost()

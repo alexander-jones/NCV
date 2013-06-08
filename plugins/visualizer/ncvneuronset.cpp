@@ -322,7 +322,7 @@ int NCVNeuronSet::count()
 
 void NCVNeuronSet::draw()
 {
-    drawSubset(0,m_parent->count()-1);
+    drawSubset(0,m_parent->count());
 }
 
 

@@ -270,7 +270,10 @@ void NCVConnectionSet::resolve()
         for (int i =0; i < m_parent->count() * 2; i ++)
             sysIDs.append(startIndex + 1 + (i/2));
 
-        QVector<NCSConnection> connections = m_parent->connections();
+        QVector<NCSConnection> globalConnections = m_parent->connections();
+        QVector<NCSConnection> connections;
+        for (int i =0; i < globalConnections.count(); i ++)
+            connections.append(NCSConnection(globalConnections[i].inNeuron+1,globalConnections[i].outNeuron +1));
         m_neuronIdBuffer.create();
         m_neuronIdBuffer.allocate( &connections[0], m_parent->count() * 2 * sizeof(GLuint));
 

@@ -50,5 +50,8 @@
         <file>plugins/visualizer/shaders/silhouette.frag</file>
         <file>media/loading.gif</file>
         <file>media/exit.png</file>
+        <file>media/ncsBannerVertical.png</file>
+        <file>media/ncvBannerHorizontal.png</file>
+        <file>media/ncvWizardLogo.png</file>
     </qresource>
 </RCC>

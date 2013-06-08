@@ -119,6 +119,24 @@ void NCSCluster::write(QString filename)
     // close file
     file.close();
 }
+QString NCSCluster::reportHost()
+{
+    QString host;
+    int i = 0;
+
+    while (host == "" && i < machines.count())
+    {
+        for (int j = 0; j < machines[i].devices.count(); j ++)
+            if (machines[i].devices[j].type == "CPU" && machines[i].devices[j].enabled)
+            {
+                host = machines[i].name;
+                break;
+            }
+        i++;
+    }
+    return host;
+}
+
 void NCSCluster::writeHostfile(QString filename)
 {
     // open  host file

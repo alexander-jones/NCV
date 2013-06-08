@@ -27,6 +27,7 @@ struct NCSCluster
     void read(QString filename,bool append = false);
     void write(QString filename);
     void writeHostfile(QString filename);
+    QString reportHost();
     QVector<NCSMachine> machines;
 };
 

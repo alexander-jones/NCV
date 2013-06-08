@@ -615,7 +615,6 @@ bool ContinuousColorSelector::eventFilter( QObject* watched, QEvent* event )
         return false;
     if (event->type() == QEvent::HoverLeave)
     {
-        qDebug() << "hover leave";
     }
     if (event->type() == QEvent::MouseButtonPress)
     {

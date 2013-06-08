@@ -82,6 +82,11 @@ void LIFModelDistributionWidget::loadProject(QString projectDir)
 {
     m_projectDir = projectDir;
     m_topologyFilename = m_projectDir + "/tmp/topology";
+    m_modelFileEdit->clear();
+    m_modelDependencyWidget->clear();
+    m_clusterFileEdit->clear();
+    m_timeSpinBox->setValue(10);
+    m_timeUnitsComboBox->setCurrentIndex(3);
 }
 
 void LIFModelDistributionWidget::setCommandBridge(NCSCommandBridge * bridge)
@@ -283,6 +288,8 @@ void LIFModelDistributionWidget::m_distributionFinished()
     cluster.read(m_clusterFileEdit->text());
     QString hostFilePath =  m_projectDir + "/tmp/hostfile";
     cluster.writeHostfile(hostFilePath);
+    m_reportHost = cluster.reportHost();
+
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
     m_commandBridge->launchApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
@@ -314,7 +321,7 @@ void LIFModelDistributionWidget::m_readStandardOutput()
     if (out.contains("Running simulation..."))
     {
         m_launched = true;
-        launched();
+        launched(m_reportHost);
     }
 }
 

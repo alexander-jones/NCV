@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include "core/gui/utilities/qwidgetvector.h"
-#include "plugins/connection/ncsconnectionwidget.h"
+#include "core/gui/ncsconnectionwizardpage.h"
 #include "plugins/clusterEditor/ncsclustereditor.h"
 #include "plugins/lifLauncher/lifmodeldistributionwidget.h"
 #include "plugins/izhLauncher/izhmodeldistributionwidget.h"
@@ -23,7 +23,6 @@ public:
     explicit MainWindow(QWidget *parent = 0);
 
     void addPlugin(NCSWidgetPlugin *widget);
-    void addPlugin(NCSConnectionWidgetPlugin *widget);
     void addPlugin(NCSApplicationWidgetPlugin *widget);
     void addPlugin(NCSDistributionWidgetPlugin *widget);
     void addPlugin(NCSSubscriberWidgetPlugin *widget);
@@ -35,7 +34,7 @@ protected:
 private slots:
     void m_setCommandBridge(NCSCommandBridge * bridge);
     void m_createNetwork(QString topologyFilename);
-    void m_publishNetwork();
+    void m_publishNetwork(QString reportHost);
     void m_loadProject(QString projectDirectory);
     void m_closeProject();
     void m_updateTimeScale(int updateInterval);
@@ -53,9 +52,9 @@ private slots:
     void m_hideLoadingSimulation();
 
 private:
-
+    QWizard * m_startupWizard;
+    NCSConnectionWizardPage * m_connectionPage;
     QVector< NCSWidgetPlugin *> m_allPlugins;
-    QVector< NCSConnectionWidgetPlugin *> m_connectionPlugins;
     QVector< NCSApplicationWidgetPlugin *> m_applicationPlugins;
     QVector< NCSDistributionWidgetPlugin *> m_distributionPlugins;
     QVector< NCSSubscriberWidgetPlugin *> m_subscriberPlugins;

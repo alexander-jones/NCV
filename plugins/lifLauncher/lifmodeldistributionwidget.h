@@ -54,8 +54,9 @@ private slots:
     void m_browseClusterPressed();
     void m_launchSimulationPressed();
     void m_timeUnitSelected(QString unit);
+
 private:
-    QString m_projectDir;
+    QString m_reportHost, m_projectDir;
     bool m_launching, m_modelValid, m_clusterValid;
     QVBoxLayout * m_layout;
     QString m_distributionOutputDir;

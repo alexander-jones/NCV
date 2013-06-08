@@ -1,30 +1,26 @@
-#ifndef NCSCONNECTIONWIDGET_H
-#define NCSCONNECTIONWIDGET_H
-
-#include "remoteconnectionwidget.h"
-#include "core/networking/command/ncslocalcommandbridge.h"
-#include "core/networking/command/ncsremotecommandbridge.h"
-#include "core/gui/plugin-interfaces/ncsconnectionwidgetplugin.h"
-#include "core/gui/utilities/qwidgetvector.h"
+#ifndef NCSCONNECTIONWIZARDPAGE_H
+#define NCSCONNECTIONWIZARDPAGE_H
+#include <QWizardPage>
+#include "core/gui/remoteconnectionwidget.h"
 #include "core/gui/utilities/qgroupvector.h"
-#include <QWidget>
-#include <QLabel>
-#include <QProgressBar>
-#include <QLineEdit>
-#include <QGroupBox>
+#include "core/networking/command/ncscommandbridge.h"
+#include "core/networking/command/ncsremotecommandbridge.h"
+#include "core/networking/command/ncslocalcommandbridge.h"
 
-class NCSConnectionWidget : public NCSConnectionWidgetPlugin
+class NCSConnectionWizardPage : public QWizardPage
 {
     Q_OBJECT
 public:
-    explicit NCSConnectionWidget(QWidget *parent = 0);
-    QIcon icon();
-    QString title();
+    explicit NCSConnectionWizardPage(QWidget *parent = 0);
     void loadProject(QString projectDir);
+    bool validatePage();
 
 public slots:
     void initialize();
     void cleanup();
+
+signals:
+    void bridgeEstablished(NCSCommandBridge * bridge);
 
 private slots:
     void m_connectionInvalidated(NCSCommandBridge::ValidationError err);
@@ -43,6 +39,8 @@ private slots:
     void m_connectionGroupChecked(QLayout * layout);
 
 private:
+
+    bool m_complete;
     QString m_projectPath;
     QGroupVector * m_connectionGroupVector;
     QWidgetVector *m_remoteNCSDirectoryVector;
@@ -60,4 +58,4 @@ private:
     
 };
 
-#endif // NCSCONNECTIONWIDGET_H
+#endif // NCSCONNECTIONWIZARDPAGE_H

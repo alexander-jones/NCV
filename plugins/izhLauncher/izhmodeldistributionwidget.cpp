@@ -99,6 +99,12 @@ void IzhModelDistributionWidget::loadProject(QString projectDir)
 {
     m_projectDir = projectDir;
     m_topologyFilename = m_projectDir + "/tmp/topology";
+    m_neuronFileEdit->clear();
+    m_synapseFileEdit->clear();
+    m_currentFileEdit->clear();
+    m_clusterFileEdit->clear();
+    m_timeSpinBox->setValue(10);
+    m_timeUnitsComboBox->setCurrentIndex(3);
 }
 
 QIcon IzhModelDistributionWidget::icon()
@@ -247,6 +253,7 @@ void IzhModelDistributionWidget::m_distributionFinished()
     cluster.read(m_clusterFileEdit->text());
     QString hostFilePath =  m_projectDir + "/tmp/hostfile";
     cluster.writeHostfile(hostFilePath);
+    m_reportHost = cluster.reportHost();
 
     launchTriggered();
     connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
@@ -279,7 +286,7 @@ void IzhModelDistributionWidget::m_readStandardOutput()
     QString out = m_currentApplication->readAllStandardOutput();
     qDebug() << out;
     if (out.contains("Running simulation..."))
-        launched();
+        launched(m_reportHost);
 }
 
 void IzhModelDistributionWidget::m_browseClusterFilePressed()

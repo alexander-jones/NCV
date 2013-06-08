@@ -16,7 +16,7 @@
   \brief This class manages network updates in one easy interface. Give it a data source and
          an update interval, and it will handle retrieving simulation data in a threaded manner.
   */
-class NetworkUpdateManager : public QThread
+class NetworkUpdateManager : public QObject
 {
     Q_OBJECT
 public:
@@ -64,9 +64,6 @@ private slots:
 
     ///Updates all reportable attributes that are currently active.
     void m_updateAttributes();
-
-protected:
-    void run();
 
 private:
     struct ReportedAttribute

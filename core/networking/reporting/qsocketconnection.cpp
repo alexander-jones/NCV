@@ -123,7 +123,7 @@ bool QSocketConnection::recv(std::string& data)
 
 
 
-bool QSocketConnection::disconnect()
+bool QSocketConnection::disconnectFromHost()
 {
     QMutexLocker lock(&m_mutex);
 
@@ -139,7 +139,7 @@ bool QSocketConnection::disconnect()
 
 
 
-bool QSocketConnection::connected() const
+bool QSocketConnection::isConnected() const
 {
     return m_socket != 0 && m_socket->isValid() && m_socket->state() == QAbstractSocket::ConnectedState;
 }
@@ -188,7 +188,7 @@ bool QSocketConnection::_send(const void *data, unsigned int count)
 
     while (totalSent < count)
     {
-        if (!connected())
+        if (!isConnected())
         {
             qDebug() << "Not connected: " << m_socket->errorString();
             return false;
@@ -215,13 +215,13 @@ bool QSocketConnection::_recv(void *data, unsigned int count)
 
     while (totalRead < count)
     {
-        if (!connected())
+        if (!isConnected())
         {
             qDebug() << "Not connected: " << m_socket->errorString() << " host = " << m_socket->peerName();
             return false;
         }
 
-        while (!m_socket->waitForReadyRead()){ }
+        m_socket->waitForReadyRead();
 
         bytesRead = m_socket->read((char*)data + totalRead, count - totalRead);
 

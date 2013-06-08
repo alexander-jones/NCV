@@ -79,7 +79,7 @@ bool QReportClient::connectToSimulator(const std::string &server, unsigned int p
     QMutexLocker lock(&m_mutex);
     Q_UNUSED(lock);
     m_connection = new QSocketConnection(server, port, timeout);
-    return m_connection->connected();
+    return m_connection->isConnected();
 }
 
 
