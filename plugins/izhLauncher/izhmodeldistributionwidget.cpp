@@ -134,7 +134,7 @@ void IzhModelDistributionWidget::cleanup()
 void IzhModelDistributionWidget::m_distributionStarted(NCSApplicationBridge * app)
 {
     m_currentApplication = app;
-    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
+    disconnect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
 }
@@ -150,7 +150,7 @@ void IzhModelDistributionWidget::m_destroyDistribution()
 void IzhModelDistributionWidget::m_simulationStarted(NCSApplicationBridge * app)
 {
     m_currentApplication = app;
-    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    disconnect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
     connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
     connect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readStandardOutput()));
@@ -169,16 +169,7 @@ void IzhModelDistributionWidget::m_destroySimulation()
 
 void IzhModelDistributionWidget::m_launchSimulationPressed()
 {
-    if (m_clusterFileEdit->text() == "")
-        return;
-
-    if (m_neuronFileEdit->text() == "")
-        return;
-
-    if (m_synapseFileEdit->text() == "")
-        return;
-
-    if (m_currentFileEdit->text() == "")
+    if (!m_fieldsValid())
         return;
 
     m_launching = true;
@@ -196,10 +187,44 @@ void IzhModelDistributionWidget::m_launchSimulationPressed()
     distArgs << QString::number(m_neuronCountSpinBox->value());
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
     distArgs << m_distributionOutputDir << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
+    connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     m_commandBridge->launchApplication("izhDistributor",distArgs);
 
 }
+
+bool IzhModelDistributionWidget::m_fieldsValid()
+{
+    QMessageBox msgBox;
+    msgBox.addButton("Ok", QMessageBox::ActionRole);
+    if (!QFile(m_neuronFileEdit->text()).exists())
+    {
+        msgBox.setText("The neuron model file entered could not be found." );
+        msgBox.exec();
+        return false;
+    }
+    if (!QFile(m_synapseFileEdit->text()).exists())
+    {
+        msgBox.setText("The synapse model file entered could not be found." );
+        msgBox.exec();
+        return false;
+    }
+    if (!QFile(m_currentFileEdit->text()).exists())
+    {
+        msgBox.setText("The current file entered could not be found." );
+        msgBox.exec();
+        return false;
+    }
+    if (!QFile(m_clusterFileEdit->text()).exists())
+    {
+        msgBox.setText("The cluster file entered could not be found." );
+        msgBox.exec();
+        return false;
+    }
+
+    return true;
+
+}
+
 QString IzhModelDistributionWidget::m_getFilename(QString path)
 {
 #ifdef Win32
@@ -211,13 +236,31 @@ QString IzhModelDistributionWidget::m_getFilename(QString path)
     return pathSegments.at(pathSegments.size()-1);
 }
 
-void IzhModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::ApplicationError)
+void IzhModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::ApplicationError err)
 {
     m_readStandardOutput();
     m_readStandardError();
     QMessageBox msgBox;
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.setText("Distribution Failed." );
+
+    if (err == NCSApplicationBridge::Crashed)
+        msgBox.setDetailedText("The distributor has crashed." );
+    else if (err == NCSApplicationBridge::OtherApplicationRunning)
+        msgBox.setDetailedText("Another instance of this distributor is running." );
+    else if (err == NCSApplicationBridge::Timedout)
+        msgBox.setDetailedText("Communication with the distributor has timed out. The host systems might not contain enough RAM for distribution." );
+    else if (err == NCSApplicationBridge::UnknownError)
+        msgBox.setDetailedText("There was an unknown error." );
+    else if (err == NCSApplicationBridge::SyncDownloadError)
+        msgBox.setDetailedText("There was a problem downloading files from the NCS installation." );
+    else if (err == NCSApplicationBridge::SyncUploadError)
+        msgBox.setDetailedText("There was a problem uploading files to the NCS installation." );
+    else if (err == NCSApplicationBridge::WriteError)
+        msgBox.setDetailedText("There was a problem writing data to the distributor." );
+    else if (err == NCSApplicationBridge::ReadError)
+        msgBox.setDetailedText("There was a problem reading data from the distributor." );
+
     msgBox.exec();
     m_launching = false;
     m_destroyDistribution();
@@ -255,16 +298,34 @@ void IzhModelDistributionWidget::m_distributionFinished()
     m_reportHost = cluster.reportHost();
 
     launchTriggered();
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
     m_commandBridge->launchApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
 
-void IzhModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::ApplicationError)
+void IzhModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::ApplicationError err)
 {
     QMessageBox msgBox;
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.setText("Simulation Launching Failed." );
+
+    if (err == NCSApplicationBridge::Crashed)
+        msgBox.setDetailedText("The simulator has crashed." );
+    else if (err == NCSApplicationBridge::OtherApplicationRunning)
+        msgBox.setDetailedText("Another instance of this simulator is running." );
+    else if (err == NCSApplicationBridge::Timedout)
+        msgBox.setDetailedText("Communication with the simulator has timed out." );
+    else if (err == NCSApplicationBridge::UnknownError)
+        msgBox.setDetailedText("There was an unknown error." );
+    else if (err == NCSApplicationBridge::SyncDownloadError)
+        msgBox.setDetailedText("There was a problem downloading files from the NCS installation." );
+    else if (err == NCSApplicationBridge::SyncUploadError)
+        msgBox.setDetailedText("There was a problem uploading files to the NCS installation." );
+    else if (err == NCSApplicationBridge::WriteError)
+        msgBox.setDetailedText("There was a problem writing data to the simulator." );
+    else if (err == NCSApplicationBridge::ReadError)
+        msgBox.setDetailedText("There was a problem reading data from the simulator." );
+
     msgBox.exec();
     m_launching = false;
     launchFailed();

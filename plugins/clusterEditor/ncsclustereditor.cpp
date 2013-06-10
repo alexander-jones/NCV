@@ -202,7 +202,7 @@ void NCSClusterEditor::m_hostfileDetectAndAppend()
     NCSCommandArguments clusterArgs;
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
+    connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
     m_commandBridge->launchApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
@@ -222,13 +222,12 @@ void NCSClusterEditor::m_hostfileDetectAndLoad()
     NCSCommandArguments clusterArgs;
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
+    connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
     m_commandBridge->launchApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
 void NCSClusterEditor::m_detectDevicesOverIPRange()
 {
-    int devicesDetected = 1;
 
 }
 void NCSClusterEditor::m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError err)
@@ -248,7 +247,7 @@ void NCSClusterEditor::m_clusterCompilationFailed(NCSApplicationBridge::Applicat
 void NCSClusterEditor::m_clusterSpecifierStarted(NCSApplicationBridge * app)
 {
     m_currentApplication = app;
-    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
+    disconnect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
     connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_clusterCompilationFailed(NCSApplicationBridge::ApplicationError)));
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_clusterCompilationFinished()));
 
@@ -304,6 +303,7 @@ NCSClusterEditor::LabelSet NCSClusterEditor::m_infoParam(const QString & key, co
 
 void NCSClusterEditor::machineSelected(QListWidgetItem* current, QListWidgetItem* prev)
 {
+    Q_UNUSED(prev);
     if (current == NULL)
         return;
 
@@ -526,6 +526,7 @@ void NCSClusterEditor::machineEnabled(QListWidgetItem* item)
 
 void NCSClusterEditor::deviceSelected(QListWidgetItem* current, QListWidgetItem* prev)
 {
+    Q_UNUSED(prev);
     if (current == NULL)
         return;
     NCSDevice device = m_cluster.machines[m_machineSelectionIndex].devices[current->data(Qt::UserRole).toInt()];

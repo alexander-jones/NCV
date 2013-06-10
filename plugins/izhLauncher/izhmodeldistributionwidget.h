@@ -1,8 +1,8 @@
 #ifndef IZHMODELDISTRIBUTIONWIDGET_H
 #define IZHMODELDISTRIBUTIONWIDGET_H
-#include "core/gui/plugin-interfaces/ncsdistributionwidgetplugin.h"
-#include "core/gui/utilities/qwidgetvector.h"
-#include "core/gui/utilities/qgroupvector.h"
+#include "core/plugin-interfaces/ncsdistributionwidgetplugin.h"
+#include "gui/utilities/qwidgetvector.h"
+#include "gui/utilities/qgroupvector.h"
 #include <QListWidget>
 #include <QPushButton>
 #include <QLineEdit>
@@ -29,7 +29,6 @@ private slots:
     void m_readStandardOutput();
     void m_readStandardError();
 
-
     void m_distributionStarted(NCSApplicationBridge * app);
     void m_destroyDistribution();
 
@@ -49,6 +48,7 @@ private slots:
     void m_launchSimulationPressed();
     void m_timeUnitSelected(QString unit);
 private:
+    bool m_fieldsValid();
     QString m_getFilename(QString path);
 
     QString m_reportHost;

@@ -28,24 +28,32 @@ macx{
 }
 
 SOURCES += \
+    main.cpp \
     core/ncsneuronset.cpp \
     core/ncsdiscreteattribute.cpp \
     core/ncscontinuousattribute.cpp \
     core/ncsconnectionset.cpp \
     core/ncscluster.cpp \
     core/ncsattribute.cpp \
-    core/gui/utilities/qwidgetvector.cpp \
-    core/gui/utilities/qswitch.cpp \
-    core/gui/utilities/discretecolorselector.cpp \
-    core/gui/utilities/continuouscolorselector.cpp \
-    core/gui/utilities/combowidget.cpp \
-    core/networking/command/ncsremotecommandbridge.cpp \
-    core/networking/command/ncslocalcommandbridge.cpp \
-    core/networking/reporting/qsocketconnection.cpp \
-    core/networking/reporting/qreportclient.cpp \
-    core/networking/reporting/networkupdatemanager.cpp \
+    core/ncscommandarguments.cpp\
+    core/command/qsshsocket.cpp \
+    core/command/ncsremotecommandbridge.cpp \
+    core/command/ncslocalcommandbridge.cpp \
+    core/reporting/qsocketconnection.cpp \
+    core/reporting/qreportclient.cpp \
+    core/reporting/networkupdatemanager.cpp \
     core/utilities/simplecrypt.cpp \
-    mainwindow.cpp \
+    gui/mainwindow.cpp \
+    gui/ncsconnectionwizardpage.cpp \
+    gui/remoteconnectionwidget.cpp \
+    gui/utilities/qwidgetvector.cpp \
+    gui/utilities/qswitch.cpp \
+    gui/utilities/discretecolorselector.cpp \
+    gui/utilities/continuouscolorselector.cpp \
+    gui/utilities/combowidget.cpp \
+    gui/utilities/colorbutton.cpp \
+    gui/utilities/qgroupvector.cpp \
+    plugins/lifLauncher/lifmodeldistributionwidget.cpp \
     plugins/clusterEditor/ncsclustereditor.cpp \
     plugins/izhLauncher/izhmodeldistributionwidget.cpp \
     plugins/visualizer/skysphere.cpp \
@@ -61,19 +69,11 @@ SOURCES += \
     plugins/visualizer/qglx/qglxtexture1d.cpp \
     plugins/visualizer/qglx/qglxtexture.cpp \
     plugins/visualizer/qglx/qglxpainter.cpp \
+    plugins/visualizer/qglx/qglxbuffertexture.cpp \
     plugins/visualizer/qglx/qglxframebufferobject.cpp \
     plugins/visualizer/qglx/qglxcamera.cpp \
     plugins/visualizer/qglx/qglxbuffer.cpp \
-    plugins/visualizer/qglx/qglxboundingbox.cpp \
-    main.cpp \
-    core/gui/utilities/colorbutton.cpp \
-    plugins/lifLauncher/lifmodeldistributionwidget.cpp \
-    core/networking/command/qsshsocket.cpp \
-    plugins/visualizer/qglx/qglxbuffertexture.cpp \
-    core/gui/utilities/qgroupvector.cpp \
-    core/networking/command/ncscommandbridge.cpp \
-    core/gui/ncsconnectionwizardpage.cpp \
-    core/gui/remoteconnectionwidget.cpp
+    plugins/visualizer/qglx/qglxboundingbox.cpp
 
 HEADERS  += \
     core/ncsneuronset.h \
@@ -82,24 +82,33 @@ HEADERS  += \
     core/ncsconnectionset.h \
     core/ncscluster.h \
     core/ncsattribute.h \
-    core/gui/plugin-interfaces/ncswidgetplugin.h \
-    core/gui/plugin-interfaces/ncsdistributionwidgetplugin.h \
-    core/gui/plugin-interfaces/ncsapplicationwidgetplugin.h \
-    core/gui/utilities/qwidgetvector.h \
-    core/gui/utilities/qswitch.h \
-    core/gui/utilities/discretecolorselector.h \
-    core/gui/utilities/continuouscolorselector.h \
-    core/gui/utilities/combowidget.h \
-    core/gui/utilities/colorbutton.h \
-    core/networking/command/ncsremotecommandbridge.h \
-    core/networking/command/ncslocalcommandbridge.h \
-    core/networking/command/ncscommandbridge.h \
-    core/networking/reporting/qsocketconnection.h \
-    core/networking/reporting/qreportclient.h \
-    core/networking/reporting/networkupdatemanager.h \
+    core/ncscommandbridge.h \
+    core/ncscommandarguments.h \
+    core/command/qsshsocket.h \
+    core/command/ncsremotecommandbridge.h \
+    core/command/ncslocalcommandbridge.h \
+    core/reporting/qsocketconnection.h \
+    core/reporting/qreportclient.h \
+    core/reporting/sleeper.h \
+    core/reporting/networkupdatemanager.h \
     core/utilities/simplecrypt.h \
+    core/plugin-interfaces/ncssubscriberwidgetplugin.h \
+    core/plugin-interfaces/ncswidgetplugin.h \
+    core/plugin-interfaces/ncsdistributionwidgetplugin.h \
+    core/plugin-interfaces/ncsapplicationwidgetplugin.h \
+    gui/mainwindow.h \
+    gui/ncsconnectionwizardpage.h \
+    gui/remoteconnectionwidget.h \
+    gui/utilities/qgroupvector.h \
+    gui/utilities/qwidgetvector.h \
+    gui/utilities/qswitch.h \
+    gui/utilities/discretecolorselector.h \
+    gui/utilities/continuouscolorselector.h \
+    gui/utilities/combowidget.h \
+    gui/utilities/colorbutton.h \
     plugins/clusterEditor/ncsclustereditor.h \
     plugins/izhLauncher/izhmodeldistributionwidget.h \
+    plugins/lifLauncher/lifmodeldistributionwidget.h \
     plugins/visualizer/skysphere.h \
     plugins/visualizer/ncvwidget.h \
     plugins/visualizer/ncvrendertool.h \
@@ -108,6 +117,8 @@ HEADERS  += \
     plugins/visualizer/ncvcontinuousattribute.h \
     plugins/visualizer/ncvconnectionset.h \
     plugins/visualizer/ncvcanvas.h \
+    plugins/visualizer/ncvattribute.h \
+    plugins/visualizer/qglx/qglxbuffertexture.h \
     plugins/visualizer/qglx/qglxtexture3d.h \
     plugins/visualizer/qglx/qglxtexture2d.h \
     plugins/visualizer/qglx/qglxtexture1d.h \
@@ -116,21 +127,7 @@ HEADERS  += \
     plugins/visualizer/qglx/qglxframebufferobject.h \
     plugins/visualizer/qglx/qglxcamera.h \
     plugins/visualizer/qglx/qglxbuffer.h \
-    plugins/visualizer/qglx/qglxboundingbox.h \
-    mainwindow.h \
-    plugins/lifLauncher/lifmodeldistributionwidget.h \
-    core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h \
-    core/networking/command/qsshsocket.h \
-    plugins/visualizer/qglx/qglxbuffertexture.h \
-    plugins/visualizer/ncvattribute.h \
-    core/gui/utilities/qgroupvector.h \
-    core/networking/reporting/sleeper.h \
-    core/gui/ncsconnectionwizardpage.h \
-    core/gui/remoteconnectionwidget.h
-
-FORMS    += \
-    mainwindow.ui \
-    mainwindow.ui
+    plugins/visualizer/qglx/qglxboundingbox.h
 
 OTHER_FILES += \
     Doxyfile \

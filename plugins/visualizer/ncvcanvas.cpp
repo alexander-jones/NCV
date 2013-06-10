@@ -209,6 +209,7 @@ void NCVCanvas::timerEvent(QTimerEvent * e)
 
 void NCVCanvas::setBackgroundImage(QImage image)
 {
+    Q_UNUSED(image);
     //m_skySphere.setImage(image);
 }
 

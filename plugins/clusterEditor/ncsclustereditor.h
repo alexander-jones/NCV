@@ -1,6 +1,6 @@
 #include <QtGui>
-#include "core/gui/plugin-interfaces/ncsapplicationwidgetplugin.h"
-#include "core/gui/utilities/qwidgetvector.h"
+#include "core/plugin-interfaces/ncsapplicationwidgetplugin.h"
+#include "gui/utilities/qwidgetvector.h"
 #include "core/ncscluster.h"
 
 class NCSClusterEditor : public NCSApplicationWidgetPlugin

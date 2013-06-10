@@ -5,11 +5,11 @@
 #include "ncvconnectionset.h"
 #include "ncvdiscreteattribute.h"
 #include "ncvcontinuousattribute.h"
-#include "core/gui/utilities/continuouscolorselector.h"
-#include "core/gui/utilities/discretecolorselector.h"
-#include "core/gui/utilities/qswitch.h"
-#include "core/gui/utilities/qwidgetvector.h"
-#include "core/gui/utilities/qgroupvector.h"
+#include "gui/utilities/continuouscolorselector.h"
+#include "gui/utilities/discretecolorselector.h"
+#include "gui/utilities/qswitch.h"
+#include "gui/utilities/qwidgetvector.h"
+#include "gui/utilities/qgroupvector.h"
 #include <QWidget>
 #include <QBoxLayout>
 #include <QToolButton>

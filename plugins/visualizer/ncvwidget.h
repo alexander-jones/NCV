@@ -1,7 +1,7 @@
 #ifndef NCVWIDGET_H
 #define NCVWIDGET_H
 
-#include "core/gui/plugin-interfaces/ncssubscriberwidgetplugin.h"
+#include "core/plugin-interfaces/ncssubscriberwidgetplugin.h"
 #include "ncvrendertool.h"
 #include "ncvcanvas.h"
 #include <QxtPushButton>

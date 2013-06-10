@@ -1,9 +1,9 @@
 #ifndef LIFMODELDISTRIBUTIONWIDGET_H
 #define LIFMODELDISTRIBUTIONWIDGET_H
 #include "core/ncscluster.h"
-#include "core/gui/plugin-interfaces/ncsdistributionwidgetplugin.h"
-#include "core/gui/utilities/qwidgetvector.h"
-#include "core/gui/utilities/qgroupvector.h"
+#include "core/plugin-interfaces/ncsdistributionwidgetplugin.h"
+#include "gui/utilities/qwidgetvector.h"
+#include "gui/utilities/qgroupvector.h"
 #include <QListWidget>
 #include <QPushButton>
 #include <QLineEdit>
@@ -30,7 +30,6 @@ private slots:
     void m_readStandardOutput();
     void m_readStandardError();
 
-
     void m_distributionStarted(NCSApplicationBridge * app);
     void m_destroyDistribution();
 
@@ -47,15 +46,13 @@ private slots:
     void m_modelAppendPressed();
     void m_modelRemovePressed();
 
-    void m_clusterEditChanged(QString newText);
-    void m_clusterEditValid(QString newText);
-    void m_clusterEditInvalid(QString newText);
-
     void m_browseClusterPressed();
     void m_launchSimulationPressed();
     void m_timeUnitSelected(QString unit);
 
 private:
+    bool m_fieldsValid();
+
     QString m_reportHost, m_projectDir;
     bool m_launching, m_modelValid, m_clusterValid;
     QVBoxLayout * m_layout;

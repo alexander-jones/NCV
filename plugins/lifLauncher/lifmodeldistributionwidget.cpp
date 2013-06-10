@@ -43,7 +43,6 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QWidget *parent) :
     m_clusterFileLabel = new QLabel("Load Cluster to Distribute across: ");
     m_clusterWidgetVector->addWidget(m_clusterFileLabel);
     m_clusterFileEdit = new QLineEdit();
-    connect(m_clusterFileEdit,SIGNAL(textChanged(QString)),this,SLOT(m_clusterEditChanged(QString)));
     m_clusterWidgetVector->addWidget(m_clusterFileEdit);
     m_browseClusterButton = new QPushButton("Browse");
     connect(m_browseClusterButton,SIGNAL(clicked()),this,SLOT(m_browseClusterPressed()));
@@ -64,6 +63,7 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QWidget *parent) :
     m_timeUnitsComboBox->addItem("Hours");
     m_timeUnitsComboBox->addItem("Days");
     m_timeUnitsComboBox->addItem("Forever");
+
     connect(m_timeUnitsComboBox,SIGNAL(currentIndexChanged(QString)),this,SLOT(m_timeUnitSelected(QString)));
     m_timeWidgetVector->addWidget(m_timeUnitsComboBox);
     m_layout->addWidget(m_timeWidgetVector);
@@ -128,31 +128,12 @@ void LIFModelDistributionWidget:: m_modelRemovePressed()
 
 }
 
-void LIFModelDistributionWidget:: m_clusterEditChanged(QString newText)
-{
-    //m_commandBridge->checkForFile(newText);
-    //connect(m_commandBridge,SIGNAL(fileFound(filepath)),this,SLOT(m_clusterEditValid(QString)));
-    //connect(m_commandBridge,SIGNAL(fileNotFound(filepath)),this,SLOT(m_clusterEditInvalid(QString)));
-}
-
-void LIFModelDistributionWidget:: m_clusterEditValid(QString newText)
-{
-    m_clusterValid = true;
-    disconnect(m_commandBridge,SIGNAL(fileFound(filepath)),this,SLOT(m_clusterEditValid(QString)));
-    disconnect(m_commandBridge,SIGNAL(fileNotFound(filepath)),this,SLOT(m_clusterEditInvalid(QString)));
-}
-void LIFModelDistributionWidget:: m_clusterEditInvalid(QString newText)
-{
-    m_clusterValid = false;
-    disconnect(m_commandBridge,SIGNAL(fileFound(filepath)),this,SLOT(m_clusterEditValid(QString)));
-    disconnect(m_commandBridge,SIGNAL(fileNotFound(filepath)),this,SLOT(m_clusterEditInvalid(QString)));
-}
-
 void LIFModelDistributionWidget::m_browseClusterPressed()
 {
     QString clusterPath = QFileDialog::getOpenFileName(this,"Find Cluster File",m_projectDir);
     if (clusterPath != "")
         m_clusterFileEdit->setText(clusterPath);
+
 }
 
 
@@ -160,7 +141,7 @@ void LIFModelDistributionWidget::m_browseClusterPressed()
 void LIFModelDistributionWidget::m_distributionStarted(NCSApplicationBridge * app)
 {
     m_currentApplication = app;
-    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
+    disconnect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
 }
@@ -176,7 +157,7 @@ void LIFModelDistributionWidget::m_destroyDistribution()
 void LIFModelDistributionWidget::m_simulationStarted(NCSApplicationBridge * app)
 {
     m_currentApplication = app;
-    disconnect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    disconnect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
     connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
     connect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readStandardOutput()));
@@ -198,8 +179,9 @@ void LIFModelDistributionWidget::m_launchSimulationPressed()
     if (m_launching)
         return;
 
-    if (m_modelFileEdit->text() == "")
+    if (!m_fieldsValid())
         return;
+
     m_launching = true;
     QVector<NCSCommandFileArgument> modelFileDependencies;
 
@@ -232,9 +214,38 @@ void LIFModelDistributionWidget::m_launchSimulationPressed()
     distArgs << NCSCommandFileArgument(modelFile,m_modelFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution,modelFileDependencies);
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
     distArgs << m_distributionOutputDir << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
+    connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     launchTriggered();
     m_commandBridge->launchApplication("ncsDistributor",distArgs);
+}
+
+bool LIFModelDistributionWidget::m_fieldsValid()
+{
+    QMessageBox msgBox;
+    msgBox.addButton("Ok", QMessageBox::ActionRole);
+    if (!QFile(m_modelFileEdit->text()).exists())
+    {
+        msgBox.setText("The model file entered could not be found." );
+        msgBox.exec();
+        return false;
+    }
+    for (int i =0; i < m_modelDependencyWidget->count(); i ++)
+    {
+        if (!QFile(m_modelDependencyWidget->item(i)->text()).exists())
+        {
+            msgBox.setText("The model dependency '" + m_modelDependencyWidget->item(i)->text() + "'' could not be found." );
+            msgBox.exec();
+            return false;
+        }
+    }
+    if (!QFile(m_clusterFileEdit->text()).exists())
+    {
+        msgBox.setText("The cluster file entered could not be found." );
+        msgBox.exec();
+        return false;
+    }
+
+    return true;
 }
 
 void LIFModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::ApplicationError err)
@@ -244,6 +255,24 @@ void LIFModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::Appl
     m_readStandardError();
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.setText("Distribution Failed." );
+
+    if (err == NCSApplicationBridge::Crashed)
+        msgBox.setDetailedText("The distributor has crashed." );
+    else if (err == NCSApplicationBridge::OtherApplicationRunning)
+        msgBox.setDetailedText("Another instance of this distributor is running." );
+    else if (err == NCSApplicationBridge::Timedout)
+        msgBox.setDetailedText("Communication with the distributor has timed out. The host systems might not contain enough RAM for distribution." );
+    else if (err == NCSApplicationBridge::UnknownError)
+        msgBox.setDetailedText("There was an unknown error." );
+    else if (err == NCSApplicationBridge::SyncDownloadError)
+        msgBox.setDetailedText("There was a problem downloading files from the NCS installation." );
+    else if (err == NCSApplicationBridge::SyncUploadError)
+        msgBox.setDetailedText("There was a problem uploading files to the NCS installation." );
+    else if (err == NCSApplicationBridge::WriteError)
+        msgBox.setDetailedText("There was a problem writing data to the distributor." );
+    else if (err == NCSApplicationBridge::ReadError)
+        msgBox.setDetailedText("There was a problem reading data from the distributor." );
+
     msgBox.exec();
     m_launching = false;
     launchFailed();
@@ -290,7 +319,7 @@ void LIFModelDistributionWidget::m_distributionFinished()
     cluster.writeHostfile(hostFilePath);
     m_reportHost = cluster.reportHost();
 
-    connect(m_commandBridge,SIGNAL(applicationStarted(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
+    connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
     m_commandBridge->launchApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
@@ -302,6 +331,24 @@ void LIFModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::Applic
     QMessageBox msgBox;
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.setText("Simulation Launching Failed." );
+
+    if (err == NCSApplicationBridge::Crashed)
+        msgBox.setDetailedText("The simulator has crashed." );
+    else if (err == NCSApplicationBridge::OtherApplicationRunning)
+        msgBox.setDetailedText("Another instance of this simulator is running." );
+    else if (err == NCSApplicationBridge::Timedout)
+        msgBox.setDetailedText("Communication with the simulator has timed out." );
+    else if (err == NCSApplicationBridge::UnknownError)
+        msgBox.setDetailedText("There was an unknown error." );
+    else if (err == NCSApplicationBridge::SyncDownloadError)
+        msgBox.setDetailedText("There was a problem downloading files from the NCS installation." );
+    else if (err == NCSApplicationBridge::SyncUploadError)
+        msgBox.setDetailedText("There was a problem uploading files to the NCS installation." );
+    else if (err == NCSApplicationBridge::WriteError)
+        msgBox.setDetailedText("There was a problem writing data to the simulator." );
+    else if (err == NCSApplicationBridge::ReadError)
+        msgBox.setDetailedText("There was a problem reading data from the simulator." );
+
     msgBox.exec();
     m_launching = false;
     m_destroySimulation();
