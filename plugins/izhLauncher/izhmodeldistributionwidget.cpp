@@ -25,7 +25,6 @@ IzhModelDistributionWidget::IzhModelDistributionWidget(QWidget *parent) :
     m_layout->addWidget(m_neuronFileVector);
 
 
-
     m_synapseFileVector = new QWidgetVector();
     m_synapseFileLabel = new QLabel("Synapse File:");
     m_synapseFileVector->addWidget(m_synapseFileLabel);

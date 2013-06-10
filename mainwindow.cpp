@@ -47,14 +47,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(openProjAction,SIGNAL(triggered()),this,SLOT(m_openProjectPressed()));
     QAction * newProjAction  = m_fileMenu->addAction("New Project");
     connect(newProjAction,SIGNAL(triggered()),this,SLOT(m_newProjectPressed()));
-    m_fileMenu->addAction("Quit");
+    QAction * exitApplicationAction = m_fileMenu->addAction("Exit");
+    connect(exitApplicationAction,SIGNAL(triggered()),this,SLOT(close()));
     m_menuBar->addMenu(m_fileMenu);
 
     setMenuBar(m_menuBar);
 
 
     m_reportingManager = new NetworkUpdateManager(this);
-
 
     m_simulationToolbar = this->addToolBar("Simulation");
     m_simulationLoadingLabel = new QLabel();
@@ -165,6 +165,7 @@ void MainWindow::closeEvent(QCloseEvent * event)
     else
         event->ignore();
 }
+
 void MainWindow::m_runSimulationPressed()
 {
     disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));

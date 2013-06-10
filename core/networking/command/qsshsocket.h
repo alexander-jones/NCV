@@ -216,13 +216,18 @@ private slots:
     void m_onCloneConnect();
     void m_onCloneLoggedIn();
     void m_onCloneCWDSet(QString cwd);
-    void m_onCloneError(QSshSocket::SshError);
+    void m_onCloneError(SshError);
 
 protected:
     void run();
 
 private:
     void m_releaseClone();
+    void m_attemptConnect();
+    void m_attemptLogin();
+    void m_attemptCommand();
+    void m_attemptPull();
+    void m_attemptPush();
 
     enum SSHOperationType
     {
