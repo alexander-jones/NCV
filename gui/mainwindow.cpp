@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include <QMenuBar>
 #include <QFileDialog>
+#include <QDomDocument>
+
 bool removeDir(const QString & dirName)
 {
     bool result;
@@ -86,6 +88,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_setSimulationToolbar(false);
 
 
+
     m_applicationMapper = new QSignalMapper(this);
     connect(m_applicationMapper,SIGNAL(mapped(QObject*)),this,SLOT(m_ncsApplicationFinished(QObject*)));
     m_applicationLauncher = NULL;
@@ -101,11 +104,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_applicationLauncher = new QxtConfigWidget(this);
     m_applicationLauncher->setIconSize(QSize(64,64));
 
-    NCSClusterEditor * clusterEditor = new NCSClusterEditor(m_applicationLauncher);
-    addPlugin(clusterEditor);
-
     PythonEditor * pythonEditor = new PythonEditor(m_applicationLauncher);
     addPlugin(pythonEditor);
+
+    NCSClusterEditor * clusterEditor = new NCSClusterEditor(m_applicationLauncher);
+    addPlugin(clusterEditor);
 
     LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(m_applicationLauncher);
     addPlugin(modelWidget);

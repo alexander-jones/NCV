@@ -88,6 +88,17 @@ void LIFModelDistributionWidget::loadProject(QString projectDir)
     m_timeUnitsComboBox->setCurrentIndex(3);
 }
 
+QString LIFModelDistributionWidget::name()
+{
+    return "lif-launcher";
+}
+
+float LIFModelDistributionWidget::version()
+{
+    return 1.0;
+}
+
+
 void LIFModelDistributionWidget::setCommandBridge(NCSCommandBridge * bridge)
 {
     this->setEnabled(true);

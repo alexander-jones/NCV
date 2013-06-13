@@ -1,6 +1,7 @@
 #include <QAction>
 #include <QVBoxLayout>
 #include <QToolBar>
+#include <QToolButton>
 #include <QStatusBar>
 #include <QApplication>
 #include <QCloseEvent>
@@ -32,15 +33,96 @@ PythonEditor::PythonEditor(QWidget * parent)
     m_textEdit = new QsciScintilla(this);
     m_textEdit->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
-    createActions();
-    createMenus();
-    createToolBars();
+    m_fileToolBar = new QToolBar(tr("File"));
+
+    m_newButton = new QToolButton();
+    m_newButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_newButton->setText("New");
+    m_newButton->setIcon(QIcon(":/resources/images/new.png"));
+    m_newButton->setShortcut(tr("Ctrl+N"));
+    m_newButton->setStatusTip(tr("Create a new file"));
+    connect(m_newButton, SIGNAL(clicked()), this, SLOT(newFile()));
+    m_fileToolBar->addWidget(m_newButton);
+
+
+    m_openButton = new QToolButton();
+    m_openButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_openButton->setText("Open");
+    m_openButton->setIcon(QIcon(":/resources/images/open.png"));
+    m_openButton->setShortcut(tr("Ctrl+O"));
+    m_openButton->setStatusTip(tr("Open an existing file"));
+    connect(m_openButton, SIGNAL(clicked()), this, SLOT(open()));
+    m_fileToolBar->addWidget(m_openButton);
+
+    m_saveButton = new QToolButton();
+    m_saveButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_saveButton->setText("Save");
+    m_saveButton->setIcon(QIcon(":/resources/images/save.png"));
+    m_saveButton->setShortcut(tr("Ctrl+S"));
+    m_saveButton->setStatusTip(tr("Save the script to disk"));
+    connect(m_saveButton, SIGNAL(clicked()), this, SLOT(save()));
+    m_fileToolBar->addWidget(m_saveButton);
+
+    m_saveAsButton = new QToolButton();
+    m_saveAsButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_saveAsButton->setText("Save As");
+    m_saveAsButton->setIcon(QIcon(":/resources/images/save.png"));
+    m_saveAsButton->setStatusTip(tr("Save the document under a new name"));
+    connect(m_saveAsButton, SIGNAL(clicked()), this, SLOT(saveAs()));
+    m_fileToolBar->addWidget(m_saveAsButton);
+
+
+    m_cutButton = new QToolButton();
+    m_cutButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_cutButton->setText("Cut");
+    m_cutButton->setIcon(QIcon(":/resources/images/cut.png"));
+    m_cutButton->setShortcut(tr("Ctrl+X"));
+    m_cutButton->setStatusTip(tr("Cut the current selection's contents to the "
+                                 "clipboard"));
+    connect(m_cutButton, SIGNAL(clicked()), m_textEdit, SLOT(cut()));
+    m_fileToolBar->addWidget(m_cutButton);
+
+    m_copyButton = new QToolButton();
+    m_copyButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_copyButton->setText("Copy");
+    m_copyButton->setIcon(QIcon(":/resources/images/copy.png"));
+    m_copyButton->setShortcut(tr("Ctrl+C"));
+    m_copyButton->setStatusTip(tr("Copy the current selection's contents to the "
+                                 "clipboard"));
+    connect(m_copyButton, SIGNAL(clicked()), m_textEdit, SLOT(copy()));
+    m_fileToolBar->addWidget(m_copyButton);
+
+    m_pasteButton = new QToolButton();
+    m_pasteButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_pasteButton->setText("Paste");
+    m_pasteButton->setIcon(QIcon(":/resources/images/paste.png"));
+    m_pasteButton->setShortcut(tr("Ctrl+V"));
+    m_pasteButton->setStatusTip(tr("Paste the clipboard's contents into the current "
+                                   "selection"));
+    connect(m_pasteButton, SIGNAL(clicked()), m_textEdit, SLOT(paste()));
+    m_fileToolBar->addWidget(m_pasteButton);
+
+    m_cutButton->setEnabled(false);
+    m_copyButton->setEnabled(false);
+    connect(m_textEdit, SIGNAL(copyAvailable(bool)),
+            m_cutButton, SLOT(setEnabled(bool)));
+    connect(m_textEdit, SIGNAL(copyAvailable(bool)),
+            m_copyButton, SLOT(setEnabled(bool)));
+
+    m_layout->addWidget(m_fileToolBar);
 
     m_layout->addWidget(m_textEdit);
 
-    createStatusBar();
+    m_statusBar = new QStatusBar();
+    m_layout->addWidget(m_statusBar);
+    m_statusBar->showMessage(tr("Ready"));
+    m_layout->addWidget(m_statusBar);
 
     m_lexer = new QsciLexerPython(this);
+    m_lexer->setIndentationWarning(QsciLexerPython::Inconsistent);
+    m_lexer->setFoldCompact(true);
+    m_lexer->setFoldComments(true);
+    m_lexer->setFoldQuotes(true);
 
     m_api = new QsciAPIs(m_lexer);
 
@@ -52,19 +134,14 @@ PythonEditor::PythonEditor(QWidget * parent)
     m_textEdit->setAutoCompletionThreshold(1);
     m_textEdit->setAutoCompletionSource(QsciScintilla::AcsAPIs);
 
-
     this->setLayout(m_layout);
-    readSettings();
-
-    connect(m_textEdit, SIGNAL(textChanged()),
-            this, SLOT(documentWasModified()));
-
     setCurrentFile("");
 }
 
 
 void PythonEditor::loadProject(QString projectDir)
 {
+    m_projectDir = projectDir;
 }
 
 QIcon PythonEditor::icon()
@@ -76,22 +153,22 @@ QString PythonEditor::title()
     return "Python Editor";
 }
 
+QString PythonEditor::name()
+{
+    return "pyhon-editor";
+}
+
+float PythonEditor::version()
+{
+    return 1.0;
+}
+
 void PythonEditor::initialize()
 {
 }
 void PythonEditor::cleanup()
 {
 }
-
-/*void PythonEditor::closeEvent(QCloseEvent *event)
-{
-    if (maybeSave()) {
-        writeSettings();
-        event->accept();
-    } else {
-        event->ignore();
-    }
-}*/
 
 void PythonEditor::newFile()
 {
@@ -104,7 +181,7 @@ void PythonEditor::newFile()
 void PythonEditor::open()
 {
     if (maybeSave()) {
-        QString fileName = QFileDialog::getOpenFileName(this);
+        QString fileName = QFileDialog::getOpenFileName(this,"Open Python Script",m_projectDir,tr("Python script (*.py)"));
         if (!fileName.isEmpty())
             loadFile(fileName);
     }
@@ -128,139 +205,7 @@ bool PythonEditor::saveAs()
     return saveFile(fileName);
 }
 
-void PythonEditor::about()
-{
-   QMessageBox::about(this, tr("About Application"),
-            tr("The <b>Application</b> example demonstrates how to "
-               "write modern GUI applications using Qt, with a menu bar, "
-               "toolbars, and a status bar."));
-}
 
-void PythonEditor::documentWasModified()
-{
-    setWindowModified(m_textEdit->isModified());
-}
-
-void PythonEditor::createActions()
-{
-    m_newAct = new QAction(QIcon(":/resources/images/new.png"), tr("&New"), this);
-    m_newAct->setShortcut(tr("Ctrl+N"));
-    m_newAct->setStatusTip(tr("Create a new file"));
-    connect(m_newAct, SIGNAL(triggered()), this, SLOT(newFile()));
-
-    m_openAct = new QAction(QIcon(":/resources/images/open.png"), tr("&Open..."), this);
-    m_openAct->setShortcut(tr("Ctrl+O"));
-    m_openAct->setStatusTip(tr("Open an existing file"));
-    connect(m_openAct, SIGNAL(triggered()), this, SLOT(open()));
-
-    m_saveAct = new QAction(QIcon(":/resources/images/save.png"), tr("&Save"), this);
-    m_saveAct->setShortcut(tr("Ctrl+S"));
-    m_saveAct->setStatusTip(tr("Save the document to disk"));
-    connect(m_saveAct, SIGNAL(triggered()), this, SLOT(save()));
-
-    m_saveAsAct = new QAction(tr("Save &As..."), this);
-    m_saveAsAct->setStatusTip(tr("Save the document under a new name"));
-    connect(m_saveAsAct, SIGNAL(triggered()), this, SLOT(saveAs()));
-
-    m_exitAct = new QAction(tr("E&xit"), this);
-    m_exitAct->setShortcut(tr("Ctrl+Q"));
-    m_exitAct->setStatusTip(tr("Exit the application"));
-    connect(m_exitAct, SIGNAL(triggered()), this, SLOT(close()));
-
-    m_cutAct = new QAction(QIcon(":/resources/images/cut.png"), tr("Cu&t"), this);
-    m_cutAct->setShortcut(tr("Ctrl+X"));
-    m_cutAct->setStatusTip(tr("Cut the current selection's contents to the "
-                            "clipboard"));
-    connect(m_cutAct, SIGNAL(triggered()), m_textEdit, SLOT(cut()));
-
-    m_copyAct = new QAction(QIcon(":/resources/images/copy.png"), tr("&Copy"), this);
-    m_copyAct->setShortcut(tr("Ctrl+C"));
-    m_copyAct->setStatusTip(tr("Copy the current selection's contents to the "
-                             "clipboard"));
-    connect(m_copyAct, SIGNAL(triggered()), m_textEdit, SLOT(copy()));
-
-    m_pasteAct = new QAction(QIcon(":/resources/images/paste.png"), tr("&Paste"), this);
-    m_pasteAct->setShortcut(tr("Ctrl+V"));
-    m_pasteAct->setStatusTip(tr("Paste the clipboard's contents into the current "
-                              "selection"));
-    connect(m_pasteAct, SIGNAL(triggered()), m_textEdit, SLOT(paste()));
-
-    m_aboutAct = new QAction(tr("&About"), this);
-    m_aboutAct->setStatusTip(tr("Show the application's About box"));
-    connect(m_aboutAct, SIGNAL(triggered()), this, SLOT(about()));
-
-    m_aboutQtAct = new QAction(tr("About &Qt"), this);
-    m_aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
-    connect(m_aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
-
-    m_cutAct->setEnabled(false);
-    m_copyAct->setEnabled(false);
-    connect(m_textEdit, SIGNAL(copyAvailable(bool)),
-            m_cutAct, SLOT(setEnabled(bool)));
-    connect(m_textEdit, SIGNAL(copyAvailable(bool)),
-            m_copyAct, SLOT(setEnabled(bool)));
-}
-
-void PythonEditor::createMenus()
-{
-
-    m_menuBar = new QMenuBar();
-    m_fileMenu = m_menuBar->addMenu(tr("&File"));
-    m_fileMenu->addAction(m_newAct);
-    m_fileMenu->addAction(m_openAct);
-    m_fileMenu->addAction(m_saveAct);
-    m_fileMenu->addAction(m_saveAsAct);
-    m_fileMenu->addSeparator();
-    m_fileMenu->addAction(m_exitAct);
-
-    m_editMenu = m_menuBar->addMenu(tr("&Edit"));
-    m_editMenu->addAction(m_cutAct);
-    m_editMenu->addAction(m_copyAct);
-    m_editMenu->addAction(m_pasteAct);
-
-    m_menuBar->addSeparator();
-
-    m_helpMenu = m_menuBar->addMenu(tr("&Help"));
-    m_helpMenu->addAction(m_aboutAct);
-    m_helpMenu->addAction(m_aboutQtAct);
-    m_layout->addWidget(m_menuBar);
-}
-
-void PythonEditor::createToolBars()
-{
-    m_fileToolBar = new QToolBar(tr("File"));
-    m_fileToolBar->addAction(m_newAct);
-    m_fileToolBar->addAction(m_openAct);
-    m_fileToolBar->addAction(m_saveAct);
-    m_fileToolBar->addAction(m_cutAct);
-    m_fileToolBar->addAction(m_copyAct);
-    m_fileToolBar->addAction(m_pasteAct);
-    m_layout->addWidget(m_fileToolBar);
-}
-
-void PythonEditor::createStatusBar()
-{
-    m_statusBar = new QStatusBar();
-    m_layout->addWidget(m_statusBar);
-    m_statusBar->showMessage(tr("Ready"));
-    m_layout->addWidget(m_statusBar);
-}
-
-void PythonEditor::readSettings()
-{
-    QSettings settings("Trolltech", "Application Example");
-    QPoint pos = settings.value("pos", QPoint(200, 200)).toPoint();
-    QSize size = settings.value("size", QSize(400, 400)).toSize();
-    resize(size);
-    move(pos);
-}
-
-void PythonEditor::writeSettings()
-{
-    QSettings settings("Trolltech", "Application Example");
-    settings.setValue("pos", pos());
-    settings.setValue("size", size());
-}
 
 bool PythonEditor::maybeSave()
 {
@@ -324,7 +269,6 @@ void PythonEditor::setCurrentFile(const QString &fileName)
 {
     m_curFile = fileName;
     m_textEdit->setModified(false);
-    setWindowModified(false);
 
     QString shownName;
     if (m_curFile.isEmpty())
@@ -332,7 +276,6 @@ void PythonEditor::setCurrentFile(const QString &fileName)
     else
         shownName = strippedName(m_curFile);
 
-    setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("Application")));
 }
 
 QString PythonEditor::strippedName(const QString &fullFileName)

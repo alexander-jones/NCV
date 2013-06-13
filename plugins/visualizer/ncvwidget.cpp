@@ -107,6 +107,15 @@ void NCVWidget::loadProject(QString projectDir)
     m_projectDir = projectDir;
 }
 
+QString NCVWidget::name()
+{
+    return "visualizer";
+}
+
+float NCVWidget::version()
+{
+    return 1.0;
+}
 
 void  NCVWidget::setSelection(QVector<NCVElementRange> selection,NCVSelectionFlag flags)
 { 

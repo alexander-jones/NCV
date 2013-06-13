@@ -20,6 +20,8 @@ public:
     QIcon icon();
     QString title();
     void loadProject(QString projectDir);
+    QString name();
+    float version();
 
 public slots:
     void setCommandBridge(NCSCommandBridge * bridge);

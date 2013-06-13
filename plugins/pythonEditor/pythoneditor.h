@@ -5,13 +5,14 @@
 
 class QMenuBar;
 class QVBoxLayout;
-class QAction;
+class QButtonion;
 class QToolBar;
 class QMenu;
 class QStatusBar;
 class QsciScintilla;
 class QsciLexerPython;
 class QsciAPIs;
+class QToolButton;
 #include "core/plugin-interfaces/ncswidgetplugin.h"
 
 class PythonEditor : public NCSWidgetPlugin
@@ -22,6 +23,8 @@ public:
     void loadProject(QString projectDir) ;
     QIcon icon() ;
     QString title() ;
+    QString name();
+    float version();
 
 public slots:
     void initialize() ;
@@ -32,16 +35,8 @@ private slots:
     void open();
     bool save();
     bool saveAs();
-    void about();
-    void documentWasModified();
 
 private:
-    void createActions();
-    void createMenus();
-    void createToolBars();
-    void createStatusBar();
-    void readSettings();
-    void writeSettings();
     bool maybeSave();
     void loadFile(const QString &fileName);
     bool saveFile(const QString &fileName);
@@ -49,12 +44,10 @@ private:
     QString strippedName(const QString &fullFileName);
 
     QsciScintilla *m_textEdit;
-    QString m_curFile;
-    QMenuBar * m_menuBar;
-    QMenu *m_fileMenu, *m_editMenu, *m_helpMenu;
+    QString m_curFile,m_projectDir;
     QToolBar *m_fileToolBar;
-    QAction *m_newAct, *m_openAct, *m_saveAct, *m_saveAsAct, *m_exitAct;
-    QAction *m_cutAct, *m_copyAct, *m_pasteAct, *m_aboutAct, *m_aboutQtAct;
+    QToolButton *m_newButton, *m_openButton, *m_saveButton, *m_saveAsButton;
+    QToolButton *m_cutButton, *m_copyButton, *m_pasteButton;
     QsciLexerPython * m_lexer;
     QsciAPIs  * m_api;
     QVBoxLayout * m_layout;

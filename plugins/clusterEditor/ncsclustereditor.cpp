@@ -149,6 +149,16 @@ QString NCSClusterEditor::title()
     return "Cluster Editor";
 }
 
+QString NCSClusterEditor::name()
+{
+    return "cluster-editor";
+}
+
+float NCSClusterEditor::version()
+{
+    return 1.0;
+}
+
 void NCSClusterEditor::setCommandBridge(NCSCommandBridge *bridge)
 {
     m_commandBridge = bridge;

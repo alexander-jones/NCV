@@ -11,6 +11,8 @@ public:
     virtual void loadProject(QString projectDir) = 0;
     virtual QIcon icon() = 0;
     virtual QString title() = 0;
+    virtual QString name() = 0;
+    virtual float version() = 0;
 
 public slots:
     virtual void initialize() = 0;

@@ -117,6 +117,16 @@ QString IzhModelDistributionWidget::title()
 }
 
 
+QString IzhModelDistributionWidget::name()
+{
+    return "izh-launcher";
+}
+
+float IzhModelDistributionWidget::version()
+{
+    return 1.0;
+}
+
 void IzhModelDistributionWidget::setCommandBridge(NCSCommandBridge * bridge)
 {
     this->setEnabled(true);

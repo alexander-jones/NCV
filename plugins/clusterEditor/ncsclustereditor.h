@@ -16,6 +16,8 @@ public:
     void loadProject(QString projectDir);
     QIcon icon();
     QString title();
+    QString name();
+    float version();
 
 
 public slots:
