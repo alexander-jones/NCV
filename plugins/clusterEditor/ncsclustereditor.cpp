@@ -141,7 +141,7 @@ void NCSClusterEditor::loadProject(QString projectDir)
 
 QIcon NCSClusterEditor::icon()
 {
-    return QIcon(":/media/hardwareIcon.png");
+    return QIcon(":/resources/images/hardwareIcon.png");
 }
 
 QString NCSClusterEditor::title()
@@ -203,7 +203,7 @@ void NCSClusterEditor::m_hostfileDetectAndAppend()
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
-    m_commandBridge->launchApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
+    m_commandBridge->launchApplicationBridge("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
 void NCSClusterEditor::m_hostfileDetectAndLoad()
@@ -223,7 +223,7 @@ void NCSClusterEditor::m_hostfileDetectAndLoad()
     clusterArgs << NCSCommandFileArgument("cluster",m_projectDir + "/tmp/cluster",NCSCommandFileArgument::DownloadAfterExecution);
 
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_clusterSpecifierStarted(NCSApplicationBridge * )));
-    m_commandBridge->launchApplication("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
+    m_commandBridge->launchApplicationBridge("clusterSpecifier",clusterArgs,numMachines,m_hostFileEdit->text());
 }
 
 void NCSClusterEditor::m_detectDevicesOverIPRange()

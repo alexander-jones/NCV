@@ -223,6 +223,7 @@ bool QSocketConnection::_recv(void *data, unsigned int count)
 
         m_socket->waitForReadyRead();
 
+        //qDebug() << m_socket->bytesAvailable();
         bytesRead = m_socket->read((char*)data + totalRead, count - totalRead);
 
         if(bytesRead <= 0)

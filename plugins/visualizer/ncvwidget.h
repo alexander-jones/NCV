@@ -38,8 +38,11 @@ private slots:
     void m_onRenderDeselectionSet(bool on);
 	void m_onCompoundSelectionSet(bool on);
 
-	
+protected:
+    void showEvent(QShowEvent *);
+
 private:
+    bool m_valid;
     QString m_projectDir;
     QVector<NCVElementRange> m_currentSelection;
     NCVSelectionFlag m_selectionFlags;

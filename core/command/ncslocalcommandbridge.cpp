@@ -1,135 +1,12 @@
 #include "ncslocalcommandbridge.h"
 #include <QMessageBox>
+#include <QStack>
 
-NCSLocalApplicationBridge::NCSLocalApplicationBridge(QString name,QString workingDirectory, QObject *parent):NCSApplicationBridge(parent)
-{
-    m_destroyProcess = true;
-    m_name = name;
-    m_process = new QProcess();
-    m_runProcessName = "";
-    if (workingDirectory != "")
-        m_process->setWorkingDirectory(workingDirectory);
-    connect(m_process,SIGNAL(readyReadStandardOutput()),this,SIGNAL(readyReadStandardOutput()));
-    connect(m_process,SIGNAL(readyReadStandardError()),this,SIGNAL(readyReadStandardError()));
-    connect(m_process,SIGNAL(error(QProcess::ProcessError)),this,SLOT(m_processErrorOccured(QProcess::ProcessError)));
-    connect(m_process,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(m_processFinished()));
-}
-
-void NCSLocalApplicationBridge::stopExecution(bool destroy)
-{
-    m_destroyProcess = destroy;
-    executionFinished();
-}
-
-QString NCSLocalApplicationBridge::applicationName()
-{
-   return m_name;
-}
-
-NCSLocalApplicationBridge::~NCSLocalApplicationBridge()
-{
-    m_process->disconnect();
-    if (m_destroyProcess)
-    {
-        m_process->kill();
-        m_process->waitForFinished();
-
-        QProcess checker;
-        QStringList checkParams;
-        checkParams << m_name;
-        #ifdef Q_OS_LINUX
-            checker.start("pidof",checkParams,QIODevice::ReadOnly);
-            checker.waitForFinished(-1);
-
-        #elif Q_OS_WINDOWS
-            params.insert(0,"/v");
-            params.insert(1,"/fo");
-            params.insert(2,"csv");
-            params.insert(3,"|");
-            params.insert(4,"findstr");
-            params.insert(5,"/i");
-            checker.start("tasklist",checkParams,QIODevice::ReadOnly);
-            checker.waitForFinished(-1);
-        #endif
-
-        QStringList pids = QString(checker.readAllStandardOutput()).split( " ");
-        QString pidString = pids.first();
-        pidString.replace("\r\n","");
-        pidString.replace('\n',"");
-        if (pidString != "")
-        {
-            QProcess killer;
-            QStringList killParams;
-            killParams << pidString;
-            #ifdef Q_OS_LINUX
-                killer.start("kill",killParams,QIODevice::ReadOnly);
-                killer.waitForFinished(-1);
-
-            #elif Q_OS_WINDOWS
-                killParams.insert(0,"-f");
-                killParams.insert(1,"/PID");
-                killer.start("taskkill",killParams,QIODevice::ReadOnly);
-                killer.waitForFinished(-1);
-            #endif
-        }
-
-    }
-}
-
-void NCSLocalApplicationBridge::start(QString applicationPath,NCSCommandArguments arguments)
-{
-    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
-    QStringList argLiterals = arguments.literals();
-    for (int i = 0; i <fileArgs.size();i++)
-    {
-        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
-        if (literalIndex != -1)
-        {
-            if (fileArgs[i].filename != "")
-            {
-                if (!QFileInfo(fileArgs[i].filename).isAbsolute())
-                    fileArgs[i].filename == QDir::currentPath() + "/" + fileArgs[i].filename;
-                argLiterals.replace(literalIndex, fileArgs[i].filename);
-            }
-        }
-    }
-
-    m_runProcessName = applicationPath;
-    m_process->start(applicationPath,argLiterals);
-}
-
-QString NCSLocalApplicationBridge::readAllStandardError()
-{
-    return m_process->readAllStandardError();
-}
-
-QString NCSLocalApplicationBridge::readAllStandardOutput()
-{
-    return m_process->readAllStandardOutput();
-}
-
-void NCSLocalApplicationBridge::m_processErrorOccured(QProcess::ProcessError err)
-{
-    if (err == QProcess::UnknownError)
-        executionError(NCSApplicationBridge::UnknownError);
-    else
-        executionError((NCSApplicationBridge::ApplicationError)err);
-}
-
-void NCSLocalApplicationBridge::m_processFinished()
-{
-    executionFinished();
-}
-
-NCSLocalCommandBridge::NCSLocalCommandBridge(QObject *parent):NCSCommandBridge(parent)
+NCSLocalCommandBridge::NCSLocalCommandBridge(QObject *parent):NCSInternalCommandBridge(parent)
 {
     m_rootPath = "";
     m_valid = false;
     m_applicationBridge = NULL;
-}
-void NCSLocalCommandBridge::initialize(QString projectPath)
-{
-    m_projectPath = projectPath;
 }
 
 void NCSLocalCommandBridge::validate(QString path)
@@ -142,22 +19,22 @@ void NCSLocalCommandBridge::validate(QString path)
     QProcess mpi;
     mpi.start("mpirun");
     if (!mpi.waitForStarted())
-        m_invalidate(NCSCommandBridge::MissingMPI);
+        m_invalidate(NCSInternalCommandBridge::MissingMPI);
     mpi.close();
 
     // make sure directory supplied exists
     QDir ncsDirectory(m_rootPath);
     if (!ncsDirectory.exists())
-        m_invalidate(NCSCommandBridge::MissingRootDirectory);
+        m_invalidate(NCSInternalCommandBridge::MissingRootDirectory);
     else
     {
         // make sure ncs has build directory and application directory
         if (!QDir(m_buildPath).exists())
-            m_invalidate(NCSCommandBridge::MissingBuildDirectory);
+            m_invalidate(NCSInternalCommandBridge::MissingBuildDirectory);
         else if (!QDir(m_buildPath + "/applications").exists())
-            m_invalidate(NCSCommandBridge::MissingApplicationDirectory);
+            m_invalidate(NCSInternalCommandBridge::MissingApplicationDirectory);
         else if (!QDir(m_buildPath + "/plugins").exists())
-            m_invalidate(NCSCommandBridge::MissingPluginDirectory);
+            m_invalidate(NCSInternalCommandBridge::MissingPluginDirectory);
 
     }
     if (m_valid == true)
@@ -170,7 +47,7 @@ bool NCSLocalCommandBridge::valid()
 }
 
 
-void NCSLocalCommandBridge::launchApplication(QString application, NCSCommandArguments arguments)
+void NCSLocalCommandBridge::launchApplicationBridge(QString application, NCSCommandArguments arguments)
 {
     if (!m_valid)
         return;
@@ -181,7 +58,7 @@ void NCSLocalCommandBridge::launchApplication(QString application, NCSCommandArg
 }
 
 
-void NCSLocalCommandBridge::launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
+void NCSLocalCommandBridge::launchApplicationBridge(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
 {
 
     if (!m_valid)
@@ -203,20 +80,21 @@ QString NCSLocalCommandBridge::hostname()
     return "localhost";
 }
 
-void NCSLocalCommandBridge::probeApplication(QString applicationName)
+void NCSLocalCommandBridge::queryApplication(QString applicationName)
 {
-    if ( QFile(m_rootPath + "/" + "build/applications/" + applicationName + "/" +applicationName).exists() )
-        applicationProbed(applicationName,Ready);
+    if ( QFile(m_rootPath + "/build/applications/" + applicationName + "/" +applicationName).exists() )
+        applicationQueried(applicationName,Ready);
 
-    else if ( QFile(m_rootPath + "/" + "applications/" + applicationName + "/" +applicationName).exists() )
-        applicationProbed(applicationName,Unbuilt);
+    else if ( QFile(m_rootPath + "/applications/" + applicationName + "/" +applicationName).exists() )
+        applicationQueried(applicationName,Unbuilt);
 
     else
-        applicationProbed(applicationName,Missing);
+        applicationQueried(applicationName,Missing);
 
 }
 
-void NCSLocalCommandBridge::probePlugin(NCSCommandBridge::PluginType type,QString pluginName)
+
+void NCSLocalCommandBridge::queryPlugin(NCSCommandBridge::PluginType type,QString pluginName)
 {
     QString pluginSubDir;
     if (type == NeuronPlugin)
@@ -226,30 +104,53 @@ void NCSLocalCommandBridge::probePlugin(NCSCommandBridge::PluginType type,QStrin
     else
         pluginSubDir = "inputs";
 
-    if ( QFile(m_rootPath + "/" + "build/plugin/" +  pluginSubDir + "/" + pluginName + "/" +pluginName).exists() )
-        pluginProbed(pluginName,Ready);
+    if ( m_fileExists(m_rootPath + "/build/plugins/" +  pluginSubDir+ "/" + pluginName, pluginName + "*.o") )
+        pluginQueried(pluginName,Ready);
 
-    else if ( QFile(m_rootPath + "/" + "applications/" +  pluginSubDir + "/" + pluginName + "/" +pluginName).exists() )
-        pluginProbed(pluginName,Unbuilt);
+    else if (m_fileExists(m_rootPath + "/plugins/" +  pluginSubDir+ "/" + pluginName, pluginName + "*.o"))
+        pluginQueried(pluginName,Unbuilt);
 
     else
-        pluginProbed(pluginName,Missing);
+        pluginQueried(pluginName,Missing);
 }
 
-void NCSLocalCommandBridge::probeReader(QString readerName)
+void NCSLocalCommandBridge::queryReader(QString readerName)
 {
-    if ( QFile(m_rootPath + "/" + "build/readers/" + readerName + "/" +readerName).exists() )
-        readerProbed(readerName,Ready);
 
-    else if ( QFile(m_rootPath + "/" + "readers/" + readerName + "/" +readerName).exists() )
-        readerProbed(readerName,Unbuilt);
+    if ( m_fileExists(m_rootPath + "/build/readers/" +  readerName+ "/" + readerName, readerName + "*.o") )
+        readerQueried(readerName,Ready);
+
+    else if ( m_fileExists(m_rootPath + "/readers/" +  readerName+ "/" + readerName, readerName + "*.o") )
+        readerQueried(readerName,Unbuilt);
 
     else
-        readerProbed(readerName,Missing);
+        readerQueried(readerName,Missing);
 }
 
-void NCSLocalCommandBridge::m_invalidate(NCSCommandBridge::ValidationError err)
+void NCSLocalCommandBridge::m_invalidate(NCSInternalCommandBridge::ValidationError err)
 {
     m_valid = false;
     validationError(err);
+}
+
+bool NCSLocalCommandBridge::m_fileExists(QDir rootDir, QString pattern)
+{
+   QStack<QString> stack;
+   stack.push(rootDir.absolutePath());
+   while (!stack.isEmpty()) {
+      QString sSubdir = stack.pop();
+      QDir subdir(sSubdir);
+
+      // Check for the files.
+      QStringList entries = subdir.entryList(QStringList() << pattern, QDir::Files);
+      if (entries.size() > 0)
+          return true;
+
+      QFileInfoList infoEntries = subdir.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+      for (int i = 0; i < infoEntries.size(); i++) {
+         QFileInfo& item = infoEntries[i];
+         stack.push(item.absoluteFilePath());
+      }
+   }
+   return false;
 }

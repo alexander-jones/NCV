@@ -59,15 +59,14 @@ NCSConnectionWizardPage::NCSConnectionWizardPage(QWidget *parent) :
     m_connectionGroupVector->addGroup(m_remoteLayout,"Use Remote Machine as Host");
     m_layout->addWidget(m_connectionGroupVector);
 
-    this->setPixmap(QWizard::LogoPixmap,QPixmap(":/media/ncvWizardLogo.png"));
-    this->setPixmap(QWizard::WatermarkPixmap,QPixmap(":/media/ncsBannerVertical.png"));
-    this->setPixmap(QWizard::BackgroundPixmap,QPixmap(":/media/ncsBannerVertical.png"));
+    this->setPixmap(QWizard::LogoPixmap,QPixmap(":/resources/images/ncvWizardLogo.png"));
+    this->setPixmap(QWizard::WatermarkPixmap,QPixmap(":/resources/images/ncsBannerVertical.png"));
+    this->setPixmap(QWizard::BackgroundPixmap,QPixmap(":/resources/images/ncsBannerVertical.png"));
     this->setLayout(m_layout);
 }
 void NCSConnectionWizardPage::loadProject(QString projectDir)
 {
     m_projectPath = projectDir;
-    m_localCommandBridge->initialize(m_projectPath);
     m_ncsDirectoryEdit->setText(m_projectPath);
 }
 
@@ -151,10 +150,9 @@ void NCSConnectionWizardPage::m_remoteConnectionEstablished(QSshSocket * socket)
         }
     }
     m_socket = socket;
-    m_remoteCommandBridge = new NCSRemoteCommandBridge(this);
-    connect(m_remoteCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
+    m_remoteCommandBridge = new NCSRemoteCommandBridge(m_socket,this);
+    connect(m_remoteCommandBridge,SIGNAL(validationError(NCSInternalCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSInternalCommandBridge::ValidationError)));
     connect(m_remoteCommandBridge,SIGNAL(validated()),this,SLOT(m_remoteConnectionValidated()));
-    m_remoteCommandBridge->initialize(m_projectPath,socket);
     m_remoteNCSDirectoryVector->setEnabled(true);
 }
 bool NCSConnectionWizardPage::validatePage()
@@ -185,7 +183,7 @@ void NCSConnectionWizardPage::m_validateLocalConnection()
 {
     m_complete = false;
     m_localCommandBridge = new NCSLocalCommandBridge(this);
-    connect(m_localCommandBridge,SIGNAL(validationError(NCSCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSCommandBridge::ValidationError)));
+    connect(m_localCommandBridge,SIGNAL(validationError(NCSInternalCommandBridge::ValidationError)),this,SLOT(m_connectionInvalidated(NCSInternalCommandBridge::ValidationError)));
     connect(m_localCommandBridge,SIGNAL(validated()),this,SLOT(m_localConnectionValidated()));
     m_localCommandBridge->validate(m_ncsDirectoryEdit->text());
 }
@@ -199,21 +197,21 @@ void NCSConnectionWizardPage::m_localConnectionValidated()
     bridgeEstablished(m_localCommandBridge);
     m_localCommandBridge = NULL;
 }
-void NCSConnectionWizardPage::m_connectionInvalidated(NCSCommandBridge::ValidationError err)
+void NCSConnectionWizardPage::m_connectionInvalidated(NCSInternalCommandBridge::ValidationError err)
 {
     QMessageBox msgBox;
     msgBox.setText("NCS installation could not be validated:");
     msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
 
-    if (err == NCSCommandBridge::MissingMPI)
+    if (err == NCSInternalCommandBridge::MissingMPI)
         msgBox.setDetailedText("MPI could not be found in the host's system path.");
-    else if (err == NCSCommandBridge::MissingRootDirectory)
+    else if (err == NCSInternalCommandBridge::MissingRootDirectory)
         msgBox.setDetailedText("The path specified could not be found.");
-    else if (err == NCSCommandBridge::MissingBuildDirectory)
+    else if (err == NCSInternalCommandBridge::MissingBuildDirectory)
         msgBox.setDetailedText("The path specified does not contain a build directory.");
-    else if (err == NCSCommandBridge::MissingApplicationDirectory)
+    else if (err == NCSInternalCommandBridge::MissingApplicationDirectory)
         msgBox.setDetailedText("The build directory at the path specified does not contain applications.");
-    else if (err == NCSCommandBridge::MissingPluginDirectory)
+    else if (err == NCSInternalCommandBridge::MissingPluginDirectory)
         msgBox.setDetailedText("The build directory at the path specified does not contain plugins.");
 
     msgBox.exec();

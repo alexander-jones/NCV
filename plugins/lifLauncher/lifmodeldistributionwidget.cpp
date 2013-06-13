@@ -75,7 +75,6 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QWidget *parent) :
     this->setLayout(m_layout);
     this->setEnabled(false);
     m_currentApplication = NULL;
-    m_launched = false;
 }
 
 void LIFModelDistributionWidget::loadProject(QString projectDir)
@@ -137,6 +136,9 @@ void LIFModelDistributionWidget::m_browseClusterPressed()
 }
 
 
+void  LIFModelDistributionWidget::m_toy()
+{
+}
 
 void LIFModelDistributionWidget::m_distributionStarted(NCSApplicationBridge * app)
 {
@@ -144,12 +146,16 @@ void LIFModelDistributionWidget::m_distributionStarted(NCSApplicationBridge * ap
     disconnect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
+    connect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readDistributorOutput()));
+    connect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readDistributorError()));
 }
 
 void LIFModelDistributionWidget::m_destroyDistribution()
 {
     disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_distributionFailed(NCSApplicationBridge::ApplicationError)));
     disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_distributionFinished()));
+    disconnect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readDistributorOutput()));
+    disconnect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readDistributorError()));
     delete m_currentApplication;
     m_currentApplication = NULL;
 }
@@ -160,15 +166,15 @@ void LIFModelDistributionWidget::m_simulationStarted(NCSApplicationBridge * app)
     disconnect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
     connect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
     connect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
-    connect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readStandardOutput()));
-    connect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readStandardError()));
+    connect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readSimulatorOutput()));
+    connect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readSimulatorError()));
 }
 void LIFModelDistributionWidget::m_destroySimulation()
 {
     disconnect(m_currentApplication,SIGNAL(executionError(NCSApplicationBridge::ApplicationError)),this,SLOT(m_simulationFailed(NCSApplicationBridge::ApplicationError)));
     disconnect(m_currentApplication,SIGNAL(executionFinished()),this,SLOT(m_simulationFinished()));
-    disconnect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readStandardOutput()));
-    disconnect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readStandardError()));
+    disconnect(m_currentApplication,SIGNAL(readyReadStandardOutput()),this,SLOT(m_readSimulatorOutput()));
+    disconnect(m_currentApplication,SIGNAL(readyReadStandardError()),this,SLOT(m_readSimulatorError()));
     delete m_currentApplication;
     m_currentApplication = NULL;
 }
@@ -216,7 +222,7 @@ void LIFModelDistributionWidget::m_launchSimulationPressed()
     distArgs << m_distributionOutputDir << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
     launchTriggered();
-    m_commandBridge->launchApplication("ncsDistributor",distArgs);
+    m_commandBridge->launchApplicationBridge("ncsDistributor",distArgs);
 }
 
 bool LIFModelDistributionWidget::m_fieldsValid()
@@ -250,11 +256,15 @@ bool LIFModelDistributionWidget::m_fieldsValid()
 
 void LIFModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::ApplicationError err)
 {
+
+    m_destroyDistribution();
+
+    if (!m_launching)
+        return;
+
     QMessageBox msgBox;
-    m_readStandardOutput();
-    m_readStandardError();
     msgBox.addButton("Ok", QMessageBox::ActionRole);
-    msgBox.setText("Distribution Failed." );
+    msgBox.setText("Simulation Distribution Failed." );
 
     if (err == NCSApplicationBridge::Crashed)
         msgBox.setDetailedText("The distributor has crashed." );
@@ -273,10 +283,10 @@ void LIFModelDistributionWidget::m_distributionFailed(NCSApplicationBridge::Appl
     else if (err == NCSApplicationBridge::ReadError)
         msgBox.setDetailedText("There was a problem reading data from the distributor." );
 
+
     msgBox.exec();
     m_launching = false;
     launchFailed();
-    m_destroyDistribution();
 
 }
 
@@ -290,10 +300,12 @@ void LIFModelDistributionWidget::m_timeUnitSelected(QString unit)
 }
 void LIFModelDistributionWidget::m_distributionFinished()
 {
-    distributed(m_topologyFilename );
-    m_readStandardOutput();
-    m_readStandardError();
     m_destroyDistribution();
+
+    if (!m_launching)
+        return;
+
+    distributed(m_topologyFilename );
 
     QString timeArg;
     if (m_timeUnitsComboBox->currentText() == "Milliseconds")
@@ -320,14 +332,15 @@ void LIFModelDistributionWidget::m_distributionFinished()
     m_reportHost = cluster.reportHost();
 
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
-    m_commandBridge->launchApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
+    m_commandBridge->launchApplicationBridge("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
 
 void LIFModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::ApplicationError err)
 {
-    m_readStandardOutput();
-    m_readStandardError();
+    if (!m_launching)
+        return;
+
     QMessageBox msgBox;
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.setText("Simulation Launching Failed." );
@@ -351,24 +364,61 @@ void LIFModelDistributionWidget::m_simulationFailed(NCSApplicationBridge::Applic
 
     msgBox.exec();
     m_launching = false;
+    launchFailed();
     m_destroySimulation();
 }
 
-void LIFModelDistributionWidget::m_readStandardError()
+
+void LIFModelDistributionWidget::m_readDistributorError()
 {
-    qDebug() << m_currentApplication->readAllStandardError();
+    QString err = m_currentApplication->readAllStandardError();
+    int errorIndex = err.indexOf(QRegExp("File:.*syntax error"));
+    if (errorIndex != -1 )
+    {
+        m_launching = false;
+        launchFailed();
+
+        err.replace("File: ","");
+        err.replace(": syntax error","");
+        QStringList strings = err.split(":");
+
+
+        QMessageBox msgBox;
+        msgBox.addButton("Ok", QMessageBox::ActionRole);
+        msgBox.setText("Simulation Distribution Failed." );
+        msgBox.setDetailedText("There was a syntax error on line" +strings[1] + "in the file" + strings[0] );
+        msgBox.exec();
+    }
+
+
 }
-void LIFModelDistributionWidget::m_readStandardOutput()
+void LIFModelDistributionWidget::m_readDistributorOutput()
 {
     QString out = m_currentApplication->readAllStandardOutput();
 
-    if (!m_launched)
+    if (m_launching)
         qDebug() << out;
 
-    if (out.contains("Running simulation..."))
+}
+
+void LIFModelDistributionWidget::m_readSimulatorError()
+{
+    QString err = m_currentApplication->readAllStandardError();
+    qDebug() << err;
+
+}
+void LIFModelDistributionWidget::m_readSimulatorOutput()
+{
+    QString out = m_currentApplication->readAllStandardOutput();
+
+    if (m_launching)
     {
-        m_launched = true;
-        launched(m_reportHost);
+        qDebug() << out;
+        if (m_launching && out.contains("Running simulation..."))
+        {
+            m_launching = false;
+            launched(m_reportHost);
+        }
     }
 }
 
@@ -380,7 +430,7 @@ void LIFModelDistributionWidget::m_simulationFinished()
 
 QIcon LIFModelDistributionWidget::icon()
 {
-    return QIcon(":/media/lifDistributor.png");
+    return QIcon(":/resources/images/lifDistributor.png");
 }
 
 QString LIFModelDistributionWidget::title()

@@ -108,7 +108,7 @@ void IzhModelDistributionWidget::loadProject(QString projectDir)
 
 QIcon IzhModelDistributionWidget::icon()
 {
-    return QIcon(":/media/izhDistributor.png");
+    return QIcon(":/resources/images/izhDistributor.png");
 }
 
 QString IzhModelDistributionWidget::title()
@@ -188,7 +188,7 @@ void IzhModelDistributionWidget::m_launchSimulationPressed()
     distArgs << NCSCommandFileArgument(clusterFile,m_clusterFileEdit->text(),NCSCommandFileArgument::UploadBeforeExecution);
     distArgs << m_distributionOutputDir << "-topology" << NCSCommandFileArgument("topology",m_topologyFilename,NCSCommandFileArgument::DownloadAfterExecution);
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_distributionStarted(NCSApplicationBridge*)));
-    m_commandBridge->launchApplication("izhDistributor",distArgs);
+    m_commandBridge->launchApplicationBridge("izhDistributor",distArgs);
 
 }
 
@@ -299,7 +299,7 @@ void IzhModelDistributionWidget::m_distributionFinished()
 
     launchTriggered();
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_simulationStarted(NCSApplicationBridge*)));
-    m_commandBridge->launchApplication("simulator",simArgs,cluster.machines.count(),hostFilePath);
+    m_commandBridge->launchApplicationBridge("simulator",simArgs,cluster.machines.count(),hostFilePath);
 
 }
 

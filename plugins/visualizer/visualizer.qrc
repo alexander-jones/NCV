@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/shaders/connectionContinuous.geom</file>
+        <file>resources/shaders/connectionContinuous.vert</file>
+        <file>resources/shaders/connectionDiscrete.geom</file>
+        <file>resources/shaders/connectionDiscrete.vert</file>
+        <file>resources/shaders/connectionSilhouette.geom</file>
+        <file>resources/shaders/connectionSilhouette.vert</file>
+        <file>resources/shaders/continuous.frag</file>
+        <file>resources/shaders/discrete.frag</file>
+        <file>resources/shaders/neuronContinuous.vert</file>
+        <file>resources/shaders/neuronDiscrete.vert</file>
+        <file>resources/shaders/neuronSilhouette.vert</file>
+        <file>resources/shaders/silhouette.frag</file>
+        <file>resources/images/gray.jpg</file>
+        <file>resources/images/linked.png</file>
+        <file>resources/images/markerDividedTemplate.png</file>
+        <file>resources/images/markerDividedTemplateSmall.png</file>
+        <file>resources/images/markerWholeTemplate.png</file>
+        <file>resources/images/markerWholeTemplateSmall.png</file>
+        <file>resources/images/unlinked.png</file>
+        <file>resources/images/visualizationIcon.png</file>
+    </qresource>
+</RCC>

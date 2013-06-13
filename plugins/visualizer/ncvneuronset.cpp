@@ -340,16 +340,16 @@ void NCVNeuronSet::resolve()
     if (!m_initialized)
     {
 
-        m_discreteProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/plugins/visualizer/shaders/neuronDiscrete.vert" );
-        m_discreteProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/plugins/visualizer/shaders/discrete.frag" );
+        m_discreteProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/resources/shaders/neuronDiscrete.vert" );
+        m_discreteProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/resources/shaders/discrete.frag" );
         m_discreteProgram.link();
 
-        m_continuousProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/plugins/visualizer/shaders/neuronContinuous.vert" );
-        m_continuousProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/plugins/visualizer/shaders/continuous.frag" );
+        m_continuousProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/resources/shaders/neuronContinuous.vert" );
+        m_continuousProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/resources/shaders/continuous.frag" );
         m_continuousProgram.link();
 
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Vertex,":/plugins/visualizer/shaders/neuronSilhouette.vert" );
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Fragment,":/plugins/visualizer/shaders/silhouette.frag" );
+        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Vertex,":/resources/shaders/neuronSilhouette.vert" );
+        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Fragment,":/resources/shaders/silhouette.frag" );
         m_silhouetteProgram.link();
 
         GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);

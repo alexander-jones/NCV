@@ -27,8 +27,12 @@ public slots:
     void cleanup();
 
 private slots:
-    void m_readStandardOutput();
-    void m_readStandardError();
+    void m_toy();
+    void m_readSimulatorOutput();
+    void m_readSimulatorError();
+
+    void m_readDistributorOutput();
+    void m_readDistributorError();
 
     void m_distributionStarted(NCSApplicationBridge * app);
     void m_destroyDistribution();

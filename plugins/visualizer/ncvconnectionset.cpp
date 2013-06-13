@@ -250,19 +250,19 @@ void NCVConnectionSet::resolve()
     if (!m_initialized)
     {
 
-        m_discreteProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/plugins/visualizer/shaders/connectionDiscrete.vert" );
-        m_discreteProgram.addShaderFromSourceFile( QGLShader::Geometry, ":/plugins/visualizer/shaders/connectionDiscrete.geom" );
-        m_discreteProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/plugins/visualizer/shaders/discrete.frag" );
+        m_discreteProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/resources/shaders/connectionDiscrete.vert" );
+        m_discreteProgram.addShaderFromSourceFile( QGLShader::Geometry, ":/resources/shaders/connectionDiscrete.geom" );
+        m_discreteProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/resources/shaders/discrete.frag" );
         m_discreteProgram.link();
 
-        m_continuousProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/plugins/visualizer/shaders/connectionContinuous.vert" );
-        m_continuousProgram.addShaderFromSourceFile( QGLShader::Geometry, ":/plugins/visualizer/shaders/connectionContinuous.geom" );
-        m_continuousProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/plugins/visualizer/shaders/continuous.frag" );
+        m_continuousProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/resources/shaders/connectionContinuous.vert" );
+        m_continuousProgram.addShaderFromSourceFile( QGLShader::Geometry, ":/resources/shaders/connectionContinuous.geom" );
+        m_continuousProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/resources/shaders/continuous.frag" );
         m_continuousProgram.link();
 
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Vertex, ":/plugins/visualizer/shaders/connectionSilhouette.vert");
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Geometry, ":/plugins/visualizer/shaders/connectionSilhouette.geom");
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Fragment, ":/plugins/visualizer/shaders/silhouette.frag");
+        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Vertex, ":/resources/shaders/connectionSilhouette.vert");
+        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Geometry, ":/resources/shaders/connectionSilhouette.geom");
+        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Fragment, ":/resources/shaders/silhouette.frag");
         m_silhouetteProgram.link();
 
         int startIndex = m_neurons->count();

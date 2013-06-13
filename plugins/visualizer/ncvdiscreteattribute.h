@@ -3,6 +3,7 @@
 #include "qglx/qglxtexture2d.h"
 #include "qglx/qglxbuffertexture.h"
 #include "core/ncsdiscreteattribute.h"
+#include "discretecolorselector.h"
 #include "ncvattribute.h"
 
 class NCVDiscreteAttribute:public NCVAttribute

@@ -7,7 +7,7 @@
 #include <QColorDialog>
 #include <QEvent>
 #include <QPushButton>
-#include "combowidget.h"
+#include "gui/utilities/combowidget.h"
 #include "colorbutton.h"
 #include <QScrollArea>
 

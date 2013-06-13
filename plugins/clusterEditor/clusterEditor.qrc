@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/images/hardwareIcon.png</file>
+    </qresource>
+</RCC>

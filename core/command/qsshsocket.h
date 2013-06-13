@@ -70,7 +70,7 @@ public:
     /*!
         \brief The deconstructor.
     */
-    ~QSshSocket();
+    virtual ~QSshSocket();
 
     /*!
         \param host The hostname to establish an ssh connection with.
@@ -182,10 +182,11 @@ signals:
 
     /*!
         \param command The command that was executed on the remote host.
-        \param response The response to the command that was executed.
+        \param stdOut The standard out stream recieved after executing the command.
+        \param stdError The standard error stream recieved after executing the command.
         \brief This signal is emitted when a response from the remote host is received regarding a command.
     */
-    void commandExecuted(QString command,QString response);
+    void commandExecuted(QString command,QString response, QString stdError);
 
     /*!
         \brief This signal is emitted when a user has been loggen in to the remote host."
@@ -216,7 +217,7 @@ private slots:
     void m_onCloneConnect();
     void m_onCloneLoggedIn();
     void m_onCloneCWDSet(QString cwd);
-    void m_onCloneError(SshError);
+    void m_onCloneError(QSshSocket::SshError);
 
 protected:
     void run();

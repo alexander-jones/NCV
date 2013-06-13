@@ -48,7 +48,7 @@ Installing Dependencies:
 <a name="linuxDependencies"/>
 #### On Linux / Unix:
 
-Multiple libraries needed by NCV require CMake to generate makefiles, so if your system does not contain CMake
+Libraries needed by NCV require CMake to generate makefiles, so if your system does not contain CMake
 enter `sudo apt-get install cmake` into a terminal
 
 
@@ -58,12 +58,12 @@ enter `sudo apt-get install cmake` into a terminal
     * Enter `./configure` into the terminal to configure the installation & generate makefiles.
     * Enter `make` into the terminal to build Qt 4.8.4.
     * Enter `sudo make install` into the terminal to install Qt 4.8.4 into your system path.
-    * Enter `sudo apt-get install libqxt-dev` into the terminal to install the libQxt extenstion library.
+    * Enter `sudo apt-get install libqxt-dev` into the terminal to install the Qxt extenstion library.
+    * Enter `sudo apt-get install libqscintilla2-dev` into the terminal to install the QScintilla extenstion library.
 
 * **To install the GLEW 1.9.0 (OpenGL Extension Wrangler) library:**
 
     * Download the GLEW archive from [here](http://www.libssh.org/files/0.5/), extract it, and navigate into the extracted directory with a terminal.
-    * Enter `cmake .` into the terminal to  configure the installation & generate makefiles.
     * Enter `make` into the terminal to build GLEW.
     * Enter `sudo make install.all` into the terminal to install GLEW into your system path.
 
@@ -71,12 +71,16 @@ enter `sudo apt-get install cmake` into a terminal
 
     * Download the libssh 0.5.0 archive from [here](http://www.libssh.org/files/0.5/), extract it, and navigate to the directory
     containing the extracted directory with a terminal.
-    * Enter `sudo apt-get install libxmu-dev libxu-dev` into the terminal to download libssh's dependencies.
+    * Enter `sudo apt-get install libssl-dev libXmu-dev libXu-dev` into the terminal to download libssh's dependencies.
     * Enter `mkdir build`  into the terminal to create a build directory (libssh requires an out of source build.
     * Enter `cd build` into the terminal.
     * Enter `cmake  ../<EXTRACTED_DIR>` into the terminal  (where <EXTRACTED_DIR> is the directory of the extracted archive)
     to configure the installation & generate makefiles.
-    * Enter `make`  into the terminal  to build libssh and then `sudo make install`to install libssh into your system path.
+    * Enter `make`  into the terminal to build libssh and then `sudo make install`to install libssh into your system path.
+
+* ** After installation of dependencies:**
+    * Enter `sudo ldconfig` into the terminal to reconfigure dynamic linker run-time bindings.
+    * Enter `sudo updatedb` into the terminal to update the slocate database.
 
 <a name="windowsDependencies"/>
 #### On Windows 7:

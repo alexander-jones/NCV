@@ -1,178 +1,18 @@
 #include "ncsremotecommandbridge.h"
 
-NCSRemoteApplicationBridge::NCSRemoteApplicationBridge(QString name,QString projectDirectory, QObject *parent)
-    :NCSApplicationBridge(parent)
-{
-    m_name = name;
-    m_projectDir = projectDirectory;
-    m_alive = false;
-    m_pidString = -1;
-    m_destroyProcess = true;
-    m_socket = NULL;
-    m_timer = new QTimer(this);
-    connect(m_timer,SIGNAL(timeout()),this,SLOT(m_checkIfAlive()));
-}
-NCSRemoteApplicationBridge::~NCSRemoteApplicationBridge()
-{
-    m_timer->stop();
-    disconnect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
-    disconnect(m_socket,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onSocketError(QSshSocket::SshError)));
-    disconnect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
-    disconnect(m_socket,SIGNAL(pushSuccessful(QString,QString)),this,SLOT(m_executeNextPush()));
-
-    if (m_alive && m_destroyProcess)
-    {
-        m_socket->executeCommand("kill " + m_pidString);
-    }
-}
-void NCSRemoteApplicationBridge::setSocket(QSshSocket * socket, bool own)
-{
-    Q_UNUSED(own);
-    m_socket = socket;
-    connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
-    connect(m_socket,SIGNAL(error(QSshSocket::SshError)),this,SLOT(m_onSocketError(QSshSocket::SshError)));
-    connect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
-    connect(m_socket,SIGNAL(pushSuccessful(QString,QString)),this,SLOT(m_executeNextPush()));
-}
-
-void NCSRemoteApplicationBridge::stopExecution(bool destroy)
-{
-    m_destroyProcess = destroy;
-    executionFinished();
-}
-
-QString NCSRemoteApplicationBridge::applicationName()
-{
-    return m_name;
-}
-void NCSRemoteApplicationBridge::start(QString application, NCSCommandArguments arguments)
-{
-    QVector<NCSCommandFileArgument> fileArgs = arguments.fileArguments();
-    QStringList argLiterals = arguments.literals();
-    for (int i = 0; i <fileArgs.size();i++)
-    {
-        int literalIndex = argLiterals.indexOf(fileArgs[i].literal);
-        if (literalIndex != -1)
-            argLiterals.replace(literalIndex, m_projectDir + "/"+ fileArgs[i].literal);
-        fileArgs[i].literal = m_projectDir + "/"+fileArgs[i].literal;
-
-        if (fileArgs[i].operation == NCSCommandFileArgument::UploadBeforeExecution)
-            m_uploadArguments.append(fileArgs[i]);
-        if (fileArgs[i].operation == NCSCommandFileArgument::DownloadAfterExecution)
-            m_downloadArguments.append(fileArgs[i]);
-
-    }
-
-    m_wholeCommand = application;
-    for (int i=0; i < argLiterals.size();i++)
-        m_wholeCommand +=" " + argLiterals[i];
-
-    m_alive = true;
-    m_executeNextPush();
-}
-
-QString NCSRemoteApplicationBridge::readAllStandardError()
-{
-    QString retString = m_stdErr;
-    m_stdErr = "";
-    return retString;
-}
-
-QString NCSRemoteApplicationBridge::readAllStandardOutput()
-{
-    QString retString = m_stdOut;
-    m_stdOut = "";
-    return retString;
-}
-
-void NCSRemoteApplicationBridge::m_onCommandExecuted(QString command,QString response)
-{
-    if (command == "pidof " + m_name)
-    {
-        if (response == "")
-        {
-            m_alive = false;
-            executionFinished();
-        }
-        else
-        {
-            QStringList pids = response.split( " ");
-            m_pidString = pids.first();
-            m_pidString.replace("\r\n","");
-            m_pidString.replace("\n","");
-            m_timer->start(10000);
-        }
-    }
-    else
-    {
-        m_stdOut = response;
-        m_stdErr = "";
-        m_executeNextPull();
-    }
-}
-
-void NCSRemoteApplicationBridge::m_checkIfAlive()
-{
-    m_socket->executeCommand("pidof " + m_name);
-}
-
-void NCSRemoteApplicationBridge::m_executeNextPush()
-{
-    if (m_uploadArguments.size() > 0)
-    {
-        NCSCommandFileArgument arg = m_uploadArguments[0];
-        m_uploadArguments.pop_front();
-        m_socket->pushFile(arg.filename,arg.literal);
-    }
-    else
-    {
-        m_socket->executeCommand(m_wholeCommand);
-    }
-}
-
-void NCSRemoteApplicationBridge::m_executeNextPull()
-{
-    if (m_downloadArguments.size() > 0)
-    {
-        NCSCommandFileArgument arg = m_downloadArguments[0];
-        m_downloadArguments.pop_front();
-        m_socket->pullFile(arg.filename,arg.literal);
-    }
-    else
-    {
-        disconnect(m_socket,SIGNAL(pullSuccessful(QString,QString)),this,SLOT(m_executeNextPull()));
-        readyReadStandardOutput();
-        readyReadStandardError();
-        m_checkIfAlive();
-    }
-
-
-}
-void NCSRemoteApplicationBridge::m_onSocketError(QSshSocket::SshError err)
-{
-    Q_UNUSED(err);
-    executionError(NCSApplicationBridge::UnknownError);
-}
-
-NCSRemoteCommandBridge::NCSRemoteCommandBridge( QObject *parent ):NCSCommandBridge(parent)
+NCSRemoteCommandBridge::NCSRemoteCommandBridge( QSshSocket * socket,QObject *parent ):NCSInternalCommandBridge(parent)
 {
     m_socket = NULL;
     m_clearProjectContext();
-}
-
-void NCSRemoteCommandBridge::initialize(QString projectPath, QSshSocket * socket)
-{
-    m_projectPath = projectPath;
     if (m_socket != NULL)
         m_socket->disconnect();
     m_socket = socket;
 
-    connect(m_socket,SIGNAL(commandExecuted(QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString)));
+    connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
     connect(m_socket,SIGNAL(workingDirectorySet(QString)),this,SLOT(m_socketDirectorySet(QString)));
     connect(m_socket,SIGNAL(cloned(QSshSocket*)),this,SLOT(m_onSocketCloned(QSshSocket*)));
 
 }
-
 
 void NCSRemoteCommandBridge::validate(QString path)
 {
@@ -182,7 +22,7 @@ void NCSRemoteCommandBridge::validate(QString path)
     m_socket->executeCommand("type -P mpirun &>/dev/null && echo 'exists'");
 }
 
-void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandArguments arguments)
+void NCSRemoteCommandBridge::launchApplicationBridge(QString application, NCSCommandArguments arguments)
 {
     if (!m_valid)
         return ;
@@ -195,7 +35,7 @@ void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandAr
     m_socket->clone();
 
 }
-void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
+void NCSRemoteCommandBridge::launchApplicationBridge(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile )
 {
     if (!m_valid)
         return;
@@ -215,16 +55,21 @@ void NCSRemoteCommandBridge::launchApplication(QString application, NCSCommandAr
 
 }
 
-void NCSRemoteCommandBridge::probeApplication(QString applicationName)
+void NCSRemoteCommandBridge::queryApplication(QString applicationName)
 {
-    m_applicationToProbe = applicationName;
+    m_applicationToquery =  queryContext(applicationName);
     if (m_socket != NULL)
-        m_socket->executeCommand("[ -f ./applications/" + applicationName +"/"+ applicationName + " ] && echo 'exists' ");
+    {
+        disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+        connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onApplicationQueried(QString,QString,QString)));
+        m_socket->executeCommand("[ -f brainslug/build/applications/" + applicationName +"/"+ applicationName + " ] && echo 'exists' ");
+    }
 }
 
-void NCSRemoteCommandBridge::probePlugin(NCSCommandBridge::PluginType type,QString pluginName)
+void NCSRemoteCommandBridge::queryPlugin(NCSCommandBridge::PluginType type,QString pluginName)
 {
-    m_pluginToProbe = pluginName;
+
+    m_pluginToquery =  queryContext(pluginName);
     QString pluginSubDir;
     if (type == NeuronPlugin)
         pluginSubDir = "neurons";
@@ -234,14 +79,22 @@ void NCSRemoteCommandBridge::probePlugin(NCSCommandBridge::PluginType type,QStri
         pluginSubDir = "inputs";
 
     if (m_socket != NULL)
-        m_socket->executeCommand("[ -f ./plugins/" + pluginSubDir + "/" + pluginName +"/"+ pluginName + " ] && echo 'exists' ");
+    {
+        disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+        connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onPluginQueried(QString,QString,QString)));
+        m_socket->executeCommand("find brainslug/build/plugins/" + pluginSubDir + "/" + pluginName  + " -name '" + pluginName + "*.o");
+    }
 }
 
-void NCSRemoteCommandBridge::probeReader(QString readerName)
+void NCSRemoteCommandBridge::queryReader(QString readerName)
 {
-    m_readerToProbe = readerName;
+    m_readerToquery =  queryContext(readerName);
     if (m_socket != NULL)
-        m_socket->executeCommand("[ -f ./readers/" + readerName +"/"+ readerName + " ] && echo 'exists' ");
+    {
+        disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+        connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onReaderQueried(QString,QString,QString)));
+        m_socket->executeCommand("find brainslug/build/readers/" + readerName + " -name '" + readerName + "*.o");
+    }
 }
 
 
@@ -261,48 +114,136 @@ void NCSRemoteCommandBridge::m_onSocketCloned(QSshSocket * applicationSocket)
     m_launchingApplications.pop_front();
 }
 
-void NCSRemoteCommandBridge::m_onCommandExecuted(QString command,QString response)
+void NCSRemoteCommandBridge::m_onApplicationQueried(QString command,QString stdOut,QString stdError)
 {
-    qDebug() << command << " "<< response;
+
+    if (!m_applicationToquery.builtChecked)
+    {
+        m_applicationToquery.builtChecked = true;
+        if ( stdOut.contains("exists"))
+        {
+            disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onApplicationQueried(QString,QString,QString)));
+            connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+            applicationQueried(m_applicationToquery.name,Ready);
+        }
+        else
+            m_socket->executeCommand(command.replace("applications/","../applications/"));
+    }
+    else
+    {
+        disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onApplicationQueried(QString,QString,QString)));
+        connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));      
+        if ( stdOut.contains("exists"))
+            applicationQueried(m_applicationToquery.name,Unbuilt);
+        else
+            applicationQueried(m_applicationToquery.name,Missing);
+
+    }
+
+}
+
+void NCSRemoteCommandBridge::m_onPluginQueried(QString command,QString stdOut,QString stdError)
+{
+    if (!m_pluginToquery.builtChecked)
+    {
+        m_pluginToquery.builtChecked = true;
+        if ( stdOut.size() > 0)
+        {
+            disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onPluginQueried(QString,QString,QString)));
+            connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+            pluginQueried(m_pluginToquery.name,Ready);
+        }
+        else
+            m_socket->executeCommand(command.replace("plugins/","../plugins/"));
+    }
+    else
+    {
+        disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onPluginQueried(QString,QString,QString)));
+        connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+        if ( stdOut.size() > 0)
+            pluginQueried(m_pluginToquery.name,Unbuilt);
+        else
+            pluginQueried(m_pluginToquery.name,Missing);
+
+    }
+
+
+}
+
+void NCSRemoteCommandBridge::m_onReaderQueried(QString command,QString stdOut,QString stdError)
+{
+
+    if (!m_readerToquery.builtChecked)
+    {
+        m_readerToquery.builtChecked = true;
+        if ( stdOut.size() > 0)
+        {
+            disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onReaderQueried(QString,QString,QString)));
+            connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+            readerQueried(m_readerToquery.name,Ready);
+        }
+
+        else
+            m_socket->executeCommand(command.replace("readers/","../readers/"));
+    }
+    else
+    {
+        disconnect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onReaderQueried(QString,QString,QString)));
+        connect(m_socket,SIGNAL(commandExecuted(QString,QString,QString)),this,SLOT(m_onCommandExecuted(QString,QString,QString)));
+        if ( stdOut.size() > 0)
+            readerQueried(m_readerToquery.name,Unbuilt);
+        else
+            readerQueried(m_readerToquery.name,Missing);
+
+    }
+
+}
+
+
+void NCSRemoteCommandBridge::m_onCommandExecuted(QString command,QString stdOut,QString stdError)
+{
+    qDebug() << command << " "<< stdOut << " " << stdError;
+
+    stdOut.replace('\n',"");
     if (command == "type -P mpirun &>/dev/null && echo 'exists'")
     {
-        if (response == "exists")
+        if (stdOut == "exists")
             m_socket->executeCommand("[ -d " + m_remoteRootPath +" ] && echo 'exists'" );
         else
-            validationError(NCSCommandBridge::MissingMPI);
+            validationError(NCSInternalCommandBridge::MissingMPI);
     }
     else if (command == "[ -d " + m_remoteRootPath +" ] && echo 'exists'")
     {
-        if (response == "exists")
+        if (stdOut == "exists")
             m_socket->executeCommand("[ -d " + m_remoteBuildPath + " ] && echo 'exists'");
         else
-            validationError(NCSCommandBridge::MissingRootDirectory);
+            validationError(NCSInternalCommandBridge::MissingRootDirectory);
     }
     else if (command == "[ -d " + m_remoteBuildPath + " ] && echo 'exists'")
     {
-        if (response == "exists")
+        if (stdOut == "exists")
             m_socket->executeCommand("[ -d " + m_remoteBuildPath + "/applications ] && echo 'exists'");
         else
-            validationError(NCSCommandBridge::MissingBuildDirectory);
+            validationError(NCSInternalCommandBridge::MissingBuildDirectory);
     }
     else if (command == "[ -d " + m_remoteBuildPath + "/applications ] && echo 'exists'")
     {
-        if (response == "exists")
+        if (stdOut == "exists")
             m_socket->executeCommand("[ -d " + m_remoteBuildPath +"/plugins ] && echo 'exists'");
         else
-            validationError(NCSCommandBridge::MissingApplicationDirectory);
+            validationError(NCSInternalCommandBridge::MissingApplicationDirectory);
     }
     else if (command == "[ -d " + m_remoteBuildPath +"/plugins ] && echo 'exists'")
     {
-        if (response == "exists")
+        if (stdOut == "exists")
             m_socket->setWorkingDirectory(m_remoteBuildPath);
 
         else
-            validationError(NCSCommandBridge::MissingPluginDirectory);
+            validationError(NCSInternalCommandBridge::MissingPluginDirectory);
     }
     else if (command == "[ -d ./tmp-project ] && echo 'exists'")
     {
-        if (response == "exists")
+        if (stdOut == "exists")
             m_socket->executeCommand("rm -r tmp-project");
         else
             m_socket->executeCommand("mkdir tmp-project");
@@ -316,55 +257,6 @@ void NCSRemoteCommandBridge::m_onCommandExecuted(QString command,QString respons
         m_valid = true;
         validated();
     }
-    else if (command.contains("./applications/"))
-    {
-
-        if ( response == "exists" )
-            applicationProbed(m_applicationToProbe,Ready);
-        else
-            m_socket->executeCommand(command.replace("./","../"));
-    }
-    else if (command.contains("../applications/"))
-    {
-
-        if ( response == "exists" )
-            applicationProbed(m_applicationToProbe,Unbuilt);
-        else
-            applicationProbed(m_applicationToProbe,Missing);
-    }
-    else if (command.contains("./plugins/"))
-    {
-
-        if ( response == "exists" )
-            pluginProbed(m_pluginToProbe,Ready);
-        else
-            m_socket->executeCommand(command.replace("./","../"));
-    }
-    else if (command.contains("../plugins/"))
-    {
-
-        if ( response == "exists" )
-            pluginProbed(m_pluginToProbe,Unbuilt);
-        else
-            pluginProbed(m_pluginToProbe,Missing);
-    }
-
-    else if (command.contains("./readers/"))
-    {
-
-        if ( response == "exists" )
-            readerProbed(m_readerToProbe,Ready);
-        else
-            m_socket->executeCommand(command.replace("./","../"));
-    }
-    else if (command.contains("../readers/"))
-    {
-
-        if ( response == "exists" )
-            readerProbed(m_readerToProbe,Unbuilt);
-        else
-            readerProbed(m_readerToProbe,Missing);
-    }
 }
 
 void NCSRemoteCommandBridge::m_socketDirectorySet(QString dir)
@@ -376,8 +268,6 @@ void NCSRemoteCommandBridge::m_socketDirectorySet(QString dir)
 
 void NCSRemoteCommandBridge::m_clearProjectContext()
 {
-
-    m_projectPath = "";
     m_remoteRootPath = "";
     m_remoteBuildPath = "";
     m_remoteProjectPath = "";

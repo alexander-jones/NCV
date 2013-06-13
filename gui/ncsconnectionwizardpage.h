@@ -23,7 +23,7 @@ signals:
     void bridgeEstablished(NCSCommandBridge * bridge);
 
 private slots:
-    void m_connectionInvalidated(NCSCommandBridge::ValidationError err);
+    void m_connectionInvalidated(NCSInternalCommandBridge::ValidationError err);
     void m_localConnectionValidated();
     void m_localNCSDirectoryChanged(QString newText);
     void m_browseForNCS();

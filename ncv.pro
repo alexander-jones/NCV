@@ -11,21 +11,27 @@ QXT += core gui
 QT  += core network xml gui opengl
 TARGET = ncv
 TEMPLATE = app
-ICON = media/ncv.png
+ICON =
 
 #linux specific settings
 unix:!macx{
-    LIBS +=  -lssh -lGLU  -lGLEW
+    LIBS +=  -lssh
 }
 
 #windows specific settings
 win32{
-    LIBS += -lssh  -lglew32
+    LIBS += -lssh
 }
 
 #mac specific settings
 macx{
 }
+
+include(plugins/clusterEditor/clusterEditor.pri)
+include(plugins/izhLauncher/izhLauncher.pri)
+include(plugins/lifLauncher/lifLauncher.pri)
+include(plugins/visualizer/visualizer.pri)
+include(plugins/pythonEditor/pythonEditor.pri)
 
 SOURCES += \
     main.cpp \
@@ -39,6 +45,8 @@ SOURCES += \
     core/command/qsshsocket.cpp \
     core/command/ncsremotecommandbridge.cpp \
     core/command/ncslocalcommandbridge.cpp \
+    core/command/ncsremoteapplicationbridge.cpp \
+    core/command/ncslocalapplicationbridge.cpp\
     core/reporting/qsocketconnection.cpp \
     core/reporting/qreportclient.cpp \
     core/reporting/networkupdatemanager.cpp \
@@ -48,32 +56,8 @@ SOURCES += \
     gui/remoteconnectionwidget.cpp \
     gui/utilities/qwidgetvector.cpp \
     gui/utilities/qswitch.cpp \
-    gui/utilities/discretecolorselector.cpp \
-    gui/utilities/continuouscolorselector.cpp \
     gui/utilities/combowidget.cpp \
-    gui/utilities/colorbutton.cpp \
-    gui/utilities/qgroupvector.cpp \
-    plugins/lifLauncher/lifmodeldistributionwidget.cpp \
-    plugins/clusterEditor/ncsclustereditor.cpp \
-    plugins/izhLauncher/izhmodeldistributionwidget.cpp \
-    plugins/visualizer/skysphere.cpp \
-    plugins/visualizer/ncvwidget.cpp \
-    plugins/visualizer/ncvrendertool.cpp \
-    plugins/visualizer/ncvneuronset.cpp \
-    plugins/visualizer/ncvdiscreteattribute.cpp \
-    plugins/visualizer/ncvcontinuousattribute.cpp \
-    plugins/visualizer/ncvconnectionset.cpp \
-    plugins/visualizer/ncvcanvas.cpp \
-    plugins/visualizer/qglx/qglxtexture3d.cpp \
-    plugins/visualizer/qglx/qglxtexture2d.cpp \
-    plugins/visualizer/qglx/qglxtexture1d.cpp \
-    plugins/visualizer/qglx/qglxtexture.cpp \
-    plugins/visualizer/qglx/qglxpainter.cpp \
-    plugins/visualizer/qglx/qglxbuffertexture.cpp \
-    plugins/visualizer/qglx/qglxframebufferobject.cpp \
-    plugins/visualizer/qglx/qglxcamera.cpp \
-    plugins/visualizer/qglx/qglxbuffer.cpp \
-    plugins/visualizer/qglx/qglxboundingbox.cpp
+    gui/utilities/qgroupvector.cpp
 
 HEADERS  += \
     core/ncsneuronset.h \
@@ -84,6 +68,11 @@ HEADERS  += \
     core/ncsattribute.h \
     core/ncscommandbridge.h \
     core/ncscommandarguments.h \
+    core/ncsapplicationbridge.h \
+    core/command/ncsremoteapplicationbridge.h \
+    core/command/ncslocalapplicationbridge.h \
+    core/command/NCSInternalCommandBridge.h \
+    core/command/ncsinternalcommandbridge.h \
     core/command/qsshsocket.h \
     core/command/ncsremotecommandbridge.h \
     core/command/ncslocalcommandbridge.h \
@@ -102,47 +91,12 @@ HEADERS  += \
     gui/utilities/qgroupvector.h \
     gui/utilities/qwidgetvector.h \
     gui/utilities/qswitch.h \
-    gui/utilities/discretecolorselector.h \
-    gui/utilities/continuouscolorselector.h \
-    gui/utilities/combowidget.h \
-    gui/utilities/colorbutton.h \
-    plugins/clusterEditor/ncsclustereditor.h \
-    plugins/izhLauncher/izhmodeldistributionwidget.h \
-    plugins/lifLauncher/lifmodeldistributionwidget.h \
-    plugins/visualizer/skysphere.h \
-    plugins/visualizer/ncvwidget.h \
-    plugins/visualizer/ncvrendertool.h \
-    plugins/visualizer/ncvneuronset.h \
-    plugins/visualizer/ncvdiscreteattribute.h \
-    plugins/visualizer/ncvcontinuousattribute.h \
-    plugins/visualizer/ncvconnectionset.h \
-    plugins/visualizer/ncvcanvas.h \
-    plugins/visualizer/ncvattribute.h \
-    plugins/visualizer/qglx/qglxbuffertexture.h \
-    plugins/visualizer/qglx/qglxtexture3d.h \
-    plugins/visualizer/qglx/qglxtexture2d.h \
-    plugins/visualizer/qglx/qglxtexture1d.h \
-    plugins/visualizer/qglx/qglxtexture.h \
-    plugins/visualizer/qglx/qglxpainter.h \
-    plugins/visualizer/qglx/qglxframebufferobject.h \
-    plugins/visualizer/qglx/qglxcamera.h \
-    plugins/visualizer/qglx/qglxbuffer.h \
-    plugins/visualizer/qglx/qglxboundingbox.h
+    gui/utilities/combowidget.h
+
 
 OTHER_FILES += \
     Doxyfile \
-    plugins/visualizer/shaders/silhouette.frag \
-    plugins/visualizer/shaders/neuronSilhouette.vert \
-    plugins/visualizer/shaders/neuronDiscrete.vert \
-    plugins/visualizer/shaders/neuronContinuous.vert \
-    plugins/visualizer/shaders/discrete.frag \
-    plugins/visualizer/shaders/continuous.frag \
-    plugins/visualizer/shaders/connectionSilhouette.vert \
-    plugins/visualizer/shaders/connectionSilhouette.geom \
-    plugins/visualizer/shaders/connectionDiscrete.vert \
-    plugins/visualizer/shaders/connectionDiscrete.geom \
-    plugins/visualizer/shaders/connectionContinuous.vert \
-    plugins/visualizer/shaders/connectionContinuous.geom
+    README.md
 
 RESOURCES += \
-    core-profile.qrc
+    ncv.qrc

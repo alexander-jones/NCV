@@ -1,57 +1,30 @@
 #ifndef NCSREMOTECOMMANDBRIDGE_H
 #define NCSREMOTECOMMANDBRIDGE_H
 #include "core/ncscommandbridge.h"
-#include "qsshsocket.h"
+#include "ncsremoteapplicationbridge.h"
+#include "ncsinternalcommandbridge.h"
 
-class NCSRemoteApplicationBridge:public NCSApplicationBridge
+class NCSRemoteCommandBridge : public NCSInternalCommandBridge
 {
     Q_OBJECT
 public:
-    explicit NCSRemoteApplicationBridge(QString name,QString projectDirectory, QObject *parent = 0);
-    ~NCSRemoteApplicationBridge();
-    void setSocket(QSshSocket * socket,bool own = false);
-    void start(QString application,NCSCommandArguments arguments);
-    QString readAllStandardError();
-    QString readAllStandardOutput();
-    void stopExecution(bool destroy);
-    QString applicationName();
-
-private slots:
-    void m_onCommandExecuted(QString command,QString response);
-    void m_onSocketError(QSshSocket::SshError err);
-    void m_executeNextPull();
-    void m_executeNextPush();
-    void m_checkIfAlive();
-
-private:
-    QVector<NCSCommandFileArgument> m_uploadArguments;
-    QVector<NCSCommandFileArgument> m_downloadArguments;
-    bool m_destroyProcess,m_alive;
-    QSshSocket * m_socket;
-    QString m_stdOut, m_stdErr,m_name, m_pidString, m_projectDir, m_wholeCommand;
-    QTimer * m_timer;
-};
-
-class NCSRemoteCommandBridge : public NCSCommandBridge
-{
-    Q_OBJECT
-public:
-    explicit NCSRemoteCommandBridge( QObject *parent = 0);
-    void initialize(QString projectSubDir, QSshSocket * socket);
+    explicit NCSRemoteCommandBridge( QSshSocket * socket,QObject *parent = 0);
     QString hostname();
-    void initialize(QString projectSubDir);
-    void launchApplication(QString application, NCSCommandArguments arguments);
-    void launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
-    void probeApplication(QString applicationName);
-    void probePlugin(NCSCommandBridge::PluginType type,QString pluginName);
-    void probeReader(QString readerName);
+    void launchApplicationBridge(QString application, NCSCommandArguments arguments);
+    void launchApplicationBridge(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
+    void queryApplication(QString applicationName);
+    void queryPlugin(NCSCommandBridge::PluginType type,QString pluginName);
+    void queryReader(QString readerName);
     void validate(QString path);
     bool valid();
 
 
 private slots:
+    void m_onApplicationQueried(QString command,QString stdOut,QString stdError);
+    void m_onPluginQueried(QString command,QString stdOut,QString stdError);
+    void m_onReaderQueried(QString command,QString stdOut,QString stdError);
     void m_onSocketCloned(QSshSocket * applicationSocket);
-    void m_onCommandExecuted(QString command,QString response);
+    void m_onCommandExecuted(QString command,QString stdOut,QString stdError);
     void m_onSocketError(QSshSocket::SshError err);
     void m_socketDirectorySet(QString);
     void m_clearProjectContext();
@@ -64,10 +37,23 @@ private:
         NCSCommandArguments arguments;
         NCSRemoteApplicationBridge * application;
     };
+
+    struct queryContext
+    {
+        queryContext(QString n = "")
+        {
+            name = n;
+            builtChecked = false;
+        }
+
+        QString name;
+        bool builtChecked;
+    };
+
     QVector<ApplicationContext> m_launchingApplications;
     QSshSocket * m_socket;
-    QString m_remoteRootPath, m_remoteBuildPath, m_projectPath,m_remoteProjectPath;
-    QString m_pluginToProbe, m_applicationToProbe,m_readerToProbe;
+    QString m_remoteRootPath, m_remoteBuildPath,m_remoteProjectPath;
+    queryContext m_pluginToquery, m_applicationToquery,m_readerToquery;
     bool m_valid;
 };
 

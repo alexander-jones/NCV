@@ -3,9 +3,9 @@
 QSwitch::QSwitch(QWidget *parent )
     :QLabel(parent)
 {
-    m_offBackground = QPixmap(":/media/switchBackgroundOff.png");
-    m_onBackground = QPixmap(":/media/switchBackgroundOn.png");
-    m_handle = QPixmap(":/media/switchHandle.png");
+    m_offBackground = QPixmap(":/resources/images/switchBackgroundOff.png");
+    m_onBackground = QPixmap(":/resources/images/switchBackgroundOn.png");
+    m_handle = QPixmap(":/resources/images/switchHandle.png");
     this->setFixedSize(m_offBackground.size());
     m_handleOffset = m_handle.size().width()/2 ;
     m_switchPosition = m_handleOffset;

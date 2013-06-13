@@ -1,51 +1,29 @@
 #ifndef NCSLOCALCOMMANDBRIDGE_H
 #define NCSLOCALCOMMANDBRIDGE_H
-#include "core/ncscommandbridge.h"
+#include "ncslocalapplicationbridge.h"
+#include "ncsinternalcommandbridge.h"
 #include <QTimer>
 
-class NCSLocalApplicationBridge:public NCSApplicationBridge
-{
-    Q_OBJECT
-public:
-    explicit NCSLocalApplicationBridge(QString name,QString workingDirectory = "",QObject *parent = 0);
-    ~NCSLocalApplicationBridge();
-    void start(QString application,NCSCommandArguments arguments);
-    QString readAllStandardError();
-    QString readAllStandardOutput();
-
-    void stopExecution(bool destroy);
-    QString applicationName();
-private slots:
-    void m_processErrorOccured(QProcess::ProcessError);
-    void m_processFinished();
-
-private:
-    QProcess * m_process;
-    QString m_name;
-    QString m_runProcessName;
-    bool m_destroyProcess;
-};
-
-class NCSLocalCommandBridge : public NCSCommandBridge
+class NCSLocalCommandBridge : public NCSInternalCommandBridge
 {
     Q_OBJECT
 public:
     explicit NCSLocalCommandBridge(QObject *parent = 0);
     QString hostname();
-    void initialize(QString projectSubDir);
-    void launchApplication(QString application, NCSCommandArguments arguments);
-    void launchApplication(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
-    void probeApplication(QString applicationName);
-    void probePlugin(NCSCommandBridge::PluginType type,QString pluginName);
-    void probeReader(QString readerName);
+    void launchApplicationBridge(QString application, NCSCommandArguments arguments);
+    void launchApplicationBridge(QString application, NCSCommandArguments arguments,int numProcesses, QString hostFile = "" );
+    void queryApplication(QString applicationName);
+    void queryPlugin(NCSCommandBridge::PluginType type,QString pluginName);
+    void queryReader(QString readerName);
     void validate(QString path);
     bool valid();
 
 private:
-    void m_invalidate(NCSCommandBridge::ValidationError err);
+    bool m_fileExists(QDir rootDir, QString pattern);
+    void m_invalidate(NCSInternalCommandBridge::ValidationError err);
 
     QVector<NCSCommandFileArgument> m_downloadArguments;
-    QString m_rootPath, m_buildPath, m_projectPath;
+    QString m_rootPath, m_buildPath;
     NCSLocalApplicationBridge * m_applicationBridge;
     bool m_valid;
     QTimer m_timer;

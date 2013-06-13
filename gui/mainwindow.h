@@ -7,6 +7,7 @@
 #include "plugins/lifLauncher/lifmodeldistributionwidget.h"
 #include "plugins/izhLauncher/izhmodeldistributionwidget.h"
 #include "plugins/visualizer/ncvwidget.h"
+#include "plugins/pythonEditor/pythoneditor.h"
 #include "core/reporting/networkupdatemanager.h"
 #include <QMainWindow>
 #include <QVBoxLayout>

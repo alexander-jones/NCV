@@ -58,12 +58,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_simulationToolbar = this->addToolBar("Simulation");
     m_simulationLoadingLabel = new QLabel();
-    m_simulationLoadingMovie = new QMovie(":/media/loading.gif");
+    m_simulationLoadingMovie = new QMovie(":/resources/images/loading.gif");
     m_simulationToolbar->addWidget(m_simulationLoadingLabel);
     m_simulationToolbar->setMovable(false);
-    m_runSimulationButton = m_simulationToolbar->addAction(QIcon(":/media/playIcon.png"), "Run Simulation");
+    m_runSimulationButton = m_simulationToolbar->addAction(QIcon(":/resources/images/playIcon.png"), "Run Simulation");
     connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
-    m_stopSimulationButton = m_simulationToolbar->addAction(QIcon(":/media/stopIcon.png"), "Stop Simulation");
+    m_stopSimulationButton = m_simulationToolbar->addAction(QIcon(":/resources/images/stopIcon.png"), "Stop Simulation");
     connect(m_stopSimulationButton,SIGNAL(triggered()),this,SLOT(m_stopSimulationPressed()));
     m_simulationTimeSlider = new QSlider(this);
     m_simulationTimeSlider->setToolTip("Adjust the  Update Interval");
@@ -104,6 +104,9 @@ MainWindow::MainWindow(QWidget *parent) :
     NCSClusterEditor * clusterEditor = new NCSClusterEditor(m_applicationLauncher);
     addPlugin(clusterEditor);
 
+    PythonEditor * pythonEditor = new PythonEditor(m_applicationLauncher);
+    addPlugin(pythonEditor);
+
     LIFModelDistributionWidget * modelWidget = new LIFModelDistributionWidget(m_applicationLauncher);
     addPlugin(modelWidget);
 
@@ -112,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     NCVWidget * visualizationWidget = new NCVWidget(m_applicationLauncher);
     addPlugin(visualizationWidget);
+
 
     this->setCentralWidget(m_applicationLauncher);
     m_applicationLauncher->setEnabled(false);
@@ -171,7 +175,7 @@ void MainWindow::m_runSimulationPressed()
     disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
     connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulationPressed()));
     connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
-    m_runSimulationButton->setIcon(QIcon(":/media/pauseIcon.png"));
+    m_runSimulationButton->setIcon(QIcon(":/resources/images/pauseIcon.png"));
     m_runSimulationButton->setText("Pause Simulation");
     m_reportingManager->setUpdateInterval(m_simulationTimeSlider->value());
     m_reportingManager->startUpdates();
@@ -183,7 +187,7 @@ void MainWindow::m_pauseSimulationPressed()
     disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulationPressed()));
     connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
     disconnect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
-    m_runSimulationButton->setIcon(QIcon(":/media/playIcon.png"));
+    m_runSimulationButton->setIcon(QIcon(":/resources/images/playIcon.png"));
     m_runSimulationButton->setText("Run Simulation");
     m_reportingManager->stopUpdates();
     m_stopSimulationButton->setEnabled(true);
@@ -386,7 +390,7 @@ void MainWindow::m_ncsApplicationLaunched(NCSApplicationBridge * app)
 void MainWindow::m_ncsApplicationFinished(QObject * app)
 {
     NCSApplicationBridge * application = dynamic_cast<NCSApplicationBridge *> (app);
-    qDebug() << application->applicationName();
+    qDebug() << "closed" << application->applicationName();
     disconnect(application,SIGNAL(executionFinished()), m_applicationMapper,SLOT(map()));
     int index = m_activeApplications.indexOf(application);
 
@@ -496,6 +500,7 @@ void MainWindow::m_createNetwork(QString topologyFilename)
 void MainWindow::m_publishNetwork(QString reportHost)
 {
 
+
     if (m_reportingManager->connectToHost(reportHost.toStdString(),8951))
         qDebug() << "NCV connected to NCS simulation reporting from " << reportHost;
     else
@@ -505,6 +510,7 @@ void MainWindow::m_publishNetwork(QString reportHost)
         msgBox.setText("NCV could not connect to the report host of NCS. This may be due to another simulator instance running on the host or because of problems with the internet connection."  );
         msgBox.addButton("Ok", QMessageBox::ActionRole);
         msgBox.exec();
+        m_disconnectFromSimulator();
         return;
     }
 

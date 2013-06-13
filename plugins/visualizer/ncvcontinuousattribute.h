@@ -4,7 +4,7 @@
 #include "qglx/qglxbuffertexture.h"
 #include "ncvattribute.h"
 #include "core/ncscontinuousattribute.h"
-#include "gui/utilities/continuouscolorselector.h"
+#include "continuouscolorselector.h"
 
 class NCVContinuousAttribute: public NCVAttribute
 {

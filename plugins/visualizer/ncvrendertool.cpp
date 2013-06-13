@@ -30,8 +30,8 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     connect(m_neuronLinkButton,SIGNAL(pressed()),this,SLOT(m_neuronLinkButtonPressed()));
     connect(m_connectionLinkButton,SIGNAL(pressed()),this,SLOT(m_connectionLinkButtonPressed()));
 
-    m_linkedIcon = QIcon(":/media/linked.png");
-    m_unlinkedIcon = QIcon(":/media/unlinked.png");
+    m_linkedIcon = QIcon(":/resources/images/linked.png");
+    m_unlinkedIcon = QIcon(":/resources/images/unlinked.png");
 
     m_neuronLayout = new QVBoxLayout();
     m_neuronLayout->setSpacing(0);

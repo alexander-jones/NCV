@@ -4,6 +4,7 @@
 NCVWidget::NCVWidget(QWidget *parent) :
     NCSSubscriberWidgetPlugin(parent)
 {
+    m_valid = true;
     m_neurons = NULL;
     m_connections = NULL;
     m_layout = new QBoxLayout(QBoxLayout::LeftToRight);
@@ -68,6 +69,7 @@ NCVWidget::NCVWidget(QWidget *parent) :
     setFocus();
 
 
+
     m_frameCount = 0;
     m_timer.start();
     connect(m_canvas,SIGNAL(frameRendered()),this,SLOT(m_newFrameReceived()));
@@ -80,7 +82,25 @@ NCVWidget::NCVWidget(QWidget *parent) :
     connect(this,SIGNAL(selectionChanged(QVector<NCVElementRange>,NCVSelectionFlag)),m_canvas,SLOT(setSelection(QVector<NCVElementRange>,NCVSelectionFlag)));
     connect(m_canvas,SIGNAL(selectionChanged(QVector<NCVElementRange>,NCVSelectionFlag)),this,SLOT(setSelection(QVector<NCVElementRange>,NCVSelectionFlag)));
 
+
 }
+
+void NCVWidget::showEvent(QShowEvent *)
+{
+    if (!m_valid && m_layout->count() >0 )
+    {
+        m_layout->removeWidget(m_renderTool);
+        m_renderTool->hide();
+
+        m_layout->removeWidget(m_collapseButton);
+        m_collapseButton->hide();
+
+        m_layout->removeWidget(m_canvas);
+        m_canvas->hide();
+
+    }
+}
+
 
 void NCVWidget::loadProject(QString projectDir)
 {
@@ -235,13 +255,7 @@ NCVWidget::~NCVWidget()
 
 void NCVWidget::m_reportFatalError()
 {
-
-    this->setEnabled(false);
-    QMessageBox msgBox;
-    msgBox.setText("Graphics Configuration Incapable");
-    msgBox.setInformativeText("Cannot create a valid OpenGL 3.3 context.");
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.exec();
+    m_valid = false;
 }
 
 void NCVWidget::initialize()
@@ -254,7 +268,7 @@ void NCVWidget::cleanup()
 
 QIcon NCVWidget::icon()
 {
-    return QIcon(":/media/visualizationIcon.png");
+    return QIcon(":/resources/images/visualizationIcon.png");
 }
 
 QString NCVWidget::title()

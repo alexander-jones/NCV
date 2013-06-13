@@ -86,17 +86,17 @@ void Marker::m_drawImage()
 	if (m_type == Solid)
 	{
 		if (m_size == Large)
-			m_image = QImage(":/media/markerWholeTemplate.png");
+            m_image = QImage(":/resources/images/markerWholeTemplate.png");
 		else
-			m_image = QImage(":/media/markerWholeTemplateSmall.png");
+            m_image = QImage(":/resources/images/markerWholeTemplateSmall.png");
 	}
 	else
 	{
 
 		if (m_size == Large)
-			m_image = QImage(":/media/markerDividedTemplate.png");
+            m_image = QImage(":/resources/images/markerDividedTemplate.png");
 		else
-			m_image = QImage(":/media/markerDividedTemplateSmall.png");
+            m_image = QImage(":/resources/images/markerDividedTemplateSmall.png");
 	}
 
 	for (int y = 0; y < m_image.height(); y++)
@@ -174,12 +174,12 @@ ContinuousColorSelector::ContinuousColorSelector(QWidget *parent) :
     m_valueLayerContainer->installEventFilter( this );
     m_layout->addWidget(m_valueLayerContainer);
 
-    m_markerHeight = QImage(":/media/markerWholeTemplate.png").height();
-    m_markerWidth = QImage(":/media/markerWholeTemplate.png").width();
+    m_markerHeight = QImage(":/resources/images/markerWholeTemplate.png").height();
+    m_markerWidth = QImage(":/resources/images/markerWholeTemplate.png").width();
 
     m_markerSelector = new QComboBox();
-    m_markerSelector->addItem(QIcon(":/media/markerWholeTemplate.png"),"Solid");
-    m_markerSelector->addItem(QIcon(":/media/markerDividedTemplate.png"),"Divided");
+    m_markerSelector->addItem(QIcon(":/resources/images/markerWholeTemplate.png"),"Solid");
+    m_markerSelector->addItem(QIcon(":/resources/images/markerDividedTemplate.png"),"Divided");
     connect(m_markerSelector,SIGNAL(currentIndexChanged(QString)),this,SLOT(m_markerTypeSelected(QString)));
     m_currentMarkerType = Marker::Solid;
 

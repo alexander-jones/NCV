@@ -296,31 +296,49 @@ void QSshSocket::m_attemptCommand()
     QByteArray buffer;
     buffer.resize(1000);
 
-    // read in command result
+    // read in std out
     int totalBytes = 0, newBytes = 0;
     do
     {
         newBytes = ssh_channel_read(channel, &(buffer.data()[totalBytes]), buffer.size() - totalBytes, 0);
         if (newBytes > 0)
             totalBytes += newBytes;
-    }while (newBytes > 0);
+    }while ( newBytes > 0);
+
+
+    QString stdOut = QString(buffer).mid(0,totalBytes);
+
+    // read in std err
+    totalBytes = 0, newBytes = 0;
+    do
+    {
+        newBytes = ssh_channel_read(channel, &(buffer.data()[totalBytes]), buffer.size() - totalBytes, 1);
+        if (newBytes > 0)
+            totalBytes += newBytes;
+    }while ( newBytes > 0);
+
+    QString stdErr = QString(buffer).mid(0,totalBytes);
+
+    if (totalBytes >0)
+    {
+        qDebug() << ssh_get_error(m_session);
+
+    }
 
     // close channel
     ssh_channel_send_eof(channel);
     ssh_channel_close(channel);
     ssh_channel_free(channel);
 
-    QString response = QString(buffer).mid(0,totalBytes);
-    response.replace("\n","");
     if (m_currentOperation.type == WorkingDirectoryTest)
     {
-        if (response == "exists")
+        if (stdOut.contains("exists"))
             m_workingDirectory = m_nextWorkingDir;
         m_nextWorkingDir = ".";
         workingDirectorySet(m_workingDirectory);
     }
     else
-        commandExecuted( m_currentOperation.command, response) ;
+        commandExecuted( m_currentOperation.command, stdOut,stdErr) ;
 }
 
 void QSshSocket::m_attemptPull()

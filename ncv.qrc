@@ -1,0 +1,34 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/images/cameraIcon.png</file>
+        <file>resources/images/cluster.png</file>
+        <file>resources/images/columnIcon.png</file>
+        <file>resources/images/connectIcon.png</file>
+        <file>resources/images/connectionIcon.png</file>
+        <file>resources/images/exit.png</file>
+        <file>resources/images/groupIcon.png</file>
+        <file>resources/images/layerIcon.png</file>
+        <file>resources/images/loading.gif</file>
+        <file>resources/images/localComputer.png</file>
+        <file>resources/images/ncs.ico</file>
+        <file>resources/images/ncs.png</file>
+        <file>resources/images/ncs.xcf</file>
+        <file>resources/images/ncsBannerVertical.png</file>
+        <file>resources/images/ncv.png</file>
+        <file>resources/images/ncvWizardLogo.png</file>
+        <file>resources/images/neuronIcon.png</file>
+        <file>resources/images/organizationIcon.png</file>
+        <file>resources/images/pauseIcon.png</file>
+        <file>resources/images/playIcon.png</file>
+        <file>resources/images/presentationIcon.png</file>
+        <file>resources/images/projectIcon.png</file>
+        <file>resources/images/recordIcon.png</file>
+        <file>resources/images/selectionIcon.png</file>
+        <file>resources/images/setupIcon.png</file>
+        <file>resources/images/stopIcon.png</file>
+        <file>resources/images/switchBackgroundOff.png</file>
+        <file>resources/images/switchBackgroundOn.png</file>
+        <file>resources/images/switchHandle.png</file>
+        <file>resources/images/toolIcon.png</file>
+    </qresource>
+</RCC>

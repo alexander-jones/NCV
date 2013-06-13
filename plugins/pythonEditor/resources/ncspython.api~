@@ -1,0 +1,118 @@
+and
+del
+from
+not
+while
+as
+elif
+global
+or
+with
+assert
+else
+if
+pass
+yield
+break
+except
+import
+print
+class
+exec
+in
+raise
+continue
+finally
+is
+return
+def
+for
+lambda
+try
+abs(x) Return the absolute value of a number.
+all(iterable) Return True if all elements in the iterable are true.
+any(iterable) Return True if any element of the iterable is true.
+bin(x) Convert an integer number to a binary string.
+bool([x]) Convert a value to a Boolean.
+bytearray([source[, encoding[, errors]]]) Return a new array of bytes.
+callable(object) Return True if the object argument appears callable, False if not.
+chr(i) Return a string of one character whose ASCII code is the integer i. 
+classmethod(function) Return a class method for function.
+cmp(x, y) Compare the two objects x and y and return an integer according to the outcome.
+compile(source, filename, mode[, flags[, dont_inherit]]) Compile the source into a code or AST object. 
+complex([real[, imag]]) Create a complex number with the value real + imag*j or convert a string or number to a complex number.
+delattr(object, name) The function deletes the named attribute, provided the object allows it.
+dict(**kwarg) Create a new dictionary. 
+dict(mapping, **kwarg) Create a new dictionary. 
+dict(iterable, **kwarg) Create a new dictionary. 
+dir([object]) Without arguments, return the list of names in the current local scope. With an argument, attempt to return a list of valid attributes for that object.
+divmod(a, b) Take two (non complex) numbers as arguments and return a pair of numbers consisting of their quotient and remainder when using long division.
+enumerate(sequence, start=0) Return an enumerate object. sequence must be a sequence
+eval(expression[, globals[, locals]]) The arguments are a string and optional globals and locals.
+execfile(filename[, globals[, locals]]) This function is similar to the exec statement, but parses a file instead of a string.
+file(name[, mode[, buffering]]) Constructor function for the file type.
+filter(function, iterable) Construct a list from those elements of iterable for which function returns true.
+float([x]) Convert a string or a number to floating point. 
+format(value[, format_spec]) Convert a value to a “formatted” representation, as controlled by format_spec. 
+frozenset([iterable]) Return a new frozenset object, optionally with elements taken from iterable. 
+getattr(object, name[, default]) Return the value of the named attribute of object.
+globals() Return a dictionary representing the current global symbol table.
+hasattr(object, name) The arguments are an object and a string. The result is True if the string is the name of one of the object’s attributes, False if not.
+hash(object) Return the hash value of the object (if it has one).
+help([object]) Invoke the built-in help system. 
+hex(x) Convert an integer number (of any size) to a hexadecimal string. 
+id(object) Return the “identity” of an object. 
+input([prompt]) Equivalent to eval(raw_input(prompt)).
+int(x=0) Convert a number or string x to an integer, or return 0 if no arguments are given. 
+int(x, base=10) Convert a number or string x to an integer, or return 0 if no arguments are given. 
+isinstance(object, classinfo) Return true if the object argument is an instance of the classinfo argument, or of a (direct, indirect or virtual) subclass thereof. 
+issubclass(class, classinfo) Return true if class is a subclass (direct, indirect or virtual) of classinfo.
+iter(o[, sentinel]) Return an iterator object. 
+len(s) Return the length (the number of items) of an object. 
+list([iterable]) Return a list whose items are the same and in the same order as iterable‘s items.
+locals() Update and return a dictionary representing the current local symbol table. 
+long(x=0) Convert a string or number to a long integer. 
+long(x, base=10) Convert a string or number to a long integer. 
+map(function, iterable, ...) Apply function to every item of iterable and return a list of the results.
+max(iterable[, key]) Return the largest item in an iterable or the largest of two or more arguments.
+max(arg1, arg2, *args[, key]) Return the largest item in an iterable or the largest of two or more arguments.
+memoryview(obj) Return a “memory view” object created from the given argument. 
+min(iterable[, key]) Return the smallest item in an iterable or the smallest of two or more arguments.
+min(arg1, arg2, *args[, key]) Return the smallest item in an iterable or the smallest of two or more arguments.
+next(iterator[, default]) Retrieve the next item from the iterator by calling its next() method. 
+object() Return a new featureless object. 
+oct(x) Convert an integer number (of any size) to an octal string.
+open(name[, mode[, buffering]]) Open a file, returning an object of the file type described in section File Objects.
+ord(c) Given a string of length one, return an integer representing the Unicode code point of the character when the argument is a unicode object, or the value of the byte when the argument is an 8-bit string.
+pow(x, y[, z]) Return x to the power y; if z is present, return x to the power y, modulo z.
+print(*objects, sep=' ', end='\n', file=sys.stdout) Print objects to the stream file, separated by sep and followed by end. sep, end and file, if present, must be given as keyword arguments.
+property([fget[, fset[, fdel[, doc]]]]) Return a property attribute for new-style classes (classes that derive from object).
+range(stop) This is a versatile function to create lists containing arithmetic progressions. 
+range(start, stop[, step]) This is a versatile function to create lists containing arithmetic progressions. 
+raw_input([prompt]) If the prompt argument is present, it is written to standard output without a trailing newline. 
+reduce(function, iterable[, initializer]) Apply function of two arguments cumulatively to the items of iterable, from left to right, so as to reduce the iterable to a single value.
+reload(module) Reload a previously imported module.
+repr(object) Return a string containing a printable representation of an object. This is the same value yielded by conversions.
+reversed(seq) Return a reverse iterator. 
+round(number[, ndigits]) Return the floating point value number rounded to ndigits digits after the decimal point. 
+set([iterable]) Return a new set object, optionally with elements taken from iterable. 
+setattr(object, name, value) This is the counterpart of getattr().
+slice(stop) Return a slice object representing the set of indices specified by range(start, stop, step). 
+slice(start, stop[, step]) Return a slice object representing the set of indices specified by range(start, stop, step). 
+sorted(iterable[, cmp[, key[, reverse]]]) Return a new sorted list from the items in iterable.
+staticmethod(function) Return a static method for function.
+str(object='') Return a string containing a nicely printable representation of an object. 
+sum(iterable[, start]) Sums start and the items of an iterable from left to right and returns the total. start defaults to 0.
+super(type[, object-or-type]) Return a proxy object that delegates method calls to a parent or sibling class of type. 
+tuple([iterable]) Return a tuple whose items are the same and in the same order as iterable‘s items. 
+type(object) With one argument, return the type of an object. 
+type(name, bases, dict) With one argument, return the type of an object. 
+unichr(i) Return the Unicode string of one character whose Unicode code is the integer i.
+unicode(object='') Return the Unicode string version of object.
+unicode(object[, encoding[, errors]]) Return the Unicode string version of object.
+vars([object]) Return the __dict__ attribute for a module, class, instance, or any other object with a __dict__ attribute.
+xrange(stop) This function is very similar to range(), but returns an xrange object instead of a list.
+xrange(start, stop[, step]) This function is very similar to range(), but returns an xrange object instead of a list.
+zip([iterable, ...]) This function returns a list of tuples, where the i-th tuple contains the i-th element from each of the argument sequences or iterables.
+
+
