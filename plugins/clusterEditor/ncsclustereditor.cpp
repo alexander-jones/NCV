@@ -127,9 +127,9 @@ NCSClusterEditor::NCSClusterEditor(QWidget * parent)
     this->setLayout(m_layout);
     this->setEnabled(false);
 }
-void NCSClusterEditor::loadProject(QString projectDir)
+void NCSClusterEditor::loadProject(NCSProjectPortal project)
 {
-    m_projectDir = projectDir;
+    m_projectDir = project.parentDirectory();
     m_machineList->clear();
     m_deviceList->clear();
     m_hostFileEdit->clear();

@@ -1,4 +1,5 @@
 #include "ncsproject.h"
+#include "core/utilities/simplecrypt.h"
 #include <QFile>
 
 NCSProject::NCSProject(const QString & filepath,QObject *parent ):
@@ -11,82 +12,66 @@ NCSProject::NCSProject(const QString & filepath,QObject *parent ):
     QFile file(filepath);
     if (file.exists())
         m_load(&file);
+    else
+        m_new();
+
 }
 QString NCSProject::parentDirectory()
 {
+    return m_parentDirectory;
 }
 
 void NCSProject::registerPlugin(NCSWidgetPlugin * plugin)
 {
-    QDomElement pluginRoot = m_document.documentElement().firstChildElement("plugins");
-    QDomElement pluginElement = pluginRoot.firstChildElement(plugin->name());
-    NCSProjectPortal portal(&pluginElement,m_parentDirectory);
+    QDomElement pluginElement = m_rootPluginElement.firstChildElement(plugin->name());
+
     if (pluginElement.isNull())
     {
-        pluginElement.setTagName(plugin->name());
+        pluginElement = m_document.createElement(plugin->name());
         pluginElement.setAttribute("version",plugin->version());
+        m_rootPluginElement.appendChild(pluginElement);
     }
-    else
-    {
-        if (pluginElement.attribute("version") != QString::number(plugin->version()))
-        {
-            pluginElement.clear();
-            pluginElement.setTagName(plugin->name());
-            pluginElement.setAttribute("version",plugin->version());
-        }
-    }
-
+    plugin->loadProject(NCSProjectPortal(pluginElement,m_document,m_parentDirectory));
 
 }
 
 void NCSProject::save()
 {
+    QFile file(m_filepath);
+    m_save(&file);
 }
 
 void NCSProject::saveAs(QString filename)
 {
+    QFile file(filename);
+    m_save(&file);
+}
+QString NCSProject::filepath()
+{
+    return m_filepath;
 }
 
-void NCSProject::setNCSInstallation(QSshSocket * socket,QString installationPath)
+
+void NCSProject::m_new()
 {
+    m_rootElement = m_document.createElement("ncv-project");
+    m_rootElement.setAttribute("version", 1.0);
+    m_document.appendChild(m_rootElement);
+    m_rootPluginElement = m_document.createElement("plugins");
+    m_rootElement.appendChild(m_rootPluginElement);
 }
 
-void NCSProject::setNCSInstallation(QString installationPath)
-{
-}
-
-void NCSProject::m_connectionInvalidated(NCSInternalCommandBridge::ValidationError err)
-{
-}
-void NCSProject::m_localConnectionValidated()
-{
-}
-void NCSProject::m_remoteConnectionValidated()
-{
-}
 void NCSProject::m_load(QFile * file)
 {
     file->open( QIODevice::ReadOnly | QIODevice::Text );
     m_document.setContent(file);
-    QDomElement root = m_document.documentElement();
-    root.firstChildElement("installation");
+    m_rootElement = m_document.documentElement();
+    m_rootPluginElement = m_rootElement.firstChildElement("plugins");
     file->close();
 }
 
 void NCSProject::m_save(QFile  * file)
 {
-    QDomElement root = m_document.documentElement();
-    root.setTagName("project");
-    root.setAttribute("version", 1.0);
-    QDomElement ncsInstallation;
-
-    if (m_commandBridge != NULL)
-    {
-        if (m_remoteCommandBridge == m_commandBridge)
-        {
-        }
-    }
-
     file->open( QIODevice::WriteOnly | QIODevice::Text );
     QTextStream stream( file );
     stream << m_document.toString();

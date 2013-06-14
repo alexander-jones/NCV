@@ -215,6 +215,7 @@ bool QSshSocket::isLoggedIn()
 }
 
 QString QSshSocket::user(){return m_user;}
+QString QSshSocket::password(){return m_password;}
 QString QSshSocket::host(){return m_host;}
 int QSshSocket::port(){return m_port;}
 

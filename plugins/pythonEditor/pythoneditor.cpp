@@ -31,83 +31,51 @@ PythonEditor::PythonEditor(QWidget * parent)
     m_layout = new QVBoxLayout();
 
     m_textEdit = new QsciScintilla(this);
+
     m_textEdit->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+
+    QFontMetrics fontmetrics = QFontMetrics(this->font());
+    m_textEdit->setMarginsFont(this->font());
+    m_textEdit->setMarginWidth(0,fontmetrics.width("00000") );
+    m_textEdit->setMarginsBackgroundColor(QColor("#e8e5e5"));
+    m_textEdit->setMarginsForegroundColor(QColor("#dd4814"));
+    m_textEdit->setMarginLineNumbers(0,true);
 
     m_fileToolBar = new QToolBar(tr("File"));
 
-    m_newButton = new QToolButton();
-    m_newButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    m_newButton->setText("New");
-    m_newButton->setIcon(QIcon(":/resources/images/new.png"));
-    m_newButton->setShortcut(tr("Ctrl+N"));
-    m_newButton->setStatusTip(tr("Create a new file"));
+    m_newButton = m_createButton("New",QIcon(":/resources/images/new.png"),tr("Ctrl+N"),tr("Open an new file."));
     connect(m_newButton, SIGNAL(clicked()), this, SLOT(newFile()));
     m_fileToolBar->addWidget(m_newButton);
 
 
-    m_openButton = new QToolButton();
-    m_openButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    m_openButton->setText("Open");
-    m_openButton->setIcon(QIcon(":/resources/images/open.png"));
-    m_openButton->setShortcut(tr("Ctrl+O"));
-    m_openButton->setStatusTip(tr("Open an existing file"));
+    m_openButton = m_createButton("Open",QIcon(":/resources/images/open.png"),tr("Ctrl+O"),tr("Open an existing file."));
     connect(m_openButton, SIGNAL(clicked()), this, SLOT(open()));
     m_fileToolBar->addWidget(m_openButton);
 
-    m_saveButton = new QToolButton();
-    m_saveButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    m_saveButton->setText("Save");
-    m_saveButton->setIcon(QIcon(":/resources/images/save.png"));
-    m_saveButton->setShortcut(tr("Ctrl+S"));
-    m_saveButton->setStatusTip(tr("Save the script to disk"));
+    m_saveButton = m_createButton("Save",QIcon(":/resources/images/save.png"),tr("Ctrl+S"),tr("Save the file."));
     connect(m_saveButton, SIGNAL(clicked()), this, SLOT(save()));
     m_fileToolBar->addWidget(m_saveButton);
 
-    m_saveAsButton = new QToolButton();
-    m_saveAsButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    m_saveAsButton->setText("Save As");
-    m_saveAsButton->setIcon(QIcon(":/resources/images/save.png"));
-    m_saveAsButton->setStatusTip(tr("Save the document under a new name"));
+    m_saveAsButton = m_createButton("Save As",QIcon(":/resources/images/save.png"),tr("Ctrl+Shift+S"),tr("Save the file under a new name."));
     connect(m_saveAsButton, SIGNAL(clicked()), this, SLOT(saveAs()));
     m_fileToolBar->addWidget(m_saveAsButton);
 
-
-    m_cutButton = new QToolButton();
-    m_cutButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    m_cutButton->setText("Cut");
-    m_cutButton->setIcon(QIcon(":/resources/images/cut.png"));
-    m_cutButton->setShortcut(tr("Ctrl+X"));
-    m_cutButton->setStatusTip(tr("Cut the current selection's contents to the "
-                                 "clipboard"));
+    m_cutButton = m_createButton("Cut",QIcon(":/resources/images/cut.png"),tr("Ctrl+X"),tr("Cut the selection to clipboard."));
+    m_cutButton->setEnabled(false);
     connect(m_cutButton, SIGNAL(clicked()), m_textEdit, SLOT(cut()));
+    connect(m_textEdit, SIGNAL(copyAvailable(bool)), m_cutButton, SLOT(setEnabled(bool)));
     m_fileToolBar->addWidget(m_cutButton);
 
-    m_copyButton = new QToolButton();
-    m_copyButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    m_copyButton->setText("Copy");
-    m_copyButton->setIcon(QIcon(":/resources/images/copy.png"));
-    m_copyButton->setShortcut(tr("Ctrl+C"));
-    m_copyButton->setStatusTip(tr("Copy the current selection's contents to the "
-                                 "clipboard"));
+    m_copyButton = m_createButton("Copy",QIcon(":/resources/images/copy.png"),tr("Ctrl+C"),tr("Copy the selection to clipboard."));
+    m_copyButton->setEnabled(false);
     connect(m_copyButton, SIGNAL(clicked()), m_textEdit, SLOT(copy()));
+    connect(m_textEdit, SIGNAL(copyAvailable(bool)), m_copyButton, SLOT(setEnabled(bool)));
     m_fileToolBar->addWidget(m_copyButton);
 
-    m_pasteButton = new QToolButton();
-    m_pasteButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    m_pasteButton->setText("Paste");
-    m_pasteButton->setIcon(QIcon(":/resources/images/paste.png"));
-    m_pasteButton->setShortcut(tr("Ctrl+V"));
-    m_pasteButton->setStatusTip(tr("Paste the clipboard's contents into the current "
-                                   "selection"));
+    m_pasteButton = m_createButton("Paste",QIcon(":/resources/images/paste.png"),tr("Ctrl+V"),tr("Paste the clipboard's contents."));
     connect(m_pasteButton, SIGNAL(clicked()), m_textEdit, SLOT(paste()));
     m_fileToolBar->addWidget(m_pasteButton);
 
-    m_cutButton->setEnabled(false);
-    m_copyButton->setEnabled(false);
-    connect(m_textEdit, SIGNAL(copyAvailable(bool)),
-            m_cutButton, SLOT(setEnabled(bool)));
-    connect(m_textEdit, SIGNAL(copyAvailable(bool)),
-            m_copyButton, SLOT(setEnabled(bool)));
 
     m_layout->addWidget(m_fileToolBar);
 
@@ -126,7 +94,8 @@ PythonEditor::PythonEditor(QWidget * parent)
 
     m_api = new QsciAPIs(m_lexer);
 
-    m_api->load(":/resources/apis/ncspython.api");
+    m_api->load(":/resources/apis/builtin.api");
+    m_api->load(":/resources/apis/keywords.api");
     m_api->prepare();
 
     m_textEdit->setLexer(m_lexer);
@@ -138,10 +107,20 @@ PythonEditor::PythonEditor(QWidget * parent)
     setCurrentFile("");
 }
 
-
-void PythonEditor::loadProject(QString projectDir)
+QToolButton * PythonEditor::m_createButton(QString text, QIcon icon, QKeySequence seq, QString statusTip)
 {
-    m_projectDir = projectDir;
+    QToolButton* button = new QToolButton();
+    button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    button->setText(text);
+    button->setIcon(icon);
+    button->setShortcut(seq);
+    button->setStatusTip(statusTip);
+    return button;
+}
+
+void PythonEditor::loadProject(NCSProjectPortal project)
+{
+    m_projectDir = project.parentDirectory();
 }
 
 QIcon PythonEditor::icon()

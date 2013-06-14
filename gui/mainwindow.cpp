@@ -2,35 +2,14 @@
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QDomDocument>
-
-bool removeDir(const QString & dirName)
-{
-    bool result;
-    QDir dir(dirName);
-
-    if (dir.exists(dirName)) {
-        Q_FOREACH(QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst)) {
-            if (info.isDir()) {
-                result = removeDir(info.absoluteFilePath());
-            }
-            else {
-                result = QFile::remove(info.absoluteFilePath());
-            }
-
-            if (!result) {
-                return result;
-            }
-        }
-        result = dir.rmdir(dirName);
-    }
-    return result;
-}
+#include "gui/ncsinstallationdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
     m_neurons = NULL;
     m_connections = NULL;
+    m_project = NULL;
 
     this->setWindowTitle("NCV");
     m_rootPath = QDir::homePath() + "/NCV_Projects";
@@ -52,6 +31,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QAction * exitApplicationAction = m_fileMenu->addAction("Exit");
     connect(exitApplicationAction,SIGNAL(triggered()),this,SLOT(close()));
     m_menuBar->addMenu(m_fileMenu);
+
+
+    m_editMenu = new QMenu(tr("Edit"),this);
+    QAction * ncsInstall  = m_editMenu->addAction("Change NCS Installation");
+    connect(ncsInstall,SIGNAL(triggered()),this,SLOT(m_changeNCSInstallation()));
+    m_menuBar->addMenu(m_editMenu);
 
     setMenuBar(m_menuBar);
 
@@ -80,10 +65,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_timeScaleLabel->setText(" ( <b>" + QString::number(m_simulationTimeSlider->value()) +"</b> msec ) ");
     m_timeScaleLabel->setEnabled(false);
     m_simulationToolbar->addWidget(m_timeScaleLabel);
-    m_ncsInstallationLabel = new QLabel();
-    m_ncsInstallationLabel->setText("<b> [ Unconnected ] </b>");
-    m_ncsInstallationLabel->setTextFormat(Qt::RichText);
-    m_simulationToolbar->addWidget(m_ncsInstallationLabel);
+    m_ncsContextLabel = new QLabel();
+    m_ncsContextLabel->setText("<b> [ Unconnected ] </b>");
+    m_ncsContextLabel->setTextFormat(Qt::RichText);
+    m_simulationToolbar->addWidget(m_ncsContextLabel);
 
     m_setSimulationToolbar(false);
 
@@ -95,11 +80,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_commandBridge = NULL;
     m_simulationApplicationIndex = -1;
 
-    m_startupWizard = new QWizard(this);
-    m_startupWizard->setOption(QWizard::NoDefaultButton );
-    m_connectionPage = new NCSConnectionWizardPage();
-    connect(m_connectionPage,SIGNAL(bridgeEstablished(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
-    m_startupWizard->addPage(m_connectionPage);
 
     m_applicationLauncher = new QxtConfigWidget(this);
     m_applicationLauncher->setIconSize(QSize(64,64));
@@ -119,12 +99,40 @@ MainWindow::MainWindow(QWidget *parent) :
     NCVWidget * visualizationWidget = new NCVWidget(m_applicationLauncher);
     addPlugin(visualizationWidget);
 
-
     this->setCentralWidget(m_applicationLauncher);
-    m_applicationLauncher->setEnabled(false);
+
+    m_installationDialog = new NCSInstallationDialog(this);
+    if (m_installationDialog->hasDefaultInstallation())
+    {
+        connect(m_installationDialog,SIGNAL(attemptSuccesful(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
+        connect(m_installationDialog,SIGNAL(attemptFailed(NCSInstallationDialog::BridgeCreationError)),this,SLOT(m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCreationError)));
+        m_installationDialog->attemptDefault();
+    }
+    else
+        m_changeNCSInstallation();
+
+    for (int i = 0; i < m_subscriberPlugins.count(); i ++)
+        m_setPluginEnabled(m_subscriberPlugins[i],false);
+
     this->showMaximized();
 }
 
+
+MainWindow::~MainWindow()
+{
+}
+
+
+
+void MainWindow::m_changeNCSInstallation()
+{
+    if (m_installationDialog == NULL)
+    {
+        m_installationDialog = new NCSInstallationDialog(this);
+        connect(m_installationDialog,SIGNAL(attemptSuccesful(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
+        m_installationDialog->show();
+    }
+}
 
 
 void MainWindow::addPlugin(NCSWidgetPlugin *widget)
@@ -135,7 +143,8 @@ void MainWindow::addPlugin(NCSWidgetPlugin *widget)
 
 void MainWindow::addPlugin(NCSApplicationWidgetPlugin *widget)
 {
-    connect(m_connectionPage,SIGNAL(bridgeEstablished(NCSCommandBridge*)),widget,SLOT(setCommandBridge(NCSCommandBridge*)));
+    if (m_commandBridge != NULL)
+        widget->setCommandBridge(m_commandBridge);
     m_applicationPlugins.append(widget);
     addPlugin((NCSWidgetPlugin *)widget);
 }
@@ -153,6 +162,8 @@ void MainWindow::addPlugin(NCSSubscriberWidgetPlugin *widget)
 {
     m_subscriberPlugins.append(widget);
     addPlugin((NCSWidgetPlugin *)widget);
+    if (m_simulationApplicationIndex == -1)
+        m_setPluginEnabled(widget,false);
 }
 
 void MainWindow::closeEvent(QCloseEvent * event)
@@ -166,7 +177,8 @@ void MainWindow::closeEvent(QCloseEvent * event)
 
     if (msgBox.clickedButton() == exitButton)
     {
-        m_closeProject();
+        if (m_project != NULL)
+            m_closeProject();
         m_reportingManager->disconnectFromHost();
     }
     else
@@ -212,17 +224,12 @@ void  MainWindow::m_stopSimulationPressed()
     m_disconnectFromSimulator();
 
     for (int i = 0; i < m_distributionPlugins.count(); i ++)
-        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_distributionPlugins[i]),true);
-
-
+        m_setPluginEnabled(m_distributionPlugins[i],true);
     for (int i = 0; i < m_subscriberPlugins.count(); i ++)
     {
+        m_setPluginEnabled(m_subscriberPlugins[i],false);
         int launcherIndex = m_applicationLauncher->indexOf(m_subscriberPlugins[i]);
-        m_applicationLauncher->setPageEnabled(launcherIndex,false);
-
-        if (m_applicationLauncher->currentIndex() == launcherIndex)
-            m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_distributionPlugins[0]));
-    }
+   }
 
 
 }
@@ -254,13 +261,13 @@ void MainWindow::m_disconnectFromSimulator(bool destroy )
 
 void MainWindow::m_openProjectPressed()
 {
+    QString filepath = QFileDialog::getOpenFileName(this,"Open Project File",m_rootPath,tr("NCS Project file (*.ncsproj)"));
 
-    QString projDir = QFileDialog::getExistingDirectory(this,"Open Project File",m_rootPath);
-    if (projDir != "")
+    if (filepath != "")
     {
-        if (m_projectDirectory != "")
+        if (m_project != NULL)
             m_closeProject();
-        m_loadProject(projDir);
+        m_loadProject(filepath);
     }
 }
 
@@ -269,7 +276,7 @@ void MainWindow::m_newProjectPressed()
     QString projName = QInputDialog::getText(this,"Create New Project","What would you like to name this project?");
     if (projName != "")
     {
-        if (m_projectDirectory != "")
+        if (m_project != NULL)
             m_closeProject();
 
         if (QDir(m_rootPath + "/" + projName).exists())
@@ -286,32 +293,21 @@ void MainWindow::m_newProjectPressed()
         }
 
         QDir(m_rootPath).mkdir(projName);
-        m_loadProject(m_rootPath + "/" + projName);
+        m_loadProject(m_rootPath + "/" + projName + "/" + projName + ".ncsproj");
     }
 }
 
-void MainWindow::m_loadProject(QString projectDirectory)
+void MainWindow::m_loadProject(QString filepath)
 {
 
-    if (QDir(projectDirectory + "/tmp").exists())
-        removeDir(projectDirectory+"/tmp");
+    m_project = new NCSProject(filepath,this);
+    if (QDir(m_project->parentDirectory() + "/tmp").exists())
+        m_removeDir(m_project->parentDirectory() +"/tmp");
 
-    QDir(projectDirectory).mkdir("tmp");
-
-    m_startupWizard->show();
-
-    m_projectDirectory = projectDirectory;
-    m_applicationLauncher->setEnabled(true);
-
-    for (int i = 0; i < m_applicationPlugins.count(); i ++)
-        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_applicationPlugins[i]),false);
-
-    for (int i = 0; i < m_subscriberPlugins.count(); i ++)
-        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_subscriberPlugins[i]),false);
+    QDir(m_project->parentDirectory()).mkdir("tmp");
 
     for (int i = 0; i < m_allPlugins.count(); i ++)
-        m_allPlugins[i]->loadProject(m_projectDirectory);
-
+        m_project->registerPlugin(m_allPlugins[i]);
 
 }
 void MainWindow::m_closeProject()
@@ -341,11 +337,12 @@ void MainWindow::m_closeProject()
     }
     m_activeApplications.clear();
 
-    if (QDir(m_projectDirectory + "/tmp").exists())
-        removeDir(m_projectDirectory+"/tmp");
+    if (QDir(m_project->parentDirectory() + "/tmp").exists())
+        m_removeDir(m_project->parentDirectory()+"/tmp");
 
-    m_projectDirectory = "";
-    m_ncsInstallationLabel->setText("<b> [ Unconnected ] </b>");
+    m_ncsContextLabel->setText("<b> [ Unconnected ] </b>");
+    m_project->save();
+    delete m_project;
 }
 
 void MainWindow::m_showLoadingSimulation()
@@ -368,13 +365,52 @@ void MainWindow::m_updateTimeScale(int value)
 
 }
 
+
+void MainWindow::m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCreationError)
+{
+    QMessageBox msgBox;
+    msgBox.setText("NCV could not validate the default NCS host. Fill out the following dialog to connect to NCS."  );
+    msgBox.addButton("Ok", QMessageBox::ActionRole);
+    msgBox.exec();
+
+    delete m_installationDialog;
+
+    m_changeNCSInstallation();
+}
+
 void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
 {
     m_commandBridge = bridge;
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_ncsApplicationLaunched(NCSApplicationBridge*)));
     for (int i = 0; i < m_applicationPlugins.count(); i ++)
-        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_applicationPlugins[i]),true);
-    m_ncsInstallationLabel->setText("<font color= '#dd4814' > [ <i>NCS6</i>@<b>" + m_commandBridge->hostname()+ "</b> ] </font> ");
+    {
+        m_applicationPlugins[i]->setCommandBridge(bridge);
+        m_setPluginEnabled(m_applicationPlugins[i],true);
+    }
+    m_ncsContextLabel->setText("<font color= '#dd4814' > [ <i>NCS6</i>@<b>" + m_commandBridge->hostname()+ "</b> ] </font> ");
+}
+
+void MainWindow::m_setPluginEnabled(NCSWidgetPlugin * plugin, bool enable)
+{
+    int index = m_applicationLauncher->indexOf(plugin);
+    m_applicationLauncher->setPageEnabled(index,enable);
+    QString title = m_applicationLauncher->pageTitle(index);
+    if (enable)
+        m_applicationLauncher->setPageToolTip(index,title);
+    else
+    {
+        m_applicationLauncher->setPageToolTip(index,title + "<br><font color='#dd4814'>Start a simulation to activate</font>");
+
+        if (m_applicationLauncher->currentIndex() == index)
+        {
+            if (plugin->inherits(NCSDistributionWidgetPlugin::staticMetaObject.className()))
+                m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_subscriberPlugins[0]));
+
+            if (plugin->inherits(NCSSubscriberWidgetPlugin::staticMetaObject.className()))
+                m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_distributionPlugins[0]));
+
+        }
+    }
 }
 
 void MainWindow::m_ncsApplicationLaunched(NCSApplicationBridge * app)
@@ -518,14 +554,7 @@ void MainWindow::m_publishNetwork(QString reportHost)
     }
 
     for (int i = 0; i < m_distributionPlugins.count(); i ++)
-    {
-        int launcherIndex = m_applicationLauncher->indexOf(m_distributionPlugins[i]);
-        m_applicationLauncher->setPageEnabled(launcherIndex,false);
-
-        if (m_applicationLauncher->currentIndex() == launcherIndex)
-            m_applicationLauncher->setCurrentIndex(m_applicationLauncher->indexOf(m_subscriberPlugins[0]));
-    }
-
+        m_setPluginEnabled(m_distributionPlugins[i],false);
 
     m_reportingManager->setNeurons(m_neurons);
     if (m_connections != NULL)
@@ -533,10 +562,9 @@ void MainWindow::m_publishNetwork(QString reportHost)
 
     for (int i = 0; i < m_subscriberPlugins.count(); i ++)
     {
-        m_applicationLauncher->setPageEnabled(m_applicationLauncher->indexOf(m_subscriberPlugins[i]),true);
         m_subscriberPlugins[i]->setNeurons(m_neurons);
-        if (m_connections != NULL)
-            m_subscriberPlugins[i]->setConnections(m_connections);
+        m_subscriberPlugins[i]->setConnections(m_connections);
+        m_setPluginEnabled(m_subscriberPlugins[i],true);
     }
 
     m_hideLoadingSimulation();
@@ -554,6 +582,25 @@ void MainWindow::m_setSimulationToolbar(bool on)
     m_simulationLoadingLabel->setEnabled(false);
 }
 
-MainWindow::~MainWindow()
+bool MainWindow::m_removeDir(const QString & dirName)
 {
+    bool result;
+    QDir dir(dirName);
+
+    if (dir.exists(dirName)) {
+        Q_FOREACH(QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst)) {
+            if (info.isDir()) {
+                result = m_removeDir(info.absoluteFilePath());
+            }
+            else {
+                result = QFile::remove(info.absoluteFilePath());
+            }
+
+            if (!result) {
+                return result;
+            }
+        }
+        result = dir.rmdir(dirName);
+    }
+    return result;
 }

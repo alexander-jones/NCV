@@ -13,9 +13,7 @@
         <file>resources/images/ncs.ico</file>
         <file>resources/images/ncs.png</file>
         <file>resources/images/ncs.xcf</file>
-        <file>resources/images/ncsBannerVertical.png</file>
         <file>resources/images/ncv.png</file>
-        <file>resources/images/ncvWizardLogo.png</file>
         <file>resources/images/neuronIcon.png</file>
         <file>resources/images/organizationIcon.png</file>
         <file>resources/images/pauseIcon.png</file>
@@ -30,5 +28,6 @@
         <file>resources/images/switchBackgroundOn.png</file>
         <file>resources/images/switchHandle.png</file>
         <file>resources/images/toolIcon.png</file>
+        <file>resources/images/ncvDialogIcon.png</file>
     </qresource>
 </RCC>

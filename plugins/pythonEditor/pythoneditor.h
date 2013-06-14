@@ -13,14 +13,17 @@ class QsciScintilla;
 class QsciLexerPython;
 class QsciAPIs;
 class QToolButton;
+class QKeySequence;
+class QLabel;
 #include "core/plugin-interfaces/ncswidgetplugin.h"
+#include "gui/utilities/qwidgetvector.h"
 
 class PythonEditor : public NCSWidgetPlugin
 {
     Q_OBJECT
 public:
     explicit PythonEditor(QWidget *parent = 0);
-    void loadProject(QString projectDir) ;
+    void loadProject(NCSProjectPortal project) ;
     QIcon icon() ;
     QString title() ;
     QString name();
@@ -37,12 +40,16 @@ private slots:
     bool saveAs();
 
 private:
+    QToolButton * m_createButton( QString title, QIcon icon, QKeySequence seq = QKeySequence(),QString statusTip = "");
+
+
     bool maybeSave();
     void loadFile(const QString &fileName);
     bool saveFile(const QString &fileName);
     void setCurrentFile(const QString &fileName);
     QString strippedName(const QString &fullFileName);
 
+    QWidgetVector * m_homeButtonMenu;
     QsciScintilla *m_textEdit;
     QString m_curFile,m_projectDir;
     QToolBar *m_fileToolBar;

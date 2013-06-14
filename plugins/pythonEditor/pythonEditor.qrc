@@ -7,6 +7,7 @@
         <file>resources/images/paste.png</file>
         <file>resources/images/pythonEditor.png</file>
         <file>resources/images/save.png</file>
-        <file>resources/apis/ncspython.api</file>
+        <file>resources/apis/builtin.api</file>
+        <file>resources/apis/keywords.api</file>
     </qresource>
 </RCC>

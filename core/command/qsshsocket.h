@@ -120,6 +120,11 @@ public:
     void login(QString user, QString password);
 
     /*!
+        \brief Returns the password of the current authenticated user on the remote host. If not connected to a remote host, or if a user has not been authenticated this returns "".
+    */
+    QString password();
+
+    /*!
         \brief Returns the port of the current connection. If not connected to a remote host, this returns -1.
     */
     int port();

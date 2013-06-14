@@ -19,7 +19,7 @@ public:
     explicit LIFModelDistributionWidget(QWidget *parent = 0);
     QIcon icon();
     QString title();
-    void loadProject(QString projectDir);
+    void loadProject(NCSProjectPortal project);
     QString name();
     float version();
 

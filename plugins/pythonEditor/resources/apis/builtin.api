@@ -1,34 +1,3 @@
-and
-del
-from
-not
-while
-as
-elif
-global
-or
-with
-assert
-else
-if
-pass
-yield
-break
-except
-import
-print
-class
-exec
-in
-raise
-continue
-finally
-is
-return
-def
-for
-lambda
-try
 abs(x) Return the absolute value of a number.
 all(iterable) Return True if all elements in the iterable are true.
 any(iterable) Return True if any element of the iterable is true.

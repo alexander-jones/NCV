@@ -94,9 +94,9 @@ IzhModelDistributionWidget::IzhModelDistributionWidget(QWidget *parent) :
 
 }
 
-void IzhModelDistributionWidget::loadProject(QString projectDir)
+void IzhModelDistributionWidget::loadProject(NCSProjectPortal project)
 {
-    m_projectDir = projectDir;
+    m_projectDir = project.parentDirectory();
     m_topologyFilename = m_projectDir + "/tmp/topology";
     m_neuronFileEdit->clear();
     m_synapseFileEdit->clear();

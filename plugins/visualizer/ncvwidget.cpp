@@ -102,9 +102,9 @@ void NCVWidget::showEvent(QShowEvent *)
 }
 
 
-void NCVWidget::loadProject(QString projectDir)
+void NCVWidget::loadProject(NCSProjectPortal project)
 {
-    m_projectDir = projectDir;
+    m_projectDir = project.parentDirectory();
 }
 
 QString NCVWidget::name()

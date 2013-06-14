@@ -2,17 +2,19 @@
 #define MAINWINDOW_H
 
 #include "gui/utilities/qwidgetvector.h"
-#include "gui/ncsconnectionwizardpage.h"
+#include "gui/ncsinstallationdialog.h"
 #include "plugins/clusterEditor/ncsclustereditor.h"
 #include "plugins/lifLauncher/lifmodeldistributionwidget.h"
 #include "plugins/izhLauncher/izhmodeldistributionwidget.h"
 #include "plugins/visualizer/ncvwidget.h"
 #include "plugins/pythonEditor/pythoneditor.h"
 #include "core/reporting/networkupdatemanager.h"
+#include "core/ncsproject.h"
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QxtConfigWidget>
 #include <QLabel>
+
 
 class MainWindow : public QMainWindow
 {
@@ -31,6 +33,7 @@ protected:
     void closeEvent(QCloseEvent *);
 
 private slots:
+    void m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCreationError);
     void m_setCommandBridge(NCSCommandBridge * bridge);
     void m_createNetwork(QString topologyFilename);
     void m_publishNetwork(QString reportHost);
@@ -50,16 +53,19 @@ private slots:
     void m_showLoadingSimulation();
     void m_hideLoadingSimulation();
 
+    void m_changeNCSInstallation();
 private:
-    QWizard * m_startupWizard;
-    NCSConnectionWizardPage * m_connectionPage;
+    void m_setPluginEnabled(NCSWidgetPlugin * plugin, bool enabled);
+    bool m_removeDir(const QString & dirName);
+
     QVector< NCSWidgetPlugin *> m_allPlugins;
     QVector< NCSApplicationWidgetPlugin *> m_applicationPlugins;
     QVector< NCSDistributionWidgetPlugin *> m_distributionPlugins;
     QVector< NCSSubscriberWidgetPlugin *> m_subscriberPlugins;
 
+    NCSInstallationDialog * m_installationDialog;
+    NCSProject * m_project;
     int m_simulationApplicationIndex;
-    QString m_projectDirectory;
     QToolBar * m_simulationToolbar;
     QSlider * m_simulationTimeSlider;
     QAction *m_runSimulationButton, * m_pauseSimulationButton, * m_stopSimulationButton;
@@ -71,7 +77,7 @@ private:
     QVBoxLayout * m_layout;
     QxtConfigWidget * m_applicationLauncher;
     QSlider * m_timeScaleSlider;
-    QLabel * m_timeScaleLabel ,* m_simulationLoadingLabel, *m_ncsInstallationLabel;
+    QLabel * m_timeScaleLabel ,* m_simulationLoadingLabel, *m_ncsContextLabel;
     QMovie * m_simulationLoadingMovie;
     QMenu * m_fileMenu, * m_editMenu, *m_toolsMenu;
 	QMenuBar * m_menuBar;

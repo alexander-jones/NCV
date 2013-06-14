@@ -77,9 +77,11 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QWidget *parent) :
     m_currentApplication = NULL;
 }
 
-void LIFModelDistributionWidget::loadProject(QString projectDir)
+void LIFModelDistributionWidget::loadProject(NCSProjectPortal project)
 {
-    m_projectDir = projectDir;
+    //QDomElement element = project.newElement("data");
+    //project.rootElement().appendChild(element);
+    m_projectDir = project.parentDirectory();
     m_topologyFilename = m_projectDir + "/tmp/topology";
     m_modelFileEdit->clear();
     m_modelDependencyWidget->clear();

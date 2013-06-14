@@ -52,14 +52,14 @@ SOURCES += \
     core/reporting/networkupdatemanager.cpp \
     core/utilities/simplecrypt.cpp \
     gui/mainwindow.cpp \
-    gui/ncsconnectionwizardpage.cpp \
-    gui/remoteconnectionwidget.cpp \
     gui/utilities/qwidgetvector.cpp \
     gui/utilities/qswitch.cpp \
     gui/utilities/combowidget.cpp \
     gui/utilities/qgroupvector.cpp \
     core/ncsproject.cpp \
-    core/ncsprojectportal.cpp
+    core/ncsprojectportal.cpp \
+    gui/ncsinstallationdialog.cpp \
+    gui/ncsdialog.cpp
 
 HEADERS  += \
     core/ncsneuronset.h \
@@ -68,7 +68,7 @@ HEADERS  += \
     core/ncsconnectionset.h \
     core/ncscluster.h \
     core/ncsattribute.h \
-    core/ncscommandbridge.h \
+    core/ncscommandbridg e.h \
     core/ncscommandarguments.h \
     core/ncsapplicationbridge.h \
     core/command/ncsremoteapplicationbridge.h \
@@ -88,14 +88,15 @@ HEADERS  += \
     core/plugin-interfaces/ncsdistributionwidgetplugin.h \
     core/plugin-interfaces/ncsapplicationwidgetplugin.h \
     gui/mainwindow.h \
-    gui/ncsconnectionwizardpage.h \
-    gui/remoteconnectionwidget.h \
     gui/utilities/qgroupvector.h \
     gui/utilities/qwidgetvector.h \
     gui/utilities/qswitch.h \
     gui/utilities/combowidget.h \
     core/ncsproject.h \
-    core/ncsprojectportal.h
+    core/ncsprojectportal.h \
+    core/ncscommandbridge.h \
+    gui/ncsinstallationdialog.h \
+    gui/ncsdialog.h
 
 
 OTHER_FILES += \
