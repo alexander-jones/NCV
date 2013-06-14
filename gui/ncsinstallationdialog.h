@@ -51,6 +51,9 @@ public:
     bool attemptRemote(QString host, QString user,QString password, QString path = ".");
     bool attemptingConnection();
 
+public slots:
+    void show();
+
 signals:
     void attemptSuccesful(NCSCommandBridge * bridge);
     void attemptFailed(NCSInstallationDialog::BridgeCreationError err);

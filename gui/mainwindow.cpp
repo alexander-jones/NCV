@@ -33,9 +33,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_menuBar->addMenu(m_fileMenu);
 
 
+    m_installationDialog = new NCSInstallationDialog(this);
     m_editMenu = new QMenu(tr("Edit"),this);
     QAction * ncsInstall  = m_editMenu->addAction("Change NCS Installation");
-    connect(ncsInstall,SIGNAL(triggered()),this,SLOT(m_changeNCSInstallation()));
+    connect(ncsInstall,SIGNAL(triggered()),m_installationDialog,SLOT(show()));
     m_menuBar->addMenu(m_editMenu);
 
     setMenuBar(m_menuBar);
@@ -99,39 +100,31 @@ MainWindow::MainWindow(QWidget *parent) :
     NCVWidget * visualizationWidget = new NCVWidget(m_applicationLauncher);
     addPlugin(visualizationWidget);
 
-    this->setCentralWidget(m_applicationLauncher);
-
-    m_installationDialog = new NCSInstallationDialog(this);
-    if (m_installationDialog->hasDefaultInstallation())
-    {
-        connect(m_installationDialog,SIGNAL(attemptSuccesful(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
-        connect(m_installationDialog,SIGNAL(attemptFailed(NCSInstallationDialog::BridgeCreationError)),this,SLOT(m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCreationError)));
-        m_installationDialog->attemptDefault();
-    }
-    else
-        m_changeNCSInstallation();
+    for (int i = 0; i < m_applicationPlugins.count(); i ++)
+        m_setPluginEnabled(m_applicationPlugins[i],false);
 
     for (int i = 0; i < m_subscriberPlugins.count(); i ++)
         m_setPluginEnabled(m_subscriberPlugins[i],false);
 
+    this->setCentralWidget(m_applicationLauncher);
     this->showMaximized();
+
+    connect(m_installationDialog,SIGNAL(attemptSuccesful(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
+    if (m_installationDialog->hasDefaultInstallation())
+    {
+        connect(m_installationDialog,SIGNAL(attemptFailed(NCSInstallationDialog::BridgeCreationError)),this,SLOT(m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCreationError)));
+        m_installationDialog->attemptDefault();
+    }
+    else
+        m_installationDialog->show();
+
+
+
 }
 
 
 MainWindow::~MainWindow()
 {
-}
-
-
-
-void MainWindow::m_changeNCSInstallation()
-{
-    if (m_installationDialog == NULL)
-    {
-        m_installationDialog = new NCSInstallationDialog(this);
-        connect(m_installationDialog,SIGNAL(attemptSuccesful(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
-        m_installationDialog->show();
-    }
 }
 
 
@@ -147,6 +140,9 @@ void MainWindow::addPlugin(NCSApplicationWidgetPlugin *widget)
         widget->setCommandBridge(m_commandBridge);
     m_applicationPlugins.append(widget);
     addPlugin((NCSWidgetPlugin *)widget);
+
+    if (m_commandBridge == NULL)
+        m_setPluginEnabled(widget,false);
 }
 void MainWindow::addPlugin(NCSDistributionWidgetPlugin *widget)
 {
@@ -162,6 +158,7 @@ void MainWindow::addPlugin(NCSSubscriberWidgetPlugin *widget)
 {
     m_subscriberPlugins.append(widget);
     addPlugin((NCSWidgetPlugin *)widget);
+
     if (m_simulationApplicationIndex == -1)
         m_setPluginEnabled(widget,false);
 }
@@ -373,9 +370,9 @@ void MainWindow::m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCre
     msgBox.addButton("Ok", QMessageBox::ActionRole);
     msgBox.exec();
 
-    delete m_installationDialog;
+    disconnect(m_installationDialog,SIGNAL(attemptFailed(NCSInstallationDialog::BridgeCreationError)),this,SLOT(m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCreationError)));
 
-    m_changeNCSInstallation();
+    m_installationDialog->show();
 }
 
 void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)

@@ -54,6 +54,22 @@ NCSInstallationDialog::NCSInstallationDialog(QWidget *parent) :
     m_loadSavedInstallations();
 
 }
+void NCSInstallationDialog::show()
+{
+    m_localPathEdit->clear();
+    m_remoteHostEdit->clear();
+    m_remoteUserEdit->clear();
+    m_remotePasswordEdit->clear();
+    m_remotePathEdit->clear();
+    m_localContexts.clear();
+    m_remoteContexts.clear();
+    m_savedRemotesWidget->clear();
+    m_savedLocalsWidget->clear();
+    m_savedInstallationsDocument.clear();
+    m_loadSavedInstallations();
+    NCSDialog::show();
+}
+
 void NCSInstallationDialog::m_loadSavedInstallations()
 {
     QFile file(m_installationFilename);
@@ -192,16 +208,13 @@ bool NCSInstallationDialog::hasDefaultInstallation()
 
 bool NCSInstallationDialog::attemptDefault()
 {
-    if (attemptingConnection())
-        return false;
     if (hasDefaultInstallation())
     {
         if (m_defaultContext.host == "localhost")
-            attemptLocal(m_defaultContext.path);
+            return attemptLocal(m_defaultContext.path);
         else
-            attemptRemote(m_defaultContext.host,m_defaultContext.user,m_defaultContext.password,m_defaultContext.path);
+            return attemptRemote(m_defaultContext.host,m_defaultContext.user,m_defaultContext.password,m_defaultContext.path);
 
-        return true;
     }
     return false;
 }

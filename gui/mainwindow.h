@@ -53,7 +53,6 @@ private slots:
     void m_showLoadingSimulation();
     void m_hideLoadingSimulation();
 
-    void m_changeNCSInstallation();
 private:
     void m_setPluginEnabled(NCSWidgetPlugin * plugin, bool enabled);
     bool m_removeDir(const QString & dirName);
