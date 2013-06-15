@@ -9,6 +9,7 @@ NCSProject::NCSProject(const QString & filepath,QObject *parent ):
     m_parentDirectory = m_filepath;
     QStringList fileSegments = filepath.split("/");
     m_parentDirectory.remove(fileSegments.last());
+    m_name = fileSegments.last().remove(".ncsproj");
     QFile file(filepath);
     if (file.exists())
         m_load(&file);
@@ -16,6 +17,11 @@ NCSProject::NCSProject(const QString & filepath,QObject *parent ):
         m_new();
 
 }
+QString NCSProject::name()
+{
+    return m_name;
+}
+
 QString NCSProject::parentDirectory()
 {
     return m_parentDirectory;

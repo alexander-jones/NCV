@@ -46,9 +46,9 @@ NCSInstallationDialog::NCSInstallationDialog(QWidget *parent) :
     m_mainVector->addWidget(m_bottomVector);
 
     this->resize(715,638);
-    this->setTitle("<font color = '#dd4814'><b>Connect to a installation of NCS 6:</b></font>");
+    this->setTitle("<font color = '#dd4814'><b>Supply a local or remote installation of NCS 6:</b></font>");
     this->setWindowTitle("Connect to NCS");
-    this->setDescription("Specify a remote or local installation path to NCS 6.");
+    this->setDescription("Installations can be saved and the default will loaded automatically upon startup.");
     this->setWidget(m_mainVector);
 
     m_loadSavedInstallations();
@@ -61,12 +61,6 @@ void NCSInstallationDialog::show()
     m_remoteUserEdit->clear();
     m_remotePasswordEdit->clear();
     m_remotePathEdit->clear();
-    m_localContexts.clear();
-    m_remoteContexts.clear();
-    m_savedRemotesWidget->clear();
-    m_savedLocalsWidget->clear();
-    m_savedInstallationsDocument.clear();
-    m_loadSavedInstallations();
     NCSDialog::show();
 }
 
@@ -148,7 +142,7 @@ void NCSInstallationDialog::m_buildLocalWidget()
 
     m_localLayout->addWidget(m_savedLocalsVector);
 
-    m_groupBoxVector->addGroup(m_localLayout,"Connect to Local Installation of NCS");
+    m_groupBoxVector->addGroup(m_localLayout,"Local Installation:");
 }
 
 void NCSInstallationDialog::m_buildRemoteWidget()
@@ -197,7 +191,7 @@ void NCSInstallationDialog::m_buildRemoteWidget()
 
     m_remoteLayout->addWidget(m_savedRemotesVector);
 
-    m_groupBoxVector->addGroup(m_remoteLayout,"Connect to Remote Installation of NCS");
+    m_groupBoxVector->addGroup(m_remoteLayout,"Remote Installation:");
 }
 
 
@@ -471,8 +465,15 @@ void NCSInstallationDialog::m_saveCurrentInstallation()
     // create element and set attributes
     QDomElement newElement = m_savedInstallationsDocument.createElement(m_currentContext.host);
     newElement.setAttribute("path",m_currentContext.path);
-    if (m_currentContext.host != "localhost")
+    if (m_currentContext.host == "localhost")
     {
+        m_savedLocalsWidget->addItem(m_currentContext.path + " @ " + m_currentContext.host);
+        m_localContexts.append(m_currentContext);
+    }
+    else
+    {
+        m_savedRemotesWidget->addItem(m_currentContext.path + " @ " + m_currentContext.host);
+        m_remoteContexts.append(m_currentContext);
         newElement.setAttribute("user",m_currentContext.user);
 
         //encrypt password

@@ -19,10 +19,12 @@ public:
     void addWidget(QWidget *widget);
     bool containsWidget(QWidget *widget);
     void insertWidget(int index,QWidget *widget);
-    int indexOfWidget(QWidget *widget);
+    int indexOf(QWidget *widget);
     void removeWidget(QWidget *widget);
     void setDirection(Direction direction);
     void setAlignment(Qt::Alignment alignment);
+    int count();
+    void setSpacing(int spacing);
     
 signals:
     

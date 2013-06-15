@@ -29,5 +29,6 @@
         <file>resources/images/switchHandle.png</file>
         <file>resources/images/toolIcon.png</file>
         <file>resources/images/ncvDialogIcon.png</file>
+        <file>resources/images/unr.png</file>
     </qresource>
 </RCC>

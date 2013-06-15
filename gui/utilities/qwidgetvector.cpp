@@ -19,14 +19,27 @@ void QWidgetVector::insertWidget(int index,QWidget *widget)
 {
     m_layout->insertWidget(index,widget);
 }
-int QWidgetVector::indexOfWidget(QWidget *widget)
+
+int QWidgetVector::count()
+{
+    m_layout->count();
+}
+
+void QWidgetVector::setSpacing(int spacing)
+{
+    m_layout->setSpacing(spacing);
+}
+
+int QWidgetVector::indexOf(QWidget *widget)
 {
     return m_layout->indexOf(widget);
 }
 void QWidgetVector::removeWidget(QWidget *widget)
 {
     m_layout->removeWidget(widget);
+
 }
+
 void QWidgetVector::setDirection(Direction direction)
 {
     m_layout->setDirection((QBoxLayout::Direction)direction);

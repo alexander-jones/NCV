@@ -59,7 +59,8 @@ SOURCES += \
     gui/utilities/qwidgetvector.cpp \
     gui/utilities/qswitch.cpp \
     gui/utilities/combowidget.cpp \
-    gui/utilities/qgroupvector.cpp
+    gui/utilities/qgroupvector.cpp \
+    gui/ncswelcomewidget.cpp
 
 HEADERS  += \
     core/ncsneuronset.h \
@@ -95,7 +96,8 @@ HEADERS  += \
     gui/utilities/qgroupvector.h \
     gui/utilities/qwidgetvector.h \
     gui/utilities/qswitch.h \
-    gui/utilities/combowidget.h
+    gui/utilities/combowidget.h \
+    gui/ncswelcomewidget.h
 
 
 OTHER_FILES += \

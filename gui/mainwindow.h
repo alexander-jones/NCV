@@ -10,6 +10,7 @@
 #include "plugins/pythonEditor/pythoneditor.h"
 #include "core/reporting/networkupdatemanager.h"
 #include "core/ncsproject.h"
+#include "gui/ncswelcomewidget.h"
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QxtConfigWidget>
@@ -52,6 +53,7 @@ private slots:
     void m_setSimulationToolbar(bool on);
     void m_showLoadingSimulation();
     void m_hideLoadingSimulation();
+    void m_welcomeWidgetPanelSelected(int);
 
 private:
     void m_setPluginEnabled(NCSWidgetPlugin * plugin, bool enabled);
@@ -62,12 +64,13 @@ private:
     QVector< NCSDistributionWidgetPlugin *> m_distributionPlugins;
     QVector< NCSSubscriberWidgetPlugin *> m_subscriberPlugins;
 
+    NCSWelcomeWidget * m_welcomeWidget;
     NCSInstallationDialog * m_installationDialog;
     NCSProject * m_project;
     int m_simulationApplicationIndex;
-    QToolBar * m_simulationToolbar;
+    QToolBar * m_simulationToolbar, * m_applicationToolbar;
     QSlider * m_simulationTimeSlider;
-    QAction *m_runSimulationButton, * m_pauseSimulationButton, * m_stopSimulationButton;
+    QToolButton *m_runSimulationButton, * m_pauseSimulationButton, * m_stopSimulationButton;
     QSignalMapper * m_applicationMapper;
     QVector<NCSApplicationBridge *> m_activeApplications;
     NCSCommandBridge * m_commandBridge;
@@ -76,7 +79,9 @@ private:
     QVBoxLayout * m_layout;
     QxtConfigWidget * m_applicationLauncher;
     QSlider * m_timeScaleSlider;
-    QLabel * m_timeScaleLabel ,* m_simulationLoadingLabel, *m_ncsContextLabel;
+    QAction * m_projectLabelAction;
+    QToolButton * m_contextIconButton, * m_projectIconButton;
+    QLabel * m_timeScaleLabel ,* m_simulationLoadingLabel, *m_ncsContextLabel,* m_projectLabel;
     QMovie * m_simulationLoadingMovie;
     QMenu * m_fileMenu, * m_editMenu, *m_toolsMenu;
 	QMenuBar * m_menuBar;

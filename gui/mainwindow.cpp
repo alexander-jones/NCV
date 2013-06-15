@@ -32,7 +32,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(exitApplicationAction,SIGNAL(triggered()),this,SLOT(close()));
     m_menuBar->addMenu(m_fileMenu);
 
-
     m_installationDialog = new NCSInstallationDialog(this);
     m_editMenu = new QMenu(tr("Edit"),this);
     QAction * ncsInstall  = m_editMenu->addAction("Change NCS Installation");
@@ -41,39 +40,72 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setMenuBar(m_menuBar);
 
-
     m_reportingManager = new NetworkUpdateManager(this);
 
-    m_simulationToolbar = this->addToolBar("Simulation");
+
+    m_simulationToolbar = new QToolBar("Simulation");
+
     m_simulationLoadingLabel = new QLabel();
     m_simulationLoadingMovie = new QMovie(":/resources/images/loading.gif");
     m_simulationToolbar->addWidget(m_simulationLoadingLabel);
-    m_simulationToolbar->setMovable(false);
-    m_runSimulationButton = m_simulationToolbar->addAction(QIcon(":/resources/images/playIcon.png"), "Run Simulation");
-    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
-    m_stopSimulationButton = m_simulationToolbar->addAction(QIcon(":/resources/images/stopIcon.png"), "Stop Simulation");
-    connect(m_stopSimulationButton,SIGNAL(triggered()),this,SLOT(m_stopSimulationPressed()));
-    m_simulationTimeSlider = new QSlider(this);
+
+    m_runSimulationButton = new QToolButton();
+    m_runSimulationButton->setIcon(QIcon(":/resources/images/playIcon.png"));
+    m_runSimulationButton->setText("Run Simulation");
+    connect(m_runSimulationButton,SIGNAL(pressed()),this,SLOT(m_runSimulationPressed()));
+    m_simulationToolbar->addWidget(m_runSimulationButton);
+
+    m_stopSimulationButton = new QToolButton();
+    m_stopSimulationButton->setIcon(QIcon(":/resources/images/stopIcon.png"));
+    m_stopSimulationButton->setText("Stop Simulation");
+    connect(m_stopSimulationButton,SIGNAL(pressed()),this,SLOT(m_stopSimulationPressed()));
+    m_simulationToolbar->addWidget(m_stopSimulationButton);
+
+    m_simulationTimeSlider = new QSlider();
     m_simulationTimeSlider->setToolTip("Adjust the  Update Interval");
     m_simulationTimeSlider->setOrientation(Qt::Horizontal);
     m_simulationTimeSlider->setMinimum(1);
     m_simulationTimeSlider->setValue(100);
-    m_simulationTimeSlider->setMaximum(5000);
-    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),this,SLOT(m_updateTimeScale(int)));
+    m_simulationTimeSlider->setMaximum(200);
+    m_simulationTimeSlider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_simulationToolbar->addWidget(m_simulationTimeSlider);
+
+    connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),this,SLOT(m_updateTimeScale(int)));
     m_timeScaleLabel = new QLabel();
     m_timeScaleLabel->setTextFormat(Qt::RichText);
-    m_timeScaleLabel->setText(" ( <b>" + QString::number(m_simulationTimeSlider->value()) +"</b> msec ) ");
+    m_timeScaleLabel->setText("[ <b>" + QString::number(m_simulationTimeSlider->value()) +"</b> msec ] ");
     m_timeScaleLabel->setEnabled(false);
     m_simulationToolbar->addWidget(m_timeScaleLabel);
-    m_ncsContextLabel = new QLabel();
-    m_ncsContextLabel->setText("<b> [ Unconnected ] </b>");
-    m_ncsContextLabel->setTextFormat(Qt::RichText);
-    m_simulationToolbar->addWidget(m_ncsContextLabel);
+    m_simulationToolbar->setMovable(false);
 
     m_setSimulationToolbar(false);
 
+    m_applicationToolbar = this->addToolBar("Application" );
+    QWidget * spacer = new QWidget;
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_applicationToolbar->addWidget(spacer);
 
+    m_contextIconButton = new QToolButton();
+    m_contextIconButton->setAutoRaise(true);
+    m_contextIconButton->setIcon(QIcon(":/resources/images/ncs.png"));
+
+    m_applicationToolbar->addWidget(m_contextIconButton);
+    m_ncsContextLabel = new QLabel();
+    m_ncsContextLabel->setText("[<b> Unconnected </b>]");
+    m_ncsContextLabel->setTextFormat(Qt::RichText);
+    m_applicationToolbar->addWidget(m_ncsContextLabel);
+
+    m_projectIconButton = new QToolButton();
+    m_projectIconButton->setAutoRaise(true);
+    m_projectIconButton->setIcon(QIcon(":/resources/images/projectIcon.png"));
+
+    m_applicationToolbar->addWidget(m_projectIconButton);
+    m_projectLabel = new QLabel();
+    m_projectLabel->setText("[<b> No Project </b>]");
+    m_projectLabel->setTextFormat(Qt::RichText);
+    m_applicationToolbar->addWidget(m_projectLabel);
+
+    m_applicationToolbar->setMovable(false);
 
     m_applicationMapper = new QSignalMapper(this);
     connect(m_applicationMapper,SIGNAL(mapped(QObject*)),this,SLOT(m_ncsApplicationFinished(QObject*)));
@@ -81,8 +113,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_commandBridge = NULL;
     m_simulationApplicationIndex = -1;
 
-
     m_applicationLauncher = new QxtConfigWidget(this);
+    m_applicationLauncher->hide();
     m_applicationLauncher->setIconSize(QSize(64,64));
 
     PythonEditor * pythonEditor = new PythonEditor(m_applicationLauncher);
@@ -106,7 +138,18 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < m_subscriberPlugins.count(); i ++)
         m_setPluginEnabled(m_subscriberPlugins[i],false);
 
-    this->setCentralWidget(m_applicationLauncher);
+    m_welcomeWidget = new NCSWelcomeWidget();
+    connect(m_welcomeWidget,SIGNAL(quickPanelTriggered(int)),this,SLOT(m_welcomeWidgetPanelSelected(int)));
+    QString connectionDesc = "Integrate with the powerful NCS framework to enable simulation features.";
+    m_welcomeWidget->addQuickPanel(QPixmap(":/resources/images/ncs.png"), "Connect to NCS",connectionDesc);
+    QString projectDesc = "Create a new project and organize your resources into a single location.";
+    m_welcomeWidget->addQuickPanel(QPixmap(":/resources/images/projectIcon.png"), "Start a Project",projectDesc);
+    m_welcomeWidget->setPanelEnabled(1,false);
+    QString developDesc = "Open an existing project and start simulating. ";
+    m_welcomeWidget->addQuickPanel(QPixmap(":/resources/images/setupIcon.png"), "Open a Project",developDesc);
+    m_welcomeWidget->setPanelEnabled(2,false);
+
+    this->setCentralWidget(m_welcomeWidget);
     this->showMaximized();
 
     connect(m_installationDialog,SIGNAL(attemptSuccesful(NCSCommandBridge*)),this,SLOT(m_setCommandBridge(NCSCommandBridge*)));
@@ -115,8 +158,6 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(m_installationDialog,SIGNAL(attemptFailed(NCSInstallationDialog::BridgeCreationError)),this,SLOT(m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCreationError)));
         m_installationDialog->attemptDefault();
     }
-    else
-        m_installationDialog->show();
 
 
 
@@ -127,6 +168,15 @@ MainWindow::~MainWindow()
 {
 }
 
+void MainWindow::m_welcomeWidgetPanelSelected(int index)
+{
+    if (index == 0)
+        m_installationDialog->show();
+    else if (index == 1)
+        m_newProjectPressed();
+    else if (index == 2)
+        m_openProjectPressed();
+}
 
 void MainWindow::addPlugin(NCSWidgetPlugin *widget)
 {
@@ -184,8 +234,8 @@ void MainWindow::closeEvent(QCloseEvent * event)
 
 void MainWindow::m_runSimulationPressed()
 {
-    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
-    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulationPressed()));
+    disconnect(m_runSimulationButton,SIGNAL(pressed()),this,SLOT(m_runSimulationPressed()));
+    connect(m_runSimulationButton,SIGNAL(pressed()),this,SLOT(m_pauseSimulationPressed()));
     connect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
     m_runSimulationButton->setIcon(QIcon(":/resources/images/pauseIcon.png"));
     m_runSimulationButton->setText("Pause Simulation");
@@ -196,8 +246,8 @@ void MainWindow::m_runSimulationPressed()
 
 void MainWindow::m_pauseSimulationPressed()
 {
-    disconnect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_pauseSimulationPressed()));
-    connect(m_runSimulationButton,SIGNAL(triggered()),this,SLOT(m_runSimulationPressed()));
+    disconnect(m_runSimulationButton,SIGNAL(pressed()),this,SLOT(m_pauseSimulationPressed()));
+    connect(m_runSimulationButton,SIGNAL(pressed()),this,SLOT(m_runSimulationPressed()));
     disconnect(m_simulationTimeSlider,SIGNAL(sliderMoved(int)),m_reportingManager,SLOT(setUpdateInterval(int)));
     m_runSimulationButton->setIcon(QIcon(":/resources/images/playIcon.png"));
     m_runSimulationButton->setText("Run Simulation");
@@ -233,7 +283,7 @@ void  MainWindow::m_stopSimulationPressed()
 
 void MainWindow::m_disconnectFromSimulator(bool destroy )
 {
-    m_timeScaleLabel->setText(" ( <b>" + QString::number(m_simulationTimeSlider->value()) +"</b> msec ) ");
+    m_timeScaleLabel->setText("[ <b>" + QString::number(m_simulationTimeSlider->value()) +"</b> msec ]");
 
     for (int i = 0; i < m_subscriberPlugins.count(); i ++)
     {
@@ -297,7 +347,16 @@ void MainWindow::m_newProjectPressed()
 void MainWindow::m_loadProject(QString filepath)
 {
 
+    if (this->centralWidget() == m_welcomeWidget)
+    {
+        this->insertToolBar(m_applicationToolbar,m_simulationToolbar);
+        this->setCentralWidget(m_applicationLauncher);
+        m_welcomeWidget->hide();
+        m_applicationLauncher->show();
+    }
+
     m_project = new NCSProject(filepath,this);
+    m_projectLabel->setText("[<font color= '#dd4814' > " +m_project->name() + " </font>]");
     if (QDir(m_project->parentDirectory() + "/tmp").exists())
         m_removeDir(m_project->parentDirectory() +"/tmp");
 
@@ -337,7 +396,6 @@ void MainWindow::m_closeProject()
     if (QDir(m_project->parentDirectory() + "/tmp").exists())
         m_removeDir(m_project->parentDirectory()+"/tmp");
 
-    m_ncsContextLabel->setText("<b> [ Unconnected ] </b>");
     m_project->save();
     delete m_project;
 }
@@ -356,9 +414,8 @@ void MainWindow::m_hideLoadingSimulation()
 
 void MainWindow::m_updateTimeScale(int value)
 {
-    pow(value,0.2f);
     m_reportingManager->setUpdateInterval(value);
-    m_timeScaleLabel->setText(" <font color= '#772953' >( <b>" + QString::number(value) +"</b> msec )</font> ");
+    m_timeScaleLabel->setText("[ <font color= '#772953' > <b>" + QString::number(value) +"</b> msec </font>]");
 
 }
 
@@ -377,6 +434,11 @@ void MainWindow::m_defaultNCSInstallationFailed(NCSInstallationDialog::BridgeCre
 
 void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
 {
+    if (this->centralWidget() == m_welcomeWidget)
+    {
+        m_welcomeWidget->setPanelEnabled(1,true);
+        m_welcomeWidget->setPanelEnabled(2,true);
+    }
     m_commandBridge = bridge;
     connect(m_commandBridge,SIGNAL(applicationBridgeLaunched(NCSApplicationBridge*)),this,SLOT(m_ncsApplicationLaunched(NCSApplicationBridge*)));
     for (int i = 0; i < m_applicationPlugins.count(); i ++)
@@ -384,7 +446,7 @@ void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
         m_applicationPlugins[i]->setCommandBridge(bridge);
         m_setPluginEnabled(m_applicationPlugins[i],true);
     }
-    m_ncsContextLabel->setText("<font color= '#dd4814' > [ <i>NCS6</i>@<b>" + m_commandBridge->hostname()+ "</b> ] </font> ");
+    m_ncsContextLabel->setText("[<font color= '#dd4814' > <i>NCS6</i>@<b>" + m_commandBridge->hostname()+ "</b> </font>]");
 }
 
 void MainWindow::m_setPluginEnabled(NCSWidgetPlugin * plugin, bool enable)
