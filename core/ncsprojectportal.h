@@ -7,10 +7,13 @@
 class NCSProjectPortal
 {
 public:
+    NCSProjectPortal();
     NCSProjectPortal(QDomElement element, QDomDocument doc,QString parentDir);
     QDomElement rootElement();
     QDomElement newElement(QString tagName);
+    QDomText newTextElement(QString tagName);
     QString parentDirectory();
+
 private:
     QDomDocument m_document;
     QDomElement m_element;

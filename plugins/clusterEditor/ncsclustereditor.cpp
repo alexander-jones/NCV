@@ -127,7 +127,7 @@ NCSClusterEditor::NCSClusterEditor(QWidget * parent)
     this->setLayout(m_layout);
     this->setEnabled(false);
 }
-void NCSClusterEditor::loadProject(NCSProjectPortal project)
+void NCSClusterEditor::openPortal(NCSProjectPortal project)
 {
     m_projectDir = project.parentDirectory();
     m_machineList->clear();
@@ -648,6 +648,11 @@ void NCSClusterEditor::saveHostFile( QString filename)
 
 
 }
+
+void NCSClusterEditor::closePortal()
+{
+}
+
 void NCSClusterEditor::clear()
 {
     m_cluster.machines.clear();

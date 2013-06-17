@@ -11,7 +11,7 @@ NCVDiscreteAttribute::NCVDiscreteAttribute(NCSDiscreteAttribute * parent)
     for (int i = 0; i < states.count(); i ++)
     {
         if (i % 2 == 0)
-            coloration[states[i]] =QColor(0,255,0);
+            coloration[states[i]] =QColor(85,0,127);
         else
             coloration[states[i]] = QColor(255,0,0);
     }

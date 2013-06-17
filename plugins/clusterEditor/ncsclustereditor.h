@@ -13,11 +13,12 @@ public:
     void saveClusterFile(QString filename);
     void loadClusterFile(QString filename, bool append = false);
     int enabledMachines();
-    void loadProject(NCSProjectPortal project);
+    void openPortal(NCSProjectPortal portal);
     QIcon icon();
     QString title();
     QString name();
     float version();
+    void closePortal();
 
 
 public slots:

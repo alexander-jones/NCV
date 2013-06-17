@@ -1,28 +1,5 @@
-#include <QAction>
-#include <QVBoxLayout>
-#include <QToolBar>
-#include <QToolButton>
-#include <QStatusBar>
-#include <QApplication>
-#include <QCloseEvent>
-#include <QFile>
-#include <QFileInfo>
-#include <QFileDialog>
-#include <QIcon>
-#include <QMenu>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QPoint>
-#include <QSettings>
-#include <QSize>
-#include <QStatusBar>
-#include <QTextStream>
-#include <QToolBar>
-
-#include <Qsci/qsciapis.h>
-#include <Qsci/qsciscintilla.h>
-#include <Qsci/qscilexerpython.h>
 #include "pythoneditor.h"
+#include <QDebug>
 
 PythonEditor::PythonEditor(QWidget * parent)
     :NCSWidgetPlugin(parent)
@@ -31,6 +8,7 @@ PythonEditor::PythonEditor(QWidget * parent)
     m_layout = new QVBoxLayout();
 
     m_textEdit = new QsciScintilla(this);
+    connect(m_textEdit,SIGNAL(modificationChanged(bool)),this,SLOT(m_textChanged(bool)));
 
     m_textEdit->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
@@ -38,7 +16,7 @@ PythonEditor::PythonEditor(QWidget * parent)
     m_textEdit->setMarginsFont(this->font());
     m_textEdit->setMarginWidth(0,fontmetrics.width("00000") );
     m_textEdit->setMarginsBackgroundColor(QColor("#e8e5e5"));
-    m_textEdit->setMarginsForegroundColor(QColor("#dd4814"));
+    m_textEdit->setMarginsForegroundColor(QColor("#1755b5"));
     m_textEdit->setMarginLineNumbers(0,true);
 
     m_fileToolBar = new QToolBar(tr("File"));
@@ -76,6 +54,12 @@ PythonEditor::PythonEditor(QWidget * parent)
     connect(m_pasteButton, SIGNAL(clicked()), m_textEdit, SLOT(paste()));
     m_fileToolBar->addWidget(m_pasteButton);
 
+    m_spacer = new QWidget();
+    m_spacer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    m_fileToolBar->addWidget(m_spacer);
+
+    m_fileLabel = new QLabel();
+    m_fileToolBar->addWidget(m_fileLabel);
 
     m_layout->addWidget(m_fileToolBar);
 
@@ -118,9 +102,74 @@ QToolButton * PythonEditor::m_createButton(QString text, QIcon icon, QKeySequenc
     return button;
 }
 
-void PythonEditor::loadProject(NCSProjectPortal project)
+void PythonEditor::openPortal(NCSProjectPortal portal)
 {
-    m_projectDir = project.parentDirectory();
+    m_portal = portal;
+    m_projectDir = m_portal.parentDirectory();
+    QDomElement existingSave = m_portal.rootElement().firstChildElement("last");
+    if (!existingSave.isNull())
+    {
+        m_lastFileElement = existingSave;
+        QString lastFile = m_lastFileElement.attribute("filename");
+
+        if ( m_lastFileElement.text() != "")
+        {
+            m_textEdit->setText(m_lastFileElement.text());
+        }
+
+        else if (lastFile != "")
+            loadFile(lastFile);
+
+
+    }
+    else
+    {
+        m_lastFileElement = m_portal.newElement("last");
+        m_lastFileElement.setAttribute("filename","");
+        m_portal.rootElement().appendChild(m_lastFileElement);
+    }
+}
+
+void PythonEditor::closePortal()
+{
+    QDomText unsavedElement;
+    if (m_lastFileElement.hasChildNodes())
+        unsavedElement = m_lastFileElement.childNodes().at(0).toText();
+
+    if (unsavedElement.isNull())
+    {
+        if (m_textEdit->isModified())
+        {
+            unsavedElement = m_portal.newTextElement(m_textEdit->text());
+            m_lastFileElement.appendChild(unsavedElement);\
+        }
+    }
+    else
+    {
+        if (m_textEdit->isModified())
+            unsavedElement.setNodeValue(m_textEdit->text());
+    }
+}
+void PythonEditor::m_textChanged(bool changed)
+{
+    QString filepath = m_lastFileElement.attribute("filename");
+    if (!filepath.isEmpty())
+    {
+        QString strippedName = QFileInfo(filepath).fileName();
+        QString color;
+        if (QFileInfo(filepath).path() == ".")
+            color = "#1755b5";
+        else
+            color = "#dd4814";
+
+
+        if (changed || !m_lastFileElement.text().isEmpty())
+            m_fileLabel->setText("[ <font color= " + color + "> <b>* " + strippedName + "</b> </font>]");
+
+        else
+            m_fileLabel->setText("[ <font color= " + color + "> <b> " + strippedName + "</b> </font>]");
+
+    }
 }
 
 QIcon PythonEditor::icon()
@@ -134,7 +183,7 @@ QString PythonEditor::title()
 
 QString PythonEditor::name()
 {
-    return "pyhon-editor";
+    return "python-editor";
 }
 
 float PythonEditor::version()
@@ -159,8 +208,20 @@ void PythonEditor::newFile()
 
 void PythonEditor::open()
 {
-    if (maybeSave()) {
-        QString fileName = QFileDialog::getOpenFileName(this,"Open Python Script",m_projectDir,tr("Python script (*.py)"));
+    if (maybeSave())
+    {
+        QString directory;
+        QString currentFileName = m_lastFileElement.attribute("filename");
+        if (currentFileName == "" || QFileInfo(currentFileName).isRelative())
+            directory = m_projectDir;
+        else
+            directory = QFileInfo(currentFileName).path();
+
+        QString fileName = QFileDialog::getOpenFileName(this,"Open Python Script",directory,tr("Python script (*.py)"));
+
+        if (QFileInfo(fileName).path() == m_projectDir)
+            fileName = QFileInfo(fileName).fileName();
+
         if (!fileName.isEmpty())
             loadFile(fileName);
     }
@@ -168,16 +229,21 @@ void PythonEditor::open()
 
 bool PythonEditor::save()
 {
-    if (m_curFile.isEmpty()) {
+    QString savedFilename = m_lastFileElement.attribute("filename");
+    if (savedFilename.isEmpty()) {
         return saveAs();
     } else {
-        return saveFile(m_curFile);
+        return saveFile(savedFilename);
     }
 }
 
 bool PythonEditor::saveAs()
 {
     QString fileName = QFileDialog::getSaveFileName(this);
+
+    if (QFileInfo(fileName).path() == m_projectDir)
+        fileName = QFileInfo(fileName).fileName();
+
     if (fileName.isEmpty())
         return false;
 
@@ -188,7 +254,7 @@ bool PythonEditor::saveAs()
 
 bool PythonEditor::maybeSave()
 {
-    if (m_textEdit->isModified()) {
+    if (m_textEdit->isModified() || !m_lastFileElement.text().isEmpty()) {
         int ret = QMessageBox::warning(this, tr("Application"),
                      tr("The document has been modified.\n"
                         "Do you want to save your changes?"),
@@ -205,7 +271,11 @@ bool PythonEditor::maybeSave()
 
 void PythonEditor::loadFile(const QString &fileName)
 {
+
     QFile file(fileName);
+    if (QFileInfo(fileName).isRelative())
+        file.setFileName(m_projectDir + "/" + fileName);
+
     if (!file.open(QFile::ReadOnly)) {
         QMessageBox::warning(this, tr("Application"),
                              tr("Cannot read file %1:\n%2.")
@@ -213,6 +283,7 @@ void PythonEditor::loadFile(const QString &fileName)
                              .arg(file.errorString()));
         return;
     }
+
 
     QTextStream in(&file);
     QApplication::setOverrideCursor(Qt::WaitCursor);
@@ -223,9 +294,13 @@ void PythonEditor::loadFile(const QString &fileName)
     m_statusBar->showMessage(tr("File loaded"), 2000);
 }
 
+
+
 bool PythonEditor::saveFile(const QString &fileName)
 {
     QFile file(fileName);
+    if (QFileInfo(fileName).isRelative())
+        file.setFileName(m_projectDir + "/" + fileName);
     if (!file.open(QFile::WriteOnly)) {
         QMessageBox::warning(this, tr("Application"),
                              tr("Cannot write file %1:\n%2.")
@@ -246,18 +321,15 @@ bool PythonEditor::saveFile(const QString &fileName)
 
 void PythonEditor::setCurrentFile(const QString &fileName)
 {
-    m_curFile = fileName;
-    m_textEdit->setModified(false);
+    m_lastFileElement.setAttribute("filename",fileName);
 
-    QString shownName;
-    if (m_curFile.isEmpty())
-        shownName = "untitled.txt";
-    else
-        shownName = strippedName(m_curFile);
+    if (m_lastFileElement.attribute("filename").isEmpty())
+        m_fileLabel->setText("[ <b>Untitiled</b> ]");
 
+    if (m_lastFileElement.hasChildNodes())
+        m_lastFileElement.removeChild(m_lastFileElement.childNodes().at(0));
+
+     m_textEdit->setModified(false);
 }
 
-QString PythonEditor::strippedName(const QString &fullFileName)
-{
-    return QFileInfo(fullFileName).fileName();
-}
+

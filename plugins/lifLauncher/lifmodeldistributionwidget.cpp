@@ -77,7 +77,7 @@ LIFModelDistributionWidget::LIFModelDistributionWidget(QWidget *parent) :
     m_currentApplication = NULL;
 }
 
-void LIFModelDistributionWidget::loadProject(NCSProjectPortal project)
+void LIFModelDistributionWidget::openPortal(NCSProjectPortal project)
 {
     //QDomElement element = project.newElement("data");
     //project.rootElement().appendChild(element);
@@ -88,6 +88,10 @@ void LIFModelDistributionWidget::loadProject(NCSProjectPortal project)
     m_clusterFileEdit->clear();
     m_timeSpinBox->setValue(10);
     m_timeUnitsComboBox->setCurrentIndex(3);
+}
+
+void LIFModelDistributionWidget::closePortal()
+{
 }
 
 QString LIFModelDistributionWidget::name()

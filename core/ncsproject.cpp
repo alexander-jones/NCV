@@ -6,10 +6,6 @@ NCSProject::NCSProject(const QString & filepath,QObject *parent ):
     QObject(parent)
 {
     m_filepath = filepath;
-    m_parentDirectory = m_filepath;
-    QStringList fileSegments = filepath.split("/");
-    m_parentDirectory.remove(fileSegments.last());
-    m_name = fileSegments.last().remove(".ncsproj");
     QFile file(filepath);
     if (file.exists())
         m_load(&file);
@@ -19,12 +15,12 @@ NCSProject::NCSProject(const QString & filepath,QObject *parent ):
 }
 QString NCSProject::name()
 {
-    return m_name;
+    return QFileInfo(m_filepath).fileName().remove(".ncsproj");
 }
 
 QString NCSProject::parentDirectory()
 {
-    return m_parentDirectory;
+    return QFileInfo(m_filepath).path();
 }
 
 void NCSProject::registerPlugin(NCSWidgetPlugin * plugin)
@@ -37,7 +33,7 @@ void NCSProject::registerPlugin(NCSWidgetPlugin * plugin)
         pluginElement.setAttribute("version",plugin->version());
         m_rootPluginElement.appendChild(pluginElement);
     }
-    plugin->loadProject(NCSProjectPortal(pluginElement,m_document,m_parentDirectory));
+    plugin->openPortal(NCSProjectPortal(pluginElement,m_document,parentDirectory()));
 
 }
 

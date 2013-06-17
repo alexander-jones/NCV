@@ -13,7 +13,6 @@ NCSWelcomeWidget::NCSWelcomeWidget(QWidget *parent) :
     sidebarPallete.setColor(QPalette::Background, tr("#e5e5e5"));
 
     m_layout = new QVBoxLayout();
-    m_layout->addWidget(m_makeSeparator(QFrame::HLine));
 
     m_mainVector = new QWidgetVector();
 
@@ -28,6 +27,8 @@ NCSWelcomeWidget::NCSWelcomeWidget(QWidget *parent) :
     m_centralVector = new QWidgetVector();
     m_centralVector->setAlignment(Qt::AlignTop);
     m_centralVector->setDirection(QWidgetVector::TopToBottom);
+
+    m_centralVector->addWidget(m_makeSeparator(QFrame::HLine));
 
     m_welcomeLabel = new QLabel("<font color = '#dd4814'> Welcome</font> ");
     QFont font = m_welcomeLabel->font();
@@ -55,7 +56,7 @@ NCSWelcomeWidget::NCSWelcomeWidget(QWidget *parent) :
     m_footerVector->setSpacing(25);
     m_footerVector->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 
-    m_footerLabel = new QLabel("Developed by the Brain Computation Lab <font color = '#dd4814'><b>@</b></font>" );
+    m_footerLabel = new QLabel("Developed by the <b>Brain Computation Lab <font color = '#dd4814'> @</font></b>" );
     m_footerLabel->setAlignment(Qt::AlignCenter);
     font.setPointSize(24);
     font.setBold(false);

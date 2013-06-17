@@ -23,7 +23,7 @@ private:
     void m_load(QFile * file);
     void m_save(QFile * file);
 
-    QString m_filepath, m_parentDirectory, m_name;
+    QString m_filepath;
     QDomDocument m_document;
     NCSProject * m_project;
     QMap<NCSWidgetPlugin * ,QDomElement> m_pluginElements;

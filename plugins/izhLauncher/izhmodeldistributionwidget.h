@@ -18,9 +18,11 @@ public:
     explicit IzhModelDistributionWidget(QWidget *parent = 0);
     QIcon icon();
     QString title();
-    void loadProject(NCSProjectPortal project);
+    void openPortal(NCSProjectPortal project);
     QString name();
     float version();
+    void closePortal();
+
 
 public slots:
     void setCommandBridge(NCSCommandBridge * bridge);

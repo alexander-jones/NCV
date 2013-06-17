@@ -94,7 +94,12 @@ IzhModelDistributionWidget::IzhModelDistributionWidget(QWidget *parent) :
 
 }
 
-void IzhModelDistributionWidget::loadProject(NCSProjectPortal project)
+
+void IzhModelDistributionWidget::closePortal()
+{
+}
+
+void IzhModelDistributionWidget::openPortal(NCSProjectPortal project)
 {
     m_projectDir = project.parentDirectory();
     m_topologyFilename = m_projectDir + "/tmp/topology";

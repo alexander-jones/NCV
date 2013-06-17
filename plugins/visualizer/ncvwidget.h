@@ -16,11 +16,12 @@ class NCVWidget : public NCSSubscriberWidgetPlugin
 public:
     explicit NCVWidget(QWidget *parent = 0);
     ~NCVWidget();
-    void loadProject(NCSProjectPortal project);
+    void openPortal(NCSProjectPortal project);
     QIcon icon();
     QString title();
     QString name();
     float version();
+    void closePortal();
 
 public slots:
     void setNeurons(NCSNeuronSet * neurons);

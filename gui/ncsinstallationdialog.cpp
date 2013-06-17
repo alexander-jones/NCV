@@ -46,7 +46,7 @@ NCSInstallationDialog::NCSInstallationDialog(QWidget *parent) :
     m_mainVector->addWidget(m_bottomVector);
 
     this->resize(715,638);
-    this->setTitle("<font color = '#dd4814'><b>Supply a local or remote installation of NCS 6:</b></font>");
+    this->setTitle("<font color = '#1755b5'><b>Supply a local or remote installation of NCS 6:</b></font>");
     this->setWindowTitle("Connect to NCS");
     this->setDescription("Installations can be saved and the default will loaded automatically upon startup.");
     this->setWidget(m_mainVector);

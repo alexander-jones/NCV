@@ -140,12 +140,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_welcomeWidget = new NCSWelcomeWidget();
     connect(m_welcomeWidget,SIGNAL(quickPanelTriggered(int)),this,SLOT(m_welcomeWidgetPanelSelected(int)));
-    QString connectionDesc = "Integrate with the powerful NCS framework to enable simulation features.";
+    QString connectionDesc = "Integrate with the powerful Neocortical Simulator to initialize NCV.";
     m_welcomeWidget->addQuickPanel(QPixmap(":/resources/images/ncs.png"), "Connect to NCS",connectionDesc);
-    QString projectDesc = "Create a new project and organize your resources into a single location.";
+    QString projectDesc = "Create a new project and organize all simulation resources into a single location.";
     m_welcomeWidget->addQuickPanel(QPixmap(":/resources/images/projectIcon.png"), "Start a Project",projectDesc);
     m_welcomeWidget->setPanelEnabled(1,false);
-    QString developDesc = "Open an existing project and start simulating. ";
+    QString developDesc = "Use an existing project to start developing, simulating, and analyzing neocortical models. ";
     m_welcomeWidget->addQuickPanel(QPixmap(":/resources/images/setupIcon.png"), "Open a Project",developDesc);
     m_welcomeWidget->setPanelEnabled(2,false);
 
@@ -356,7 +356,7 @@ void MainWindow::m_loadProject(QString filepath)
     }
 
     m_project = new NCSProject(filepath,this);
-    m_projectLabel->setText("[<font color= '#dd4814' > " +m_project->name() + " </font>]");
+    m_projectLabel->setText("[<font color= '#1755b5' > " +m_project->name() + " </font>]");
     if (QDir(m_project->parentDirectory() + "/tmp").exists())
         m_removeDir(m_project->parentDirectory() +"/tmp");
 
@@ -395,6 +395,9 @@ void MainWindow::m_closeProject()
 
     if (QDir(m_project->parentDirectory() + "/tmp").exists())
         m_removeDir(m_project->parentDirectory()+"/tmp");
+
+    for (int i =0; i < m_allPlugins.count(); i ++)
+        m_allPlugins[i]->closePortal();
 
     m_project->save();
     delete m_project;
@@ -446,7 +449,7 @@ void MainWindow::m_setCommandBridge(NCSCommandBridge * bridge)
         m_applicationPlugins[i]->setCommandBridge(bridge);
         m_setPluginEnabled(m_applicationPlugins[i],true);
     }
-    m_ncsContextLabel->setText("[<font color= '#dd4814' > <i>NCS6</i>@<b>" + m_commandBridge->hostname()+ "</b> </font>]");
+    m_ncsContextLabel->setText("[<font color= '#1755b5' > <i>NCS6</i>@<b>" + m_commandBridge->hostname()+ "</b> </font>]");
 }
 
 void MainWindow::m_setPluginEnabled(NCSWidgetPlugin * plugin, bool enable)
@@ -458,7 +461,7 @@ void MainWindow::m_setPluginEnabled(NCSWidgetPlugin * plugin, bool enable)
         m_applicationLauncher->setPageToolTip(index,title);
     else
     {
-        m_applicationLauncher->setPageToolTip(index,title + "<br><font color='#dd4814'>Start a simulation to activate</font>");
+        m_applicationLauncher->setPageToolTip(index,title + "<br><font color='#1755b5'>Start a simulation to activate</font>");
 
         if (m_applicationLauncher->currentIndex() == index)
         {
@@ -549,7 +552,7 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     m_discreteNeuronAttributes["firing"] = new NCSDiscreteAttribute(Neuron, firingStates,1);
     m_discreteNeuronAttributes["firing"]->attachData(stubNeuronFirings);
     m_discreteNeuronAttributes["firing"]->setReportable(false);
-    m_neurons->addAttribute("firing", m_discreteNeuronAttributes["firing"]);
+    //m_neurons->addAttribute("firing", m_discreteNeuronAttributes["firing"]);
 
     unsigned int numConnections;
     dataStream >> numConnections;
@@ -590,7 +593,7 @@ void MainWindow::m_createNetwork(QString topologyFilename)
     m_continuousConnectionAttributes["voltage"] = new NCSContinuousAttribute(Connection,-80, 40);
     m_continuousConnectionAttributes["voltage"]->attachData(stubConnVoltage);
     m_continuousConnectionAttributes["voltage"]->setReportable(false);
-    m_connections->addAttribute("connVoltage",m_continuousConnectionAttributes["voltage"]);
+    //m_connections->addAttribute("connVoltage",m_continuousConnectionAttributes["voltage"]);
 
     topologyFile.close();
 }

@@ -6,6 +6,9 @@
 #include <QPushButton>
 #include <QSignalMapper>
 #include "gui/utilities/qwidgetvector.h"
+#include <QPainter>
+#include <QLinearGradient>
+
 
 class NCSWelcomeWidget : public QWidget
 {
