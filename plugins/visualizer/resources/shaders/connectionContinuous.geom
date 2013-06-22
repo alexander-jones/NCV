@@ -62,14 +62,13 @@ void main( void )
 
     //////////////////////////// Left-Up Face ////////////////////////////
 
-    emitVertex(inUpPos);
-
-    emitVertex(outUpPos);
-
     emitVertex(inDownLeftPos);
 
     emitVertex(outDownLeftPos);
 
+    emitVertex(inUpPos);
+
+    emitVertex(outUpPos);
 
     //////////////////////////// Down Face ////////////////////////////
 
@@ -79,9 +78,9 @@ void main( void )
 
     //////////////////////////// Right-Up Face ////////////////////////////
 
-    emitVertex(inUpPos);
+    emitVertex(inDownLeftPos);
 
-    emitVertex(outUpPos);
+    emitVertex(outDownLeftPos);
 
     EndPrimitive();
 }

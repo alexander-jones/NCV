@@ -151,13 +151,13 @@ void NCVCanvas::initializeGL()
     // initialize target bufferm_neuronsToCreate
     m_frameBufferObject.create();
 
-    QString names[3] = {"diffuse","id","depth"};
-    GLenum formats[3] = {GL_RGB8,GL_R32UI,GL_DEPTH_COMPONENT32};
-    GLuint samples[3] = {1,1,1};
+    QString names[4] = {"diffuse","ssao","id","depth"};
+    GLenum formats[4] = {GL_RGB8,GL_RGB8,GL_R32UI,GL_DEPTH_COMPONENT32};
+    GLuint samples[4] = {1,1,1,1};
     GLint maxSamples;
     glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
 
-    for(int i = 0 ; i < 3; i ++)
+    for(int i = 0 ; i < 4; i ++)
     {
         m_maps.insert(names[i],QGLXTexture2D());
         m_maps[names[i]].create();
@@ -171,19 +171,25 @@ void NCVCanvas::initializeGL()
     }
 
     QGLFormat f = format();
-    QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(1,1,0.5),QVector3D(-1,1,0.5)};
-    QVector2D screenCoords[4] = {QVector2D(0,0),QVector2D(1,0),QVector2D(1,1),QVector2D(0,1)};
+    QVector3D screenVerts[4] = {QVector3D(-1,-1,0.5),QVector3D(1,-1,0.5),QVector3D(-1,1,0.5),QVector3D(1,1,0.5)};
+    QVector2D screenCoords[4] = {QVector2D(0,0),QVector2D(1,0),QVector2D(0,1),QVector2D(1,1)};
     m_screenVertices.create();
     m_screenVertices.bind(QGLXBuffer::ArrayBuffer);
 
     m_screenVertices.allocate(&screenVerts[0],4 * sizeof(QVector3D));
     m_screenVertices.release();
 
-
     m_screenCoords.create();
     m_screenCoords.bind(QGLXBuffer::ArrayBuffer);
     m_screenCoords.allocate(&screenCoords[0],4 * sizeof(QVector2D));
     m_screenCoords.release();
+
+
+    m_ssaoProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/resources/shaders/postProcess.vert" );
+    m_ssaoProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/resources/shaders/ssao.frag" );
+    m_ssaoProgram.link();
+
+
 
     m_skySphere.create(m_camera.farPlane() * 10000 ,QImage(":/resources/images/gray.jpg"),QVector2D(10,10));
 
@@ -225,7 +231,6 @@ void NCVCanvas::resizeGL( int w, int h )
     glViewport( 0, 0, w, qMax( h, 1 ) );
     int targetWidth = m_width;
     int targetHeight = m_height;
-
     m_camera.setAspectRatio((float)m_width/m_height);
 
     for (QMap<QString,QGLXTexture2D>::iterator it = m_maps.begin();it != m_maps.end(); it++)
@@ -270,41 +275,21 @@ void NCVCanvas::m_performRegularRender()
         m_neurons->bind(m_camera);
         m_neurons->draw();
         m_neurons->release();
-
-        m_maps["id"].release();
-        m_frameBufferObject.enableColorAttachments(1);
-
-        m_neurons->bindSilhouettes(m_camera);
-        m_neurons->draw();
-        m_neurons->releaseSilhouettes();
     }
-
-
-    m_frameBufferObject.enableColorAttachments(2);
-    m_maps["diffuse"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,0);
-    m_maps["id"].bind(QGLXTexture2D::Draw,QGLXTexture2D::Color,1);
 
     if (m_renderConnections && m_connections != NULL)
     {
         m_connections->bind(m_camera);
         m_connections->draw();
         m_connections->release();
-
-        m_maps["id"].release();
-        m_frameBufferObject.enableColorAttachments(1);
-
-        m_connections->bindSilhouettes(m_camera);
-        m_connections->draw();
-        m_connections->releaseSilhouettes();
     }
 
-
-    // release frame buffer and related targets
     m_maps["diffuse"].release();
     m_maps["id"].release();
     m_maps["depth"].release();
     m_frameBufferObject.enableColorAttachments(0);
     m_frameBufferObject.release();
+    // release frame buffer and related targets
 
 
 }
@@ -369,47 +354,6 @@ void NCVCanvas::m_performSelectionRender()
 
         m_connections->release();
     }
-	 
-    m_frameBufferObject.enableColorAttachments(1);
-
-    if (m_renderNeurons && m_neurons != NULL)
-    {
-        m_neurons->bindSilhouettes(m_camera);
-        for (QVector<NCVElementRange>::iterator it = m_ranges.begin(); it != m_ranges.end() ; it++)
-        {
-            NCVElementRange range = *it;
-            if (range.start > m_neurons->count())
-                break;
-            else if (range.end > m_neurons->count())
-            {
-                m_neurons->drawSubset(range.start-1,m_neurons->count()+ 1-range.start);
-                break;
-            }
-            else
-                m_neurons->drawSubset(range.start-1,range.end-range.start);
-        }
-
-        m_neurons->releaseSilhouettes();
-    }
-    if (m_renderConnections && m_connections != NULL)
-    {
-
-        m_connections->bindSilhouettes(m_camera);
-        for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
-        {
-            NCVElementRange range = *it;
-
-            if (range.end <= m_neurons->count())
-                continue;
-            else if (range.start <= m_neurons->count())
-                m_connections->drawSubset(0,range.end -(m_neurons->count() +1));
-            else
-                m_connections->drawSubset(range.start-1 - m_neurons->count(),range.end-range.start);
-
-        }
-        m_connections->releaseSilhouettes();
-
-    }
 
     if ((int)m_NCVSelectionFlags & (int)RenderDeselected)
     {
@@ -456,60 +400,15 @@ void NCVCanvas::m_performSelectionRender()
 
 
         }
-		
-    m_frameBufferObject.enableColorAttachments(1);
-        if (m_renderNeurons &&  m_neurons != NULL )
-		{
-			m_neurons->bindSilhouettes(m_camera);
-            int previousEnd = 1;
-            for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
-            {
-                NCVElementRange range = *it;
-                if (range.start > m_neurons->count())
-                    break;
-                else if (range.start > previousEnd)
-                    m_neurons->drawSubset(previousEnd-1,range.start-previousEnd);
-                previousEnd = range.end;
-            }
-            if (previousEnd < m_neurons->count())
-                m_neurons->drawSubset(previousEnd-1,m_neurons->count()+ 1-previousEnd);
-
-
-            m_neurons->releaseSilhouettes();
-		}
-        if (m_renderConnections && m_connections != NULL)
-		{
-
-			m_connections->bindSilhouettes(m_camera);
-            int previousEnd = m_neurons->count() +1;
-            int endOfItems = m_neurons->count() + m_connections->count();
-            for (QVector<NCVElementRange>::iterator it = m_ranges.begin() ; it != m_ranges.end(); it++)
-            {
-                NCVElementRange range = *it;
-                if (range.end <= m_neurons->count())
-                    continue;
-                else if (range.start > previousEnd)
-                    m_connections->drawSubset(previousEnd-1- m_neurons->count(),range.start-previousEnd);
-                previousEnd = range.end;
-            }
-            if (previousEnd < endOfItems)
-                m_connections->drawSubset(previousEnd-1- m_neurons->count(),endOfItems-previousEnd);
-
-			m_connections->releaseSilhouettes();
-
-		}
-		m_maps["id"].release();
-
 
     }
 	
     m_maps["diffuse"].release();
+    m_maps["id"].release();
     m_maps["depth"].release();
 
     m_frameBufferObject.enableColorAttachments(0);
     m_frameBufferObject.release();
-
-
 
 
 }
@@ -537,8 +436,34 @@ void NCVCanvas::paintEvent(QPaintEvent *e)
 
     }
 
+    glClear( GL_COLOR_BUFFER_BIT  |GL_DEPTH_BUFFER_BIT);
+    m_ssaoProgram.bind();
 
-    m_frameBufferObject.blitTexture(m_maps["diffuse"],QGLXTexture::Color,0,QRect(0,0,m_width,m_height),QRect(0,0,m_width,m_height));
+    m_screenVertices.bind(QGLXBuffer::ArrayBuffer);
+    m_ssaoProgram.enableAttributeArray( "Vert_Position");
+    m_ssaoProgram.setAttributeBuffer("Vert_Position", GL_FLOAT,  0 ,3, sizeof(QVector3D));
+    glVertexAttribDivisor( m_ssaoProgram.attributeLocation("Vert_Position"), 0);
+
+    m_screenCoords.bind(QGLXBuffer::ArrayBuffer);
+    m_ssaoProgram.enableAttributeArray( "Vert_Coord");
+    m_ssaoProgram.setAttributeBuffer("Vert_Coord", GL_FLOAT,  0 ,2, sizeof(QVector2D));
+    glVertexAttribDivisor( m_ssaoProgram.attributeLocation("Vert_Coord"), 0);
+
+    m_maps["diffuse"].bind(0);
+    m_ssaoProgram.setUniformValue("DiffuseTexture", 0);
+
+    m_maps["depth"].bind(1);
+    m_ssaoProgram.setUniformValue("DepthTexture", 1);
+
+    m_ssaoProgram.setUniformValue("ScreenSize",QVector2D(m_width,m_height));
+
+    glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+
+    m_maps["depth"].release();
+    m_maps["diffuse"].release();
+    m_screenCoords.release();
+    m_screenVertices.release();
+    m_ssaoProgram.release();
 
     glDisable(GL_DEPTH_TEST);
     m_painter.begin(this);

@@ -149,36 +149,6 @@ void NCVConnectionSet::bind(QGLXCamera camera, bool deselected)
 
 
 
-void NCVConnectionSet::bindSilhouettes(QGLXCamera camera, QColor color)
-{
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    // perform silhouetting
-    m_silhouetteProgram.bind();
-
-    m_neuronIdBuffer.bind(QGLXBuffer::ArrayBuffer);
-    m_silhouetteProgram.enableAttributeArray( "Neuron_ID");
-    m_silhouetteProgram.setAttributeBuffer("Neuron_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
-    glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Neuron_ID"), 0);
-
-    m_neurons->positionBufferTexture().bind(0);
-    m_silhouetteProgram.setUniformValue("Inst_Translation", 0);
-
-    m_silhouetteProgram.setUniformValue("WVP",camera.projection() * camera.view());
-    m_silhouetteProgram.setUniformValue("Scale",m_scale);
-	m_silhouetteProgram.setUniformValue("SilhouetteColor",QVector3D(color.redF(),color.greenF(),color.blueF()));
-    m_silhouetteProgram.setUniformValue("CameraDirection",camera.forward());
-    m_silhouetteProgram.setUniformValue("DepthBias",m_depthBias);
-    m_silhouetteProgram.setUniformValue("FarBias",1.0f/(float)log(camera.farPlane()*m_depthBias + 1));
-    m_silhouetteProgram.setUniformValue("NearPlane",camera.nearPlane());
-    m_silhouetteProgram.setUniformValue("FarPlane",camera.farPlane());
-    m_silhouetteProgram.setUniformValue("SilhouetteDepthMagnification",0.5f);
-    m_silhouetteProgram.setUniformValue("SilhouetteMaxAlpha",0.5f);
-}
-
-
 void NCVConnectionSet::release()
 {
     if (m_currentAttribute != NULL)
@@ -232,19 +202,6 @@ void NCVConnectionSet::drawSubset(int startElement, int count)
 
 
 
-void NCVConnectionSet::releaseSilhouettes()
-{
-    m_silhouetteProgram.disableAttributeArray( "Neuron_ID" );
-    m_silhouetteProgram.disableAttributeArray( "Inst_ID" );
-    m_neuronIdBuffer.release();
-    m_idBuffer.release();
-    m_neurons->positionBufferTexture().release();
-    m_silhouetteProgram.release();
-
-    glDisable(GL_BLEND);
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-}
-
 void NCVConnectionSet::resolve()
 {
     if (!m_initialized)
@@ -259,11 +216,6 @@ void NCVConnectionSet::resolve()
         m_continuousProgram.addShaderFromSourceFile( QGLShader::Geometry, ":/resources/shaders/connectionContinuous.geom" );
         m_continuousProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/resources/shaders/continuous.frag" );
         m_continuousProgram.link();
-
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Vertex, ":/resources/shaders/connectionSilhouette.vert");
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Geometry, ":/resources/shaders/connectionSilhouette.geom");
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Fragment, ":/resources/shaders/silhouette.frag");
-        m_silhouetteProgram.link();
 
         int startIndex = m_neurons->count();
         QVector<GLuint> sysIDs;

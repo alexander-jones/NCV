@@ -30,7 +30,6 @@ class NCVNeuronSet:public QObject
 public:
     NCVNeuronSet(NCSNeuronSet * ncsParent,QObject * parent = 0);
     void bind(QGLXCamera camera,bool deselected = false);
-    void bindSilhouettes(QGLXCamera camera, QColor color = QColor(0,0,0));
     int count();
     void destroy();
     void draw();
@@ -38,7 +37,6 @@ public:
 	bool dirty();
     void resolve();
     void release();
-    void releaseSilhouettes();
 	QGLXBuffer positionBuffer();
     QGLXBufferTexture positionBufferTexture();
     QGLXBoundingBox bounds();
@@ -66,7 +64,7 @@ private:
     QGLXBoundingBox m_bounds;
     QGLXBuffer m_positionBuffer;
     QGLXBufferTexture m_positionBufferTexture;
-    QGLShaderProgram m_silhouetteProgram , m_continuousProgram, m_discreteProgram;
+    QGLShaderProgram  m_continuousProgram, m_discreteProgram;
 };
 
 

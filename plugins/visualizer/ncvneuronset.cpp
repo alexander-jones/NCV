@@ -169,47 +169,6 @@ void NCVNeuronSet::bind(QGLXCamera camera, bool deselected)
 
 
 
-void NCVNeuronSet::bindSilhouettes(QGLXCamera camera, QColor color)
-{
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-    // perform silhouetting
-    m_silhouetteProgram.bind();
-
-    m_indexBuffer.bind(QGLXBuffer::IndexBuffer);
-
-    m_vertexBuffer.bind(QGLXBuffer::ArrayBuffer);
-    m_silhouetteProgram.enableAttributeArray( "Vert_Position");
-    m_silhouetteProgram.setAttributeBuffer("Vert_Position", GL_FLOAT,  0 ,3, sizeof(QVector3D));
-    glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Vert_Position"), 0);
-
-    m_idBuffer.bind(QGLXBuffer::ArrayBuffer);
-    m_silhouetteProgram.enableAttributeArray( "Inst_ID");
-    m_silhouetteProgram.setAttributeBuffer("Inst_ID", GL_FLOAT,  0 ,1, sizeof(GLuint));
-    glVertexAttribDivisor( m_silhouetteProgram.attributeLocation("Inst_ID"), 1);
-
-    m_positionBufferTexture.bind(0);
-    m_silhouetteProgram.setUniformValue("Inst_Translation", 0);
-
-    m_silhouetteProgram.setUniformValue("WVP",camera.projection() * camera.view());
-    m_silhouetteProgram.setUniformValue("Scale",m_scale);
-    m_silhouetteProgram.setUniformValue("SilhouetteColor",QVector3D(color.redF(),color.greenF(),color.blueF()));
-    m_silhouetteProgram.setUniformValue("CameraDirection",camera.forward());
-    m_silhouetteProgram.setUniformValue("NearPlane",camera.nearPlane());
-    m_silhouetteProgram.setUniformValue("FarPlane",camera.farPlane());
-    m_silhouetteProgram.setUniformValue("DepthBias",m_depthBias);
-    m_silhouetteProgram.setUniformValue("FarBias",1.0f/(float)log(camera.farPlane()*m_depthBias + 1));
-    m_silhouetteProgram.setUniformValue("SilhouetteDepthMagnification",0.5f);
-    m_silhouetteProgram.setUniformValue("SilhouetteMaxAlpha",0.5f);
-
-
-}
-
-
-
 void NCVNeuronSet::release()
 {
     if (m_currentAttribute != NULL)
@@ -239,23 +198,6 @@ void NCVNeuronSet::release()
 
         program->release();
     }
-}
-
-
-
-void NCVNeuronSet::releaseSilhouettes()
-{
-    m_silhouetteProgram.disableAttributeArray( "Vert_Position" );
-    m_silhouetteProgram.disableAttributeArray( "Inst_ID" );
-    m_idBuffer.release();
-    m_vertexBuffer.release();
-    m_indexBuffer.release();
-
-    m_positionBufferTexture.release();
-    m_silhouetteProgram.release();
-
-    glDisable(GL_BLEND);
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 }
 
 
@@ -347,10 +289,6 @@ void NCVNeuronSet::resolve()
         m_continuousProgram.addShaderFromSourceFile( QGLShader::Vertex, ":/resources/shaders/neuronContinuous.vert" );
         m_continuousProgram.addShaderFromSourceFile( QGLShader::Fragment, ":/resources/shaders/continuous.frag" );
         m_continuousProgram.link();
-
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Vertex,":/resources/shaders/neuronSilhouette.vert" );
-        m_silhouetteProgram.addShaderFromSourceFile(QGLShader::Fragment,":/resources/shaders/silhouette.frag" );
-        m_silhouetteProgram.link();
 
         GLuint componentSize = QGLXTexture::getComponentSize(GL_FLOAT);
         GLenum textureFormat  = QGLXTexture::bufferFormatToTextureFormat(GL_FLOAT,3,componentSize);

@@ -58,14 +58,14 @@ void main( void )
     ID = Vert_ID[0];
     Value = Vert_Value[0];
 
-    emitVertex(inUpPos);
-
-    emitVertex(outUpPos);
 
     emitVertex(inDownLeftPos);
 
     emitVertex(outDownLeftPos);
 
+    emitVertex(inUpPos);
+
+    emitVertex(outUpPos);
 
     //////////////////////////// Down Face ////////////////////////////
 
@@ -75,9 +75,9 @@ void main( void )
 
     //////////////////////////// Right-Up Face ////////////////////////////
 
-    emitVertex(inUpPos);
+    emitVertex(inDownLeftPos);
 
-    emitVertex(outUpPos);
+    emitVertex(outDownLeftPos);
 
     EndPrimitive();
 }

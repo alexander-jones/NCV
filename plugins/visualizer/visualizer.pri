@@ -61,18 +61,16 @@ HEADERS  += \
 
 
 OTHER_FILES += \
-    plugins/visualizer/resources/shaders/silhouette.frag \
-    plugins/visualizer/resources/shaders/neuronSilhouette.vert \
     plugins/visualizer/resources/shaders/neuronDiscrete.vert \
     plugins/visualizer/resources/shaders/neuronContinuous.vert \
     plugins/visualizer/resources/shaders/discrete.frag \
     plugins/visualizer/resources/shaders/continuous.frag \
-    plugins/visualizer/resources/shaders/connectionSilhouette.vert \
-    plugins/visualizer/resources/shaders/connectionSilhouette.geom \
     plugins/visualizer/resources/shaders/connectionDiscrete.vert \
     plugins/visualizer/resources/shaders/connectionDiscrete.geom \
     plugins/visualizer/resources/shaders/connectionContinuous.vert \
-    plugins/visualizer/resources/shaders/connectionContinuous.geom
+    plugins/visualizer/resources/shaders/connectionContinuous.geom \
+    plugins/visualizer/resources/shaders/ssao.frag \
+    plugins/visualizer/resources/shaders/postProcess.vert
 
 RESOURCES += \
     plugins/visualizer/visualizer.qrc

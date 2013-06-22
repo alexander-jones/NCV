@@ -58,7 +58,7 @@ NCVRenderTool::NCVRenderTool(QWidget *parent) :
     m_connectionScaleSlider = new QSlider(Qt::Horizontal);
     m_connectionScaleSlider->setMinimum(10);
     m_connectionScaleSlider->setMaximum(60);
-    m_connectionScaleSlider->setValue(15);
+    m_connectionScaleSlider->setValue(45);
     m_connectionLayout->addWidget(m_connectionScaleSlider);
 
     this->addGroup(m_connectionLayout,"Connections");
@@ -117,6 +117,7 @@ void  NCVRenderTool::setNeurons(NCVNeuronSet * neurons)
         }
 
     }
+    m_neurons->setScale(m_neuronScaleSlider->value());
     connect(m_neuronScaleSlider,SIGNAL(valueChanged(int)),m_neurons,SLOT(setScale(int)));
 
 
@@ -192,6 +193,7 @@ void  NCVRenderTool::setConnections(NCVConnectionSet * connections)
 
     }
 
+    m_connections->setScale(m_connectionScaleSlider->value());
     connect(m_connectionScaleSlider,SIGNAL(valueChanged(int)),m_connections,SLOT(setScale(int)));
 }
 

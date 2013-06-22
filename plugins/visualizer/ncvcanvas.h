@@ -80,6 +80,7 @@ private:
     bool m_outsideOfWorld(QVector3D pos);
 
     QGLXPainter m_painter;
+    QGLXTexture2D m_noiseTexture;
     SkySphere m_skySphere;
     NCVSelectionFlag m_NCVSelectionFlags;
     bool m_renderDirty,m_performSilhouetting;
@@ -89,6 +90,7 @@ private:
     NCVConnectionSet * m_connections;
     QMap<QString,QGLXTexture2D> m_maps;
     QGLXFrameBufferObject  m_frameBufferObject;
+    QGLShaderProgram m_ssaoProgram;
     QVector3D m_worldSize,m_worldCenter;
     int m_width, m_height;
     QGLXCamera m_camera;

@@ -13,7 +13,6 @@ public:
 
     NCVConnectionSet(NCSConnectionSet * ncsParent,NCVNeuronSet * neurons,QObject * parent = 0);
     void bind(QGLXCamera camera,bool deselected = false);
-    void bindSilhouettes(QGLXCamera camera, QColor color = QColor(0,0,0));
     int count();
     void destroy();
 	void draw();
@@ -21,7 +20,6 @@ public:
     void drawSubset(int startElement, int count);
     void resolve();
     void release();
-    void releaseSilhouettes();
     QMap<QString,NCVAttribute *> attributes();
     NCVAttribute* getCurrentAttribute();
 
@@ -43,7 +41,7 @@ private:
     float m_depthBias;
     QMap<QString,NCVAttribute *> m_attributes;
     NCVAttribute * m_currentAttribute;
-    QGLShaderProgram m_silhouetteProgram, m_continuousProgram, m_discreteProgram, m_expansionProgram;
+    QGLShaderProgram  m_continuousProgram, m_discreteProgram, m_expansionProgram;
 };
 
 #endif // NCVCONNECTIONSET_H
