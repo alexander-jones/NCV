@@ -18,6 +18,5 @@
         <file>resources/images/visualizationIcon.png</file>
         <file>resources/shaders/ssao.frag</file>
         <file>resources/shaders/postProcess.vert</file>
-        <file>resources/images/noise.png</file>
     </qresource>
 </RCC>
